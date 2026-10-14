@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Béhourd — Gestion de compagnie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/screens.css">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/almanac.css">
+</head>
+<body>
+  <main id="app"></main>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+  <div id="boot-error" class="boot-error" hidden></div>
+
+  <script>
+    // Les modules ES ne se chargent pas depuis file:// : on prévient l'utilisateur.
+    if (location.protocol === 'file:') {
+      var el = document.getElementById('boot-error');
+      el.textContent = 'Le jeu doit être lancé via un serveur local : double-cliquez sur « lancer.bat » '
+        + '(ou exécutez « py -m http.server 8642 » dans ce dossier puis ouvrez http://localhost:8642).';
+      el.hidden = false;
+    }
+  </script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

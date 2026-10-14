@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
+  <!-- Lutteur 04 : gambeson orangé sur mailles, casque conique à nasal et coiffe de mailles, épée, écu à bandes -->
+  <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+    <rect x="17" y="50" width="6" height="14.5" fill="#2f4d2c"/>
+    <rect x="25" y="50" width="6" height="14.5" fill="#2f4d2c"/>
+    <path d="M16 63h8v6h-9z" fill="#2a1d10"/>
+    <path d="M24 63h8l1 6h-9z" fill="#2a1d10"/>
+    <path d="M37 47 L44.2 65.6 L45.6 65 L38.6 46.4Z" fill="#d4d9de"/>
+    <path d="M15 27 L9.5 44 L13.5 46 L18 31Z" fill="#8a9096"/>
+    <path d="M33 27 L38.5 43 L35 45 L30 31Z" fill="#8a9096"/>
+    <path data-club-color="primary" d="M14 26 Q24 21 34 26 L35.5 54 Q24 58 12.5 54Z" fill="#d4702a"/>
+    <path d="M12.8 50.5 Q24 54.5 35.2 50.5 L35.5 54 Q24 58 12.5 54Z" fill="#000" fill-opacity="0.28"/>
+    <rect x="13" y="44" width="22" height="2.8" fill="#3a2a1a"/>
+    <path d="M34.6 46.6 L40.4 44.4" stroke="#5a4020" stroke-width="1.8"/>
+    <circle cx="36.8" cy="45.6" r="2.4" fill="#6b4a2b"/>
+    <path d="M3 33 H19 V43 Q19 52.5 11 56.5 Q3 52.5 3 43Z" fill="#e0b43a"/>
+    <path d="M3.2 36 L18.8 44 V47.4 L3.2 39.4Z M3.4 43.8 L17.6 51 L15.6 53.4 L4.4 47.6Z" fill="#7a1f1f"/>
+    <path d="M15.5 14 Q24 9 32.5 14 V26 Q24 29 15.5 26Z" fill="#8a9096"/>
+    <ellipse cx="24" cy="18" rx="5.2" ry="5.5" fill="#e5bf9b"/>
+    <path d="M16 13 Q18 3 24 0.8 Q30 3 32 13Z" fill="#b9bec3"/>
+    <rect x="15.5" y="12" width="17" height="2.2" fill="#8d9399"/>
+    <rect x="23" y="13" width="2" height="8" fill="#8d9399"/>
+  </g>
+  <g fill="#1a1a1a"><circle cx="21.6" cy="17.4" r="0.9"/><circle cx="26.4" cy="17.4" r="0.9"/></g>
+  <path d="M20.6 21.4 Q24 23.6 27.4 21.4" stroke="#5a3b1e" stroke-width="1.4" fill="none"/>
+</svg>

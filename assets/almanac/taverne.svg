@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- Vignette de l'Almanach : La Taverne (enseigne suspendue, chope, tonneau) -->
+  <g stroke="#4a3220" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M24 90 L24 14 L86 14" fill="none" stroke-width="2.4"/>
+    <path d="M24 30 L40 14" fill="none"/>
+    <path d="M52 14 L52 22 M78 14 L78 22" fill="none"/>
+    <rect x="44" y="22" width="42" height="30" rx="3" fill="#d9b46a"/>
+    <path d="M58 30 L58 46 L72 46 L72 30 Z" fill="#f4ecd8"/>
+    <path d="M72 34 Q78 34 78 40 Q78 44 72 44" fill="none"/>
+    <path d="M58 30 Q62 26 66 30 Q70 26 72 30" fill="#ffffff"/>
+    <ellipse cx="118" cy="66" rx="20" ry="22" fill="#9a6a3a"/>
+    <path d="M100 56 Q118 50 136 56 M100 76 Q118 82 136 76" fill="none" stroke="#3a2a1a" stroke-width="2"/>
+    <ellipse cx="118" cy="66" rx="5" ry="5" fill="#6b4a2b"/>
+  </g>
+  <g stroke="#4a3220" stroke-width="1.5">
+    <path d="M40 90 L40 66 L60 66 L60 90 Z" fill="#e9c46a"/>
+    <path d="M60 70 Q70 70 70 78 Q70 86 60 86" fill="none" stroke-width="2.4"/>
+    <path d="M38 66 Q42 58 48 64 Q52 56 58 62 Q64 58 62 66 Z" fill="#fffaf0"/>
+  </g>
+</svg>

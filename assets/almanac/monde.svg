@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- Vignette de l'Almanach : Le Monde (carte déroulée, bannières, rose des vents) -->
+  <g fill="none" stroke="#4a3220" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M22 22 L66 14 L104 22 L140 14 L140 80 L104 88 L66 80 L22 88 Z" fill="#efdcae"/>
+    <path d="M66 14 L66 80 M104 22 L104 88" stroke-dasharray="3 3" opacity="0.6"/>
+    <path d="M30 60 Q42 48 54 56 T80 50 T104 58 T132 46" stroke="#5b7fa8" stroke-width="2"/>
+    <path d="M36 34 l5 -8 l5 8 z M48 38 l4 -7 l4 7 z M114 32 l5 -9 l5 9 z" fill="#8a9a6a"/>
+    <circle cx="88" cy="36" r="4" fill="#a8322d"/>
+    <circle cx="60" cy="70" r="3" fill="#2d5a9a"/>
+    <circle cx="122" cy="66" r="3" fill="#3e7d3a"/>
+    <path d="M88 32 L88 22 L96 25 L88 28" fill="#a8322d"/>
+  </g>
+  <g transform="translate(130 84)" stroke="#b8862b" stroke-width="1.2" fill="#f6e7bd">
+    <circle r="9"/>
+    <path d="M0 -12 L3 0 L0 12 L-3 0 Z M-12 0 L0 3 L12 0 L0 -3 Z" fill="#b8862b"/>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="40" height="64">
+  <!-- Spectateur : Bourgeoise à la guimpe (de face) -->
+  <g transform="translate(20 64) scale(0.97) translate(-20 -64)">
+    <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+      <path d="M13 26 Q20 22 27 26 L32 62 Q20 64.5 8 62Z" fill="#3c5f9e"/>
+      <rect x="11.5" y="36" width="17" height="2.4" fill="#e0b43a"/>
+      <path d="M12.5 26.5 L9 42 L12 43.5 L15.5 30Z" fill="#3c5f9e"/>
+      <path d="M27.5 26.5 L31 42 L28 43.5 L24.5 30Z" fill="#3c5f9e"/>
+      <circle cx="10.5" cy="43.5" r="2.1" fill="#e8bf98"/>
+      <circle cx="29.5" cy="43.5" r="2.1" fill="#e8bf98"/>
+      <path d="M12.5 19 Q12.5 7.5 20 7.5 Q27.5 7.5 27.5 19 L26.5 26 Q20 28 13.5 26Z" fill="#f4ecd8"/>
+      <circle cx="20" cy="16.5" r="5" fill="#e8bf98"/>
+    </g>
+    <g fill="#1a1a1a" stroke="none"><circle cx="18" cy="16.2" r="0.75"/><circle cx="22" cy="16.2" r="0.75"/></g>
+  </g>
+</svg>

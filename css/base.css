@@ -1,0 +1,161 @@
+/* Thème sombre (menus) par défaut. Les composants n'utilisent que ces variables :
+   le thème « hub » (gestion) les redéfinit plus bas. */
+:root {
+  --page-bg: radial-gradient(ellipse at 50% -10%, #33261b 0%, #15110d 65%) fixed, #15110d;
+  --surface: linear-gradient(180deg, rgba(44, 34, 26, 0.96), rgba(31, 24, 18, 0.96));
+  --surface-raised: linear-gradient(180deg, #30251b, #221a13);
+  --surface-card: linear-gradient(180deg, #2c2219, #221a14);
+  --surface-sunken: #120e0b;
+  --border: #4b3a27;
+  --border-strong: #7a5f3c;
+  --text: #ece2cc;
+  --text-muted: #b3a385;
+  --text-faint: #85775d;
+  --heading: #e2bd66;
+  --accent: #c9a24a;
+  --accent-strong: #e2bd66;
+  --btn-bg: linear-gradient(#30251c, #241c15);
+  --btn-bg-hover: linear-gradient(#3b2e22, #2c2119);
+  --btn-text: var(--text);
+  --btn-primary-bg: linear-gradient(#d6b05a, #b08734);
+  --btn-primary-bg-hover: linear-gradient(#e3be68, #bf963f);
+  --btn-primary-border: #e6c46e;
+  --btn-primary-text: #1d150c;
+  --danger: #c0533a;
+  --danger-text: #f3bcac;
+  --danger-bg-hover: #4a1e15;
+  --error-text: #ec8b72;
+  --success: #6f9a4f;
+  --warning: #d49a3a;
+  --focus: #f0d27a;
+  --hover-tint: rgba(201, 162, 74, 0.08);
+  --active-tint: rgba(201, 162, 74, 0.16);
+  --stat-fill: linear-gradient(90deg, #9b7a35, #e2bd66);
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --modal-backdrop: rgba(8, 6, 4, 0.72);
+  --font-display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+  --font-body: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --ui-scale: 1;
+
+  color-scheme: dark;
+  font-size: calc(17px * var(--ui-scale));
+}
+
+/* Thème clair et coloré de la phase de gestion. Priorité à la lisibilité :
+   texte foncé sur fonds unis clairs, aucune texture derrière le texte. */
+body[data-theme='hub'] {
+  --page-bg: linear-gradient(180deg, #3d6aa3 0, #6f97c2 150px, #e9dcbc 150px, #e4d4b0 100%) fixed, #e9dcbc;
+  --surface: #fbf6ea;
+  --surface-raised: #fdf9ef;
+  --surface-card: #fffdf7;
+  --surface-sunken: #f1e8d4;
+  --border: #d3bf96;
+  --border-strong: #a88a58;
+  --text: #2a2016;
+  --text-muted: #5c4a33;
+  --text-faint: #7a674c;
+  --heading: #8f2a22;
+  --accent: #b07d1a;
+  --accent-strong: #8f2a22;
+  --btn-bg: linear-gradient(#fffaf0, #f3e8d0);
+  --btn-bg-hover: linear-gradient(#fff6e2, #ecdcb8);
+  --btn-text: #2a2016;
+  --btn-primary-bg: linear-gradient(#3463a8, #27508d);
+  --btn-primary-bg-hover: linear-gradient(#3b6fb9, #2c5a9e);
+  --btn-primary-border: #1f4277;
+  --btn-primary-text: #ffffff;
+  --danger: #a8322d;
+  --danger-text: #8f2a22;
+  --danger-bg-hover: #f6dcd6;
+  --error-text: #a8322d;
+  --success: #2f7a35;
+  --warning: #9a5a12;
+  --focus: #27508d;
+  --hover-tint: rgba(39, 80, 141, 0.08);
+  --active-tint: rgba(39, 80, 141, 0.14);
+  --stat-fill: linear-gradient(90deg, #c99a2e, #e0b43a);
+  --shadow: 0 6px 18px rgba(60, 40, 15, 0.18);
+  --shadow-soft: 0 6px 14px rgba(60, 40, 15, 0.16);
+  --modal-backdrop: rgba(30, 22, 12, 0.55);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+}
+
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.05rem; }
+
+p { margin: 0 0 0.75em; }
+
+button, input, select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+[hidden] { display: none !important; }
+
+#app { min-height: 100vh; }
+
+.boot-error {
+  position: fixed;
+  inset: auto 1rem 1rem 1rem;
+  padding: 1rem 1.25rem;
+  background: #3a1610;
+  border: 1px solid #c0533a;
+  border-radius: var(--radius);
+  color: #f6d5cb;
+  z-index: 1000;
+}
+
+.muted { color: var(--text-muted); }
+.warning-text { color: var(--warning); }
+
+.eyebrow {
+  margin: 0 0 0.2em;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 1.1em;
+}

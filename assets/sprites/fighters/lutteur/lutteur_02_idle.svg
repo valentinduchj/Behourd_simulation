@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
+  <!-- Lutteur 02 : brigandine bleue rivetée sur mailles, barbute à fente en T, épée, écu parti bleu et or -->
+  <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+    <rect x="17" y="50" width="6" height="14.5" fill="#3d3a33"/>
+    <rect x="25" y="50" width="6" height="14.5" fill="#3d3a33"/>
+    <path d="M16 63h8v6h-9z" fill="#14100c"/>
+    <path d="M24 63h8l1 6h-9z" fill="#14100c"/>
+    <path d="M37 47 L44.2 65.6 L45.6 65 L38.6 46.4Z" fill="#d4d9de"/>
+    <path d="M15 27 L9.5 44 L13.5 46 L18 31Z" fill="#8a9096"/>
+    <path d="M33 27 L38.5 43 L35 45 L30 31Z" fill="#8a9096"/>
+    <path d="M10.5 37 L14.6 38.5 L13 44 L9.2 43Z M37.5 37 L33.4 38.5 L35 44 L38.8 43Z" fill="#a9afb5"/>
+    <path d="M14 26 Q24 21 34 26 L35.5 54 Q24 58 12.5 54Z" fill="#8a9096"/>
+    <path data-club-color="primary" d="M15 26.5 Q24 22.5 33 26.5 L34 50 Q24 53.5 14 50Z" fill="#2c4f86"/>
+    <rect x="13" y="44" width="22" height="2.8" fill="#3a2a1a"/>
+    <path d="M34.6 46.6 L40.4 44.4" stroke="#5a4020" stroke-width="1.8"/>
+    <circle cx="36.8" cy="45.6" r="2.4" fill="#3a2a1a"/>
+    <path d="M3 33 H19 V43 Q19 52.5 11 56.5 Q3 52.5 3 43Z" fill="#2c4f86"/>
+    <path d="M11 33 H19 V43 Q19 52.5 11 56.5Z" fill="#e0b43a"/>
+    <path d="M16 23 Q14 5 24 3 Q34 5 32 23 Q28 25 24 25 Q20 25 16 23Z" fill="#a9afb5"/>
+    <path d="M24 3 V10" stroke="#6d7378" fill="none"/>
+  </g>
+  <path d="M18 11.5 H30 V13.5 H25.2 V22 H22.8 V13.5 H18Z" fill="#1b1d20"/>
+  <g fill="#e0b43a">
+    <circle cx="21.5" cy="29" r="0.7"/><circle cx="26.5" cy="29" r="0.7"/><circle cx="30.5" cy="30" r="0.7"/>
+    <circle cx="21" cy="37" r="0.7"/><circle cx="27" cy="37" r="0.7"/><circle cx="31" cy="37" r="0.7"/>
+    <circle cx="21" cy="48.5" r="0.7"/><circle cx="27" cy="49" r="0.7"/><circle cx="31.5" cy="48.5" r="0.7"/>
+  </g>
+</svg>

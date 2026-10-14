@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
+  <!-- Lutteur 03 : cotte verte sur mailles, bassinet à camail, épée, écu blanc à la croix verte -->
+  <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+    <rect x="17" y="50" width="6" height="14.5" fill="#5b4a33"/>
+    <rect x="25" y="50" width="6" height="14.5" fill="#5b4a33"/>
+    <path d="M16 63h8v6h-9z" fill="#2a1d10"/>
+    <path d="M24 63h8l1 6h-9z" fill="#2a1d10"/>
+    <path d="M37 47 L44.2 65.6 L45.6 65 L38.6 46.4Z" fill="#d4d9de"/>
+    <path d="M15 27 L9.5 44 L13.5 46 L18 31Z" fill="#8a9096"/>
+    <path d="M33 27 L38.5 43 L35 45 L30 31Z" fill="#8a9096"/>
+    <path d="M14 26 Q24 21 34 26 L35.5 54 Q24 58 12.5 54Z" fill="#8a9096"/>
+    <path data-club-color="primary" d="M16 27 Q24 24 32 27 L33 55 Q24 58 15 55Z" fill="#3f7a3a"/>
+    <rect x="13" y="44" width="22" height="2.8" fill="#3a2a1a"/>
+    <path d="M34.6 46.6 L40.4 44.4" stroke="#5a4020" stroke-width="1.8"/>
+    <circle cx="36.8" cy="45.6" r="2.4" fill="#6b4a2b"/>
+    <path d="M3 33 H19 V43 Q19 52.5 11 56.5 Q3 52.5 3 43Z" fill="#f1ead8"/>
+    <path d="M9.5 33.4 H12.5 V56 Q11 56.6 9.5 56Z M3.4 40 H18.6 V43 H3.4Z" fill="#3f7a3a"/>
+    <path d="M14.5 13 Q14 25 16 27 Q24 30 32 27 Q34 25 33.5 13Z" fill="#8a9096"/>
+    <path d="M15.5 15 Q15 3 24 1.5 Q33 3 32.5 15 Q28.5 16 24 16 Q19.5 16 15.5 15Z" fill="#a9afb5"/>
+    <ellipse cx="24" cy="20.5" rx="5" ry="4.6" fill="#e5bf9b"/>
+  </g>
+  <g fill="#1a1a1a"><circle cx="22" cy="20" r="0.8"/><circle cx="26" cy="20" r="0.8"/></g>
+  <path d="M21.4 23.4 Q24 24.4 26.6 23.4" stroke="#5a3b1e" stroke-width="1" fill="none"/>
+  <g fill="#6d7378" opacity="0.7"><circle cx="17" cy="20" r="0.45"/><circle cx="17.4" cy="23" r="0.45"/><circle cx="31" cy="20" r="0.45"/><circle cx="30.6" cy="23" r="0.45"/></g>
+</svg>

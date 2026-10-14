@@ -1,0 +1,294 @@
+{
+  "leagueId": "league_2",
+  "notice": ["Composition INITIALE de la division pour une nouvelle partie. Pendant une partie, les clubs changent de division (promotions / relégations) : ce fichier n’est relu que pour les nouvelles parties.","id : identifiant unique dans tous les fichiers de clubs (ne pas modifier une fois la partie lancée).","emblem : partition de l’écu (pal, fasce, bande, chef, croix, sautoir, chevron, ecartele — voir src/data/emblemPatterns.js). colors : #rrggbb.","fighters[].specialty : lutteur, hastier ou runner. sprite : variante de la classe du combattant, <classe>_01 à _04 (ex. hastier_03 ; src/data/sprites.js). score : niveau 0–100, jamais affiché au joueur.","Effectifs attendus (LEAGUE_CONFIG.teamCount = 18) : 18 clubs par division, 17 dans la division de départ du joueur (+ sa compagnie).","Le Module Admin (Gestion des clubs) peut modifier ces données et exporter un fichier de remplacement.","fighters[].captain : true pour le capitaine du club (un seul par club : le 1er ou le 2e combattant)."],
+  "clubs": [
+    {
+      "id": "club_007",
+      "name": "Akerbeltz",
+      "emblem": "croix",
+      "colors": {"primary":"#f20707","secondary":"#ffffff","tertiary":"#11ff00"},
+      "fighters": [
+        {"id":"club_007_f01","name":"Geoffroy le Bref","specialty":"lutteur","sprite":"lutteur_02","score":40},
+        {"id":"club_007_f02","name":"Arnaud de Rouen","specialty":"lutteur","sprite":"lutteur_01","score":59,"captain":true},
+        {"id":"club_007_f03","name":"Évrard d’Alençon","specialty":"runner","sprite":"runner_04","score":55},
+        {"id":"club_007_f04","name":"Lambert de Montfort","specialty":"lutteur","sprite":"lutteur_03","score":57},
+        {"id":"club_007_f05","name":"Jehan d’Amiens","specialty":"hastier","sprite":"hastier_02","score":59},
+        {"id":"club_007_f06","name":"Thibault de Chartres","specialty":"hastier","sprite":"hastier_01","score":53},
+        {"id":"club_007_f07","name":"Hugues de Provins","specialty":"runner","sprite":"runner_04","score":45},
+        {"id":"club_007_f08","name":"Aymeric le Taciturne","specialty":"hastier","sprite":"hastier_03","score":57}
+      ]
+    },
+    {
+      "id": "club_002",
+      "name": "Exactor Mortis",
+      "emblem": "bande",
+      "colors": {"primary":"#000000","secondary":"#ff0000","tertiary":"#000000"},
+      "fighters": [
+        {"id":"club_002_f01","name":"Baudouin Sans-Peur","specialty":"lutteur","sprite":"lutteur_03","score":67,"captain":true},
+        {"id":"club_002_f02","name":"Onfroy de Laon","specialty":"lutteur","sprite":"lutteur_04","score":46},
+        {"id":"club_002_f03","name":"Robert de Mortagne","specialty":"hastier","sprite":"hastier_01","score":63},
+        {"id":"club_002_f04","name":"Simon Tête-d’Ours","specialty":"hastier","sprite":"hastier_02","score":72},
+        {"id":"club_002_f05","name":"Garin de Bayeux","specialty":"hastier","sprite":"hastier_03","score":53},
+        {"id":"club_002_f06","name":"Godefroy de Chartres","specialty":"runner","sprite":"runner_04","score":51},
+        {"id":"club_002_f07","name":"Odon","specialty":"lutteur","sprite":"lutteur_01","score":51},
+        {"id":"club_002_f08","name":"Osmond","specialty":"runner","sprite":"runner_02","score":55}
+      ]
+    },
+    {
+      "id": "club_011",
+      "name": "Gargouilles de Paris",
+      "emblem": "pal",
+      "colors": {"primary":"#000000","secondary":"#ffffff","tertiary":"#000000"},
+      "fighters": [
+        {"id":"club_011_f01","name":"Jehan","specialty":"hastier","sprite":"hastier_03","score":38,"captain":true},
+        {"id":"club_011_f02","name":"Rainier","specialty":"hastier","sprite":"hastier_04","score":40},
+        {"id":"club_011_f03","name":"Raymond le Hardi","specialty":"hastier","sprite":"hastier_01","score":35},
+        {"id":"club_011_f04","name":"Garin Cœur-de-Fer","specialty":"lutteur","sprite":"lutteur_02","score":45},
+        {"id":"club_011_f05","name":"Odon d’Évreux","specialty":"lutteur","sprite":"lutteur_03","score":49},
+        {"id":"club_011_f06","name":"Godefroy de Dreux","specialty":"runner","sprite":"runner_04","score":44},
+        {"id":"club_011_f07","name":"Richard d’Orbec","specialty":"runner","sprite":"runner_01","score":47},
+        {"id":"club_011_f08","name":"Mahieu de Rouen","specialty":"lutteur","sprite":"lutteur_02","score":49}
+      ]
+    },
+    {
+      "id": "club_018",
+      "name": "Vassaux de Provence",
+      "emblem": "pal",
+      "colors": {"primary":"#ff0000","secondary":"#ffffff","tertiary":"#0033ff"},
+      "fighters": [
+        {"id":"club_018_f01","name":"Enguerrand Tête-d’Ours","specialty":"hastier","sprite":"hastier_02","score":14},
+        {"id":"club_018_f02","name":"Tristan d’Étampes","specialty":"hastier","sprite":"hastier_01","score":17,"captain":true},
+        {"id":"club_018_f03","name":"Robert le Bref","specialty":"runner","sprite":"runner_04","score":14},
+        {"id":"club_018_f04","name":"Thibault de Beauvais","specialty":"hastier","sprite":"hastier_03","score":10},
+        {"id":"club_018_f05","name":"Odon de Provins","specialty":"lutteur","sprite":"lutteur_02","score":32},
+        {"id":"club_018_f06","name":"Onfroy","specialty":"lutteur","sprite":"lutteur_01","score":16},
+        {"id":"club_018_f07","name":"Herluin Main-Lourde","specialty":"lutteur","sprite":"lutteur_04","score":29},
+        {"id":"club_018_f08","name":"Osmond","specialty":"runner","sprite":"runner_03","score":9}
+      ]
+    },
+    {
+      "id": "club_008",
+      "name": "Lotharii Regnum",
+      "emblem": "bande",
+      "colors": {"primary":"#ffb700","secondary":"#ff0000","tertiary":"#ffb700"},
+      "fighters": [
+        {"id":"club_008_f01","name":"Tristan Tête-d’Ours","specialty":"lutteur","sprite":"lutteur_01","score":45,"captain":true},
+        {"id":"club_008_f02","name":"Renaud le Fort","specialty":"hastier","sprite":"hastier_02","score":47},
+        {"id":"club_008_f03","name":"Mahieu de Laon","specialty":"lutteur","sprite":"lutteur_03","score":34},
+        {"id":"club_008_f04","name":"Enguerrand","specialty":"runner","sprite":"runner_04","score":47},
+        {"id":"club_008_f05","name":"Thibault de Bayeux","specialty":"runner","sprite":"runner_01","score":35},
+        {"id":"club_008_f06","name":"Garin","specialty":"hastier","sprite":"hastier_02","score":39},
+        {"id":"club_008_f07","name":"Aymeric de Caen","specialty":"lutteur","sprite":"lutteur_03","score":46},
+        {"id":"club_008_f08","name":"Eudes Tête-d’Ours","specialty":"hastier","sprite":"hastier_04","score":41}
+      ]
+    },
+    {
+      "id": "club_004",
+      "name": "Lupus Fratum",
+      "emblem": "pal",
+      "colors": {"primary":"#0054c2","secondary":"#0054c2","tertiary":"#ffffff"},
+      "fighters": [
+        {"id":"club_004_f01","name":"Baudouin","specialty":"hastier","sprite":"hastier_01","score":45,"captain":true},
+        {"id":"club_004_f02","name":"Herluin","specialty":"runner","sprite":"runner_02","score":62},
+        {"id":"club_004_f03","name":"Jehan","specialty":"hastier","sprite":"hastier_03","score":57},
+        {"id":"club_004_f04","name":"Mathieu le Borgne","specialty":"lutteur","sprite":"lutteur_04","score":48},
+        {"id":"club_004_f05","name":"Hamon de Montfort","specialty":"lutteur","sprite":"lutteur_01","score":40},
+        {"id":"club_004_f06","name":"Bérenger Tête-d’Ours","specialty":"runner","sprite":"runner_02","score":62},
+        {"id":"club_004_f07","name":"Tristan","specialty":"hastier","sprite":"hastier_03","score":66},
+        {"id":"club_004_f08","name":"Raymond le Fort","specialty":"lutteur","sprite":"lutteur_04","score":43}
+      ]
+    },
+    {
+      "id": "club_006",
+      "name": "Bannerets d'Auvergne",
+      "emblem": "sautoir",
+      "colors": {"primary":"#dbd83b","secondary":"#ff0000","tertiary":"#ff0000"},
+      "fighters": [
+        {"id":"club_006_f01","name":"Hamon de Dieppe","specialty":"lutteur","sprite":"lutteur_03","score":40,"captain":true},
+        {"id":"club_006_f02","name":"Onfroy de Gisors","specialty":"hastier","sprite":"hastier_04","score":35},
+        {"id":"club_006_f03","name":"Richard","specialty":"runner","sprite":"runner_01","score":59},
+        {"id":"club_006_f04","name":"Bertrand le Vieux","specialty":"runner","sprite":"runner_02","score":63},
+        {"id":"club_006_f05","name":"Eudes","specialty":"hastier","sprite":"hastier_03","score":39},
+        {"id":"club_006_f06","name":"Odon de Rouen","specialty":"hastier","sprite":"hastier_04","score":56},
+        {"id":"club_006_f07","name":"Aymeric d’Évreux","specialty":"lutteur","sprite":"lutteur_01","score":54},
+        {"id":"club_006_f08","name":"Mathieu d’Amiens","specialty":"lutteur","sprite":"lutteur_02","score":54}
+      ]
+    },
+    {
+      "id": "club_014",
+      "name": "Arma Flandriae",
+      "emblem": "chef",
+      "colors": {"primary":"#977942","secondary":"#fefefe","tertiary":"#977942"},
+      "fighters": [
+        {"id":"club_014_f01","name":"Richard Pied-Ferme","specialty":"lutteur","sprite":"lutteur_02","score":23},
+        {"id":"club_014_f02","name":"Odon le Grand","specialty":"hastier","sprite":"hastier_01","score":18,"captain":true},
+        {"id":"club_014_f03","name":"Mathieu de Troyes","specialty":"hastier","sprite":"hastier_04","score":35},
+        {"id":"club_014_f04","name":"Garin le Rouge","specialty":"runner","sprite":"runner_03","score":38},
+        {"id":"club_014_f05","name":"Guillaume le Hardi","specialty":"hastier","sprite":"hastier_02","score":43},
+        {"id":"club_014_f06","name":"Tristan le Hardi","specialty":"lutteur","sprite":"lutteur_01","score":23},
+        {"id":"club_014_f07","name":"Lambert d’Arras","specialty":"runner","sprite":"runner_04","score":34},
+        {"id":"club_014_f08","name":"Renaud","specialty":"lutteur","sprite":"lutteur_03","score":25}
+      ]
+    },
+    {
+      "id": "club_013",
+      "name": "An Diforc'h' Ruz",
+      "emblem": "croix",
+      "colors": {"primary":"#ffffff","secondary":"#000000","tertiary":"#000000"},
+      "fighters": [
+        {"id":"club_013_f01","name":"Aymeric","specialty":"runner","sprite":"runner_01","score":36,"captain":true},
+        {"id":"club_013_f02","name":"Gauthier de Bayeux","specialty":"hastier","sprite":"hastier_02","score":32},
+        {"id":"club_013_f03","name":"Gervais le Pieux","specialty":"hastier","sprite":"hastier_03","score":33},
+        {"id":"club_013_f04","name":"Tancrède","specialty":"lutteur","sprite":"lutteur_04","score":36},
+        {"id":"club_013_f05","name":"Richard d’Évreux","specialty":"hastier","sprite":"hastier_01","score":36},
+        {"id":"club_013_f06","name":"Évrard de Meaux","specialty":"lutteur","sprite":"lutteur_02","score":30},
+        {"id":"club_013_f07","name":"Eudes","specialty":"runner","sprite":"runner_03","score":35},
+        {"id":"club_013_f08","name":"Hamon","specialty":"lutteur","sprite":"lutteur_04","score":21}
+      ]
+    },
+    {
+      "id": "club_010",
+      "name": "Tard-Venus",
+      "emblem": "croix",
+      "colors": {"primary":"#ffffff","secondary":"#ffffff","tertiary":"#ffffff"},
+      "fighters": [
+        {"id":"club_010_f01","name":"Bérenger le Borgne","specialty":"hastier","sprite":"hastier_02","score":37},
+        {"id":"club_010_f02","name":"Mathieu de Falaise","specialty":"runner","sprite":"runner_01","score":37,"captain":true},
+        {"id":"club_010_f03","name":"Robert d’Alençon","specialty":"hastier","sprite":"hastier_04","score":39},
+        {"id":"club_010_f04","name":"Thierry de Rouen","specialty":"runner","sprite":"runner_03","score":29},
+        {"id":"club_010_f05","name":"Hugues de Fécamp","specialty":"lutteur","sprite":"lutteur_02","score":52},
+        {"id":"club_010_f06","name":"Onfroy de Mortagne","specialty":"lutteur","sprite":"lutteur_01","score":41},
+        {"id":"club_010_f07","name":"Hamon d’Eu","specialty":"hastier","sprite":"hastier_04","score":35},
+        {"id":"club_010_f08","name":"Simon Tête-d’Ours","specialty":"lutteur","sprite":"lutteur_03","score":43}
+      ]
+    },
+    {
+      "id": "club_016",
+      "name": "Martel Du Guesclin",
+      "emblem": "pal",
+      "colors": {"primary":"#092490","secondary":"#ffffff","tertiary":"#ffffff"},
+      "fighters": [
+        {"id":"club_016_f01","name":"Thibault de Caen","specialty":"hastier","sprite":"hastier_04","score":35},
+        {"id":"club_016_f02","name":"Pierre","specialty":"hastier","sprite":"hastier_03","score":41,"captain":true},
+        {"id":"club_016_f03","name":"Amaury de Laon","specialty":"runner","sprite":"runner_02","score":36},
+        {"id":"club_016_f04","name":"Raoul d’Argentan","specialty":"lutteur","sprite":"lutteur_01","score":36},
+        {"id":"club_016_f05","name":"Rainier le Roux","specialty":"hastier","sprite":"hastier_04","score":25},
+        {"id":"club_016_f06","name":"Herluin","specialty":"lutteur","sprite":"lutteur_03","score":61},
+        {"id":"club_016_f07","name":"Hervé","specialty":"lutteur","sprite":"lutteur_02","score":50},
+        {"id":"club_016_f08","name":"Raymond le Pieux","specialty":"runner","sprite":"runner_01","score":45}
+      ]
+    },
+    {
+      "id": "club_003",
+      "name": "In Memorio Y",
+      "emblem": "pal",
+      "colors": {"primary":"#ffffff","secondary":"#449691","tertiary":"#449691"},
+      "fighters": [
+        {"id":"club_003_f01","name":"Robert Pied-Ferme","specialty":"lutteur","sprite":"lutteur_02","score":58},
+        {"id":"club_003_f02","name":"Herluin le Balafré","specialty":"lutteur","sprite":"lutteur_01","score":49,"captain":true},
+        {"id":"club_003_f03","name":"Mahieu","specialty":"runner","sprite":"runner_04","score":44},
+        {"id":"club_003_f04","name":"Geoffroy Cœur-de-Fer","specialty":"hastier","sprite":"hastier_03","score":60},
+        {"id":"club_003_f05","name":"Renaud de Lisieux","specialty":"runner","sprite":"runner_02","score":47},
+        {"id":"club_003_f06","name":"Aubry le Borgne","specialty":"hastier","sprite":"hastier_01","score":68},
+        {"id":"club_003_f07","name":"Tristan d’Étampes","specialty":"hastier","sprite":"hastier_04","score":49},
+        {"id":"club_003_f08","name":"Clément Pied-Ferme","specialty":"lutteur","sprite":"lutteur_03","score":62}
+      ]
+    },
+    {
+      "id": "club_005",
+      "name": "Grimaldi Auxilia",
+      "emblem": "chevron",
+      "colors": {"primary":"#b3202a","secondary":"#ffffff","tertiary":"#b3202a"},
+      "fighters": [
+        {"id":"club_005_f01","name":"Guillaume","specialty":"runner","sprite":"runner_04","score":48},
+        {"id":"club_005_f02","name":"Foulques","specialty":"lutteur","sprite":"lutteur_03","score":66,"captain":true},
+        {"id":"club_005_f03","name":"Hamon d’Argentan","specialty":"hastier","sprite":"hastier_02","score":62},
+        {"id":"club_005_f04","name":"Pierre de Meaux","specialty":"lutteur","sprite":"lutteur_01","score":56},
+        {"id":"club_005_f05","name":"Gaucher le Grand","specialty":"hastier","sprite":"hastier_04","score":48},
+        {"id":"club_005_f06","name":"Garin de Rouen","specialty":"runner","sprite":"runner_03","score":46},
+        {"id":"club_005_f07","name":"Herluin de Dreux","specialty":"lutteur","sprite":"lutteur_02","score":57},
+        {"id":"club_005_f08","name":"Roger","specialty":"hastier","sprite":"hastier_01","score":49}
+      ]
+    },
+    {
+      "id": "club_017",
+      "name": "Bannis du Languedoc",
+      "emblem": "pal",
+      "colors": {"primary":"#000000","secondary":"#000000","tertiary":"#b3202a"},
+      "fighters": [
+        {"id":"club_017_f01","name":"Mathieu","specialty":"hastier","sprite":"hastier_01","score":35,"captain":true},
+        {"id":"club_017_f02","name":"Raoul","specialty":"lutteur","sprite":"lutteur_02","score":10},
+        {"id":"club_017_f03","name":"Richard de Meaux","specialty":"hastier","sprite":"hastier_03","score":25},
+        {"id":"club_017_f04","name":"Renaud Pied-Ferme","specialty":"hastier","sprite":"hastier_04","score":29},
+        {"id":"club_017_f05","name":"Gaucher de Fécamp","specialty":"lutteur","sprite":"lutteur_01","score":33},
+        {"id":"club_017_f06","name":"Tristan","specialty":"runner","sprite":"runner_02","score":32},
+        {"id":"club_017_f07","name":"Raymond","specialty":"runner","sprite":"runner_03","score":16},
+        {"id":"club_017_f08","name":"Onfroy le Vieux","specialty":"lutteur","sprite":"lutteur_04","score":31}
+      ]
+    },
+    {
+      "id": "club_009",
+      "name": "Baronnerie",
+      "emblem": "pal",
+      "colors": {"primary":"#990000","secondary":"#ffffff","tertiary":"#990000"},
+      "fighters": [
+        {"id":"club_009_f01","name":"Tristan le Hardi","specialty":"runner","sprite":"runner_04","score":49},
+        {"id":"club_009_f02","name":"Aubry de Meaux","specialty":"hastier","sprite":"hastier_03","score":38,"captain":true},
+        {"id":"club_009_f03","name":"Eudes le Balafré","specialty":"runner","sprite":"runner_02","score":36},
+        {"id":"club_009_f04","name":"Baudouin","specialty":"lutteur","sprite":"lutteur_01","score":28},
+        {"id":"club_009_f05","name":"Odon le Jeune","specialty":"hastier","sprite":"hastier_04","score":53},
+        {"id":"club_009_f06","name":"Roger de Falaise","specialty":"lutteur","sprite":"lutteur_03","score":50},
+        {"id":"club_009_f07","name":"Garin d’Alençon","specialty":"lutteur","sprite":"lutteur_02","score":30},
+        {"id":"club_009_f08","name":"Jehan","specialty":"hastier","sprite":"hastier_01","score":35}
+      ]
+    },
+    {
+      "id": "club_001",
+      "name": "Faucons Noirs",
+      "emblem": "fasce",
+      "colors": {"primary":"#263475","secondary":"#ffffff","tertiary":"#1d1b1a"},
+      "fighters": [
+        {"id":"club_001_f01","name":"Thierry d’Évreux","specialty":"lutteur","sprite":"lutteur_04","score":54},
+        {"id":"club_001_f02","name":"Baudouin le Vieux","specialty":"hastier","sprite":"hastier_03","score":76,"captain":true},
+        {"id":"club_001_f03","name":"Tristan","specialty":"lutteur","sprite":"lutteur_02","score":65},
+        {"id":"club_001_f04","name":"Gervais","specialty":"runner","sprite":"runner_01","score":74},
+        {"id":"club_001_f05","name":"Jehan d’Avranches","specialty":"hastier","sprite":"hastier_04","score":80},
+        {"id":"club_001_f06","name":"Robert Tête-d’Ours","specialty":"runner","sprite":"runner_03","score":65},
+        {"id":"club_001_f07","name":"Hervé de Vernon","specialty":"lutteur","sprite":"lutteur_02","score":72},
+        {"id":"club_001_f08","name":"Geoffroy de Dreux","specialty":"hastier","sprite":"hastier_01","score":71}
+      ]
+    },
+    {
+      "id": "club_012",
+      "name": "Houblon d'or",
+      "emblem": "fasce",
+      "colors": {"primary":"#9dce30","secondary":"#ffffff","tertiary":"#030303"},
+      "fighters": [
+        {"id":"club_012_f01","name":"Herluin le Roux","specialty":"runner","sprite":"runner_04","score":19},
+        {"id":"club_012_f02","name":"Gaucher le Borgne","specialty":"hastier","sprite":"hastier_03","score":15,"captain":true},
+        {"id":"club_012_f03","name":"Renaud","specialty":"lutteur","sprite":"lutteur_02","score":14},
+        {"id":"club_012_f04","name":"Enguerrand de Vernon","specialty":"hastier","sprite":"hastier_01","score":15},
+        {"id":"club_012_f05","name":"Guillaume de Fécamp","specialty":"lutteur","sprite":"lutteur_04","score":29},
+        {"id":"club_012_f06","name":"Gauthier de Falaise","specialty":"hastier","sprite":"hastier_03","score":21},
+        {"id":"club_012_f07","name":"Hamon de Bayeux","specialty":"lutteur","sprite":"lutteur_02","score":35},
+        {"id":"club_012_f08","name":"Aubry de Mortagne","specialty":"runner","sprite":"runner_01","score":15}
+      ]
+    },
+    {
+      "id": "club_019",
+      "name": "Sanctis Draconis Petrocoria",
+      "emblem": "bande",
+      "colors": {"primary":"#ece731","secondary":"#000000","tertiary":"#000000"},
+      "fighters": [
+        {"id":"club_019_f01","name":"Aymeric d’Arras","specialty":"runner","sprite":"runner_03","score":10,"captain":true},
+        {"id":"club_019_f02","name":"Enguerrand d’Eu","specialty":"hastier","sprite":"hastier_04","score":18},
+        {"id":"club_019_f03","name":"Pierre le Hardi","specialty":"hastier","sprite":"hastier_01","score":6},
+        {"id":"club_019_f04","name":"Tristan le Hardi","specialty":"runner","sprite":"runner_02","score":13},
+        {"id":"club_019_f05","name":"Josselin de Chartres","specialty":"lutteur","sprite":"lutteur_03","score":21},
+        {"id":"club_019_f06","name":"Lambert le Borgne","specialty":"hastier","sprite":"hastier_04","score":28},
+        {"id":"club_019_f07","name":"Robert d’Arras","specialty":"lutteur","sprite":"lutteur_01","score":5},
+        {"id":"club_019_f08","name":"Bérenger de Caen","specialty":"lutteur","sprite":"lutteur_02","score":21}
+      ]
+    }
+  ]
+}

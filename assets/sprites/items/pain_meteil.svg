@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Objet : Pain au méteil (miche ronde de froment et de seigle) -->
+  <ellipse cx="32" cy="52" rx="24" ry="5" fill="#3a2a1a" opacity="0.18"/>
+  <g stroke="#4a2c14" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M7 41 Q6 20 32 17 Q58 20 57 41 Q56 51 32 52 Q8 51 7 41Z" fill="#9a5f2e"/>
+    <path d="M10 38 Q10 22 32 20 Q54 22 54 38 Q47 44 32 44 Q17 44 10 38Z" fill="#b8763c" stroke="none"/>
+    <path d="M18 26 Q24 33 22 40 M30 22 Q36 30 34 41 M42 24 Q47 31 45 39" fill="none" stroke="#e8c48a" stroke-width="2.6" stroke-linecap="round"/>
+  </g>
+  <g fill="#f4e6c6" opacity="0.85">
+    <circle cx="14" cy="34" r="1.2"/><circle cx="27" cy="27" r="1"/><circle cx="39" cy="35" r="1.2"/><circle cx="49" cy="30" r="1"/><circle cx="24" cy="38" r="0.9"/>
+  </g>
+  <path d="M14 26 Q20 21 28 21" fill="none" stroke="#f1d6a0" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+</svg>

@@ -1,0 +1,13 @@
+# Textes : fins de ligne LF dans le dépôt (le code du jeu est écrit en LF).
+* text=auto eol=lf
+# Scripts Windows : CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binaires : jamais modifiés par Git.
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.exe binary

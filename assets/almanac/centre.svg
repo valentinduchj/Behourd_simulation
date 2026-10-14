@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- Vignette de l'Almanach : Le Centre (tentes, mannequin d'entraînement, botte de foin) -->
+  <path d="M8 86 Q80 76 152 86" fill="none" stroke="#6b5a3a" stroke-width="1.6"/>
+  <g stroke="#4a3220" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M18 84 L44 36 L70 84 Z" fill="#efe3c6"/>
+    <path d="M44 36 L44 84 M36 84 L44 62 L52 84" fill="#c9a26a"/>
+    <path d="M44 36 L44 26 L54 30 L44 33" fill="#a8322d"/>
+    <path d="M62 84 L84 46 L106 84 Z" fill="#d9c7a0"/>
+    <path d="M84 46 L84 84" />
+    <path d="M77 84 L84 66 L91 84" fill="#8a6235"/>
+    <path d="M84 46 L84 37 L93 40 L84 43" fill="#2d5a9a"/>
+  </g>
+  <g stroke="#4a3220" stroke-width="1.6" stroke-linecap="round">
+    <path d="M128 84 L128 44" />
+    <path d="M118 54 L138 54" />
+    <ellipse cx="128" cy="62" rx="7" ry="11" fill="#c9a26a"/>
+    <circle cx="128" cy="44" r="6" fill="#d9c18f"/>
+  </g>
+  <g stroke="#7a5a1a" stroke-width="1.4" fill="#e2c46a">
+    <rect x="104" y="74" width="16" height="10" rx="2"/>
+    <path d="M106 78 h12 M106 81 h12" />
+  </g>
+</svg>

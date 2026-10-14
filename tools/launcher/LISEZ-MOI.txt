@@ -1,0 +1,41 @@
+BÉHOURD — version de test
+=========================
+
+Merci de tester Béhourd, un jeu de gestion de compagnie médiévale !
+
+LANCER LE JEU
+-------------
+1. Double-cliquez sur « Behourd.exe ».
+2. Une petite fenêtre noire s'ouvre, puis le jeu s'affiche dans votre navigateur.
+3. Gardez la fenêtre noire ouverte pendant toute la partie.
+   Pour quitter : sauvegardez dans le jeu, puis fermez la fenêtre noire.
+
+Rien n'est installé sur votre ordinateur, et le jeu n'est accessible que depuis
+votre ordinateur (adresse 127.0.0.1).
+
+AU PREMIER LANCEMENT
+--------------------
+Windows peut afficher « Windows a protégé votre ordinateur » : le jeu n'est pas
+signé numériquement (c'est une version de test, pas un logiciel du commerce).
+Cliquez sur « Informations complémentaires », puis sur « Exécuter quand même ».
+
+Votre pare-feu peut aussi demander une autorisation : le jeu n'a pas besoin
+d'accès au réseau, vous pouvez refuser.
+
+SAUVEGARDES
+-----------
+- Utilisez le bouton « Sauvegarder » dans le jeu.
+- Les sauvegardes sont gardées par votre navigateur : relancez toujours le jeu
+  avec Behourd.exe et le même navigateur pour les retrouver.
+- Vider les données de navigation du navigateur efface les sauvegardes.
+
+EN CAS DE PROBLÈME
+------------------
+- « Le port 8642 est déjà utilisé » : un autre programme occupe cette adresse.
+  Fermez-le (ou redémarrez l'ordinateur), puis relancez Behourd.exe.
+- Double-cliquer une seconde fois sur Behourd.exe alors que le jeu tourne déjà
+  rouvre simplement le jeu dans le navigateur.
+- Un problème, un bug, une idée ? Notez ce que vous faisiez, le jour de jeu
+  affiché en haut de l'écran, et envoyez-le avec une capture d'écran si possible.
+
+Bon jeu !

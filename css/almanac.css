@@ -1,0 +1,202 @@
+/* ---------- L'Almanach : un ouvrage médiéval, lisible avant tout ---------- */
+.almanac {
+  --alm-ink: #2b1d10;
+  --alm-ink-soft: #5a4630;
+  --alm-red: #8c2318;
+  --alm-gold: #b8862b;
+  --alm-parchment: #f3e6c4;
+  --alm-parchment-dark: #e6d3a3;
+  --alm-rule: rgba(92, 67, 38, 0.35);
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+  color: var(--alm-ink);
+}
+
+.almanac-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+.almanac-head-title { text-align: center; }
+.almanac-head-title h1 {
+  margin: 0; font-family: 'Cinzel', Georgia, serif; font-size: clamp(1.7rem, 3.4vw, 2.5rem); letter-spacing: 0.08em;
+  color: var(--alm-red); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
+}
+.almanac-head-sub { margin: 0.1rem 0 0; font-style: italic; color: var(--alm-ink-soft); }
+.almanac-head-spacer { width: 6.5rem; }
+.almanac-back { white-space: nowrap; }
+
+/* Le livre : deux pages de parchemin, une reliure au milieu. */
+.almanac-book {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(15rem, 19rem) 14px minmax(0, 1fr);
+  border-radius: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, #5a3a1c, #3e2611);
+  box-shadow: 0 14px 32px rgba(30, 18, 6, 0.4), inset 0 0 0 2px #7a5228;
+}
+.almanac-left, .almanac-right {
+  position: relative;
+  padding: 1.5rem 1.4rem 1.6rem;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.65), transparent 60%),
+    radial-gradient(ellipse at 85% 90%, rgba(170, 130, 70, 0.18), transparent 55%),
+    linear-gradient(var(--alm-parchment), var(--alm-parchment-dark));
+  border: 1px solid #c9ad74;
+  min-width: 0;
+}
+.almanac-left { border-radius: 6px 0 0 6px; box-shadow: inset -12px 0 18px -14px rgba(60, 40, 15, 0.45); }
+.almanac-right { border-radius: 0 6px 6px 0; box-shadow: inset 12px 0 18px -14px rgba(60, 40, 15, 0.45); min-height: 70vh; }
+/* Double filet et coins ornés. */
+.almanac-left::before, .almanac-right::before {
+  content: ''; position: absolute; inset: 8px; pointer-events: none;
+  border: 1px solid var(--alm-rule); outline: 1px solid var(--alm-rule); outline-offset: -5px; border-radius: 3px;
+}
+.almanac-right::after, .almanac-left::after {
+  content: '❦'; position: absolute; top: 2px; right: 10px; color: var(--alm-gold); font-size: 1.1rem; pointer-events: none;
+}
+.almanac-spine { background: linear-gradient(90deg, #2e1c0b, #6b4521 45%, #2e1c0b); border-radius: 2px; }
+
+/* Sommaire */
+.almanac-index-title, .almanac-related-title {
+  margin: 0 0 0.6rem; font-family: 'Cinzel', Georgia, serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 0.85rem; color: var(--alm-red); text-align: center;
+}
+.almanac-categories, .almanac-articles, .almanac-toc, .almanac-related ul { list-style: none; margin: 0; padding: 0; }
+.almanac-categories { display: grid; gap: 0.15rem; }
+.almanac-category-button, .almanac-article-button {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.45rem 0.6rem;
+  background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--alm-ink);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.almanac-category-button { font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 0.98rem; }
+.almanac-category-button:hover, .almanac-article-button:hover { background: rgba(184, 134, 43, 0.14); border-color: var(--alm-rule); }
+.almanac-category.is-active > .almanac-category-button { color: var(--alm-red); border-color: var(--alm-gold); background: rgba(184, 134, 43, 0.16); }
+.almanac-category-icon { width: 1.5rem; text-align: center; font-size: 1.1rem; }
+.almanac-articles { margin: 0.2rem 0 0.5rem 1.1rem; padding-left: 0.6rem; border-left: 2px solid var(--alm-rule); display: grid; gap: 0.1rem; }
+.almanac-article-button { font-size: 0.95rem; padding: 0.3rem 0.5rem; }
+.almanac-article-button.is-active { color: #fff6e0; background: var(--alm-red); border-color: #6b1a12; }
+
+/* Page */
+.almanac-breadcrumb { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem; margin-bottom: 0.4rem; font-size: 0.92rem; color: var(--alm-ink-soft); }
+.almanac-crumb { background: none; border: none; padding: 0; color: var(--alm-red); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.almanac-crumb-current { font-style: italic; }
+.almanac-article-head { text-align: center; margin-bottom: 0.8rem; }
+.almanac-article-icon { display: block; font-size: 2rem; line-height: 1; }
+.almanac-article-title { margin: 0.2rem 0 0; font-family: 'Cinzel', Georgia, serif; font-size: clamp(1.35rem, 2.6vw, 1.9rem); letter-spacing: 0.06em; color: var(--alm-red); }
+.almanac-divider { margin: 0.3rem auto 0.4rem; color: var(--alm-gold); letter-spacing: 0.1em; text-align: center; }
+.almanac-article-body { max-width: 46rem; margin: 0 auto; font-size: 1.05rem; line-height: 1.6; }
+.almanac-article-body > * + * { margin-top: 0.75rem; }
+.almanac-p, .almanac-lead { margin: 0; }
+/* Lettrine */
+.almanac-lead::first-letter {
+  float: left; margin: 0.08em 0.12em 0 0; padding: 0.04em 0.12em 0;
+  font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 3.1em; line-height: 0.85;
+  color: var(--alm-red); background: rgba(184, 134, 43, 0.16); border: 1px solid var(--alm-gold); border-radius: 3px;
+}
+.almanac-lead { font-size: 1.08em; }
+.almanac-lead::after { content: ''; display: table; clear: both; }
+.almanac-h { margin: 1.1rem 0 0; font-family: 'Cinzel', Georgia, serif; font-size: 1.12rem; color: var(--alm-red); border-bottom: 1px solid var(--alm-rule); padding-bottom: 0.15rem; }
+.almanac-h-mark { color: var(--alm-gold); margin-right: 0.4rem; }
+.almanac-list { margin: 0; padding-left: 1.4rem; }
+.almanac-list li + li { margin-top: 0.3rem; }
+.almanac-list li::marker { color: var(--alm-red); }
+.almanac-link { color: var(--alm-red); font-weight: 600; text-decoration: underline; text-decoration-color: var(--alm-gold); text-underline-offset: 3px; }
+.almanac-link:hover { color: #5e140c; }
+
+.almanac-callout, .almanac-example {
+  padding: 0.6rem 0.85rem; border-radius: 4px; border: 1px solid var(--alm-rule); border-left: 4px solid var(--alm-gold);
+  background: rgba(255, 250, 235, 0.6);
+}
+.almanac-callout p, .almanac-example p { margin: 0; }
+.almanac-callout-title, .almanac-example-title { display: flex; gap: 0.4rem; align-items: center; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 0.92rem; color: var(--alm-red); margin-bottom: 0.2rem !important; }
+.almanac-callout.is-tip { border-left-color: #4f7a33; }
+.almanac-callout.is-warning { border-left-color: var(--alm-red); background: rgba(250, 228, 214, 0.65); }
+.almanac-example { border-left-style: double; border-left-width: 6px; font-style: italic; }
+.almanac-example-title { font-style: normal; }
+
+.almanac-table-wrap { overflow-x: auto; }
+.almanac-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; background: rgba(255, 250, 235, 0.5); }
+.almanac-table th { font-family: 'Cinzel', Georgia, serif; font-size: 0.82rem; letter-spacing: 0.04em; text-align: left; color: #fff6e0; background: #6b4521; padding: 0.4rem 0.55rem; }
+.almanac-table td { padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--alm-rule); vertical-align: top; }
+.almanac-table tbody tr:nth-child(even) td { background: rgba(184, 134, 43, 0.08); }
+
+/* Fiches illustrées */
+.almanac-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.7rem; }
+.almanac-card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.7rem; align-items: start;
+  padding: 0.65rem; border: 1px solid var(--alm-rule); border-top: 3px solid var(--card-color, var(--alm-gold)); border-radius: 4px;
+  background: rgba(255, 250, 235, 0.55);
+}
+.almanac-card-art { display: flex; justify-content: center; min-width: 3.4rem; }
+.almanac-card-title { margin: 0; font-family: 'Cinzel', Georgia, serif; font-size: 1rem; color: var(--alm-ink); }
+.almanac-card-text { margin: 0.2rem 0 0.35rem; font-size: 0.92rem; line-height: 1.45; }
+.almanac-card-details { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.1rem 0.6rem; margin: 0; font-size: 0.85rem; }
+.almanac-card-details dt { color: var(--alm-ink-soft); font-weight: 600; }
+.almanac-card-details dd { margin: 0; }
+.almanac-icon-big { font-size: 2.2rem; line-height: 1.2; }
+
+/* Illustrations */
+.almanac-figure { margin: 0.6rem auto; text-align: center; }
+.almanac-figure figcaption { margin-top: 0.3rem; font-size: 0.88rem; font-style: italic; color: var(--alm-ink-soft); }
+.almanac-figure.is-right { float: right; max-width: 45%; margin: 0.2rem 0 0.6rem 1rem; }
+.almanac-article-body::after { content: ''; display: table; clear: both; }
+.almanac-svg svg { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; }
+.almanac-svg .alm-label { font: 600 12px 'EB Garamond', Georgia, serif; fill: var(--alm-ink); }
+.almanac-svg .alm-small { font: italic 11px 'EB Garamond', Georgia, serif; fill: var(--alm-ink-soft); }
+.almanac-lice svg { max-width: 300px; }
+.almanac-fighter { display: block; width: 52px; height: auto; filter: drop-shadow(0 2px 2px rgba(40, 25, 10, 0.35)); }
+.almanac-portrait { display: block; height: 90px; width: auto; }
+.almanac-item { display: block; width: 52px; height: 52px; }
+.almanac-trio { display: flex; justify-content: center; gap: 1.2rem; }
+.almanac-trio-item { margin: 0; text-align: center; }
+.almanac-trio-item .almanac-fighter { width: 58px; margin: 0 auto; }
+.almanac-trio-item figcaption { font-family: 'Cinzel', Georgia, serif; font-size: 0.82rem; }
+.almanac-stars { display: inline-grid; gap: 0.25rem; text-align: left; }
+.almanac-stars-row { display: flex; align-items: center; gap: 0.6rem; }
+.almanac-stars-label { font-style: italic; color: var(--alm-ink-soft); }
+.almanac .class-roles { margin: 0 auto; max-width: 40rem; background: rgba(255, 250, 235, 0.55); text-align: left; }
+.almanac .class-roles .class-roles-figure { min-width: 11rem; }
+.almanac-category-vignette { display: flex; justify-content: center; margin: 0.2rem 0 0.8rem; }
+.almanac-vignette-img { width: min(260px, 70%); height: auto; }
+
+/* Page d'une catégorie : sommaire des articles */
+.almanac-category-page .almanac-lead { max-width: 44rem; margin: 0 auto 1rem; }
+.almanac-toc { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.55rem; max-width: 52rem; margin: 0 auto; }
+.almanac-toc-item {
+  display: flex; gap: 0.7rem; align-items: flex-start; width: 100%; padding: 0.6rem 0.7rem; text-align: left; cursor: pointer;
+  background: rgba(255, 250, 235, 0.55); border: 1px solid var(--alm-rule); border-radius: 4px; color: var(--alm-ink); font: inherit;
+}
+.almanac-toc-item:hover { border-color: var(--alm-gold); background: rgba(255, 246, 220, 0.9); }
+.almanac-toc-icon { font-size: 1.5rem; line-height: 1.2; }
+.almanac-toc-text { display: grid; }
+.almanac-toc-title { font-family: 'Cinzel', Georgia, serif; font-weight: 700; color: var(--alm-red); }
+.almanac-toc-summary { font-size: 0.9rem; color: var(--alm-ink-soft); }
+
+/* Voir aussi, pages voisines */
+.almanac-related { max-width: 46rem; margin: 1.4rem auto 0; padding-top: 0.6rem; border-top: 1px solid var(--alm-rule); }
+.almanac-related ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem 1.2rem; }
+.almanac-turns { display: flex; justify-content: space-between; gap: 1rem; max-width: 46rem; margin: 1.2rem auto 0; }
+.almanac-turn {
+  padding: 0.4rem 0.7rem; border: 1px solid var(--alm-rule); border-radius: 4px; background: rgba(255, 250, 235, 0.6);
+  color: var(--alm-ink); font: inherit; font-size: 0.92rem; cursor: pointer;
+}
+.almanac-turn:hover { border-color: var(--alm-gold); }
+.almanac-turn.is-next { margin-left: auto; }
+.almanac-turn.is-empty { visibility: hidden; }
+
+/* Colonne de droite du hub : bouton de l'Almanach (même gabarit que Le Coffre). */
+.hub-almanac .hub-nav-icon { filter: saturate(0.8); }
+
+@media (max-width: 860px) {
+  .almanac-book { grid-template-columns: minmax(0, 1fr); }
+  .almanac-spine { display: none; }
+  .almanac-left { border-radius: 6px 6px 0 0; }
+  .almanac-right { border-radius: 0 0 6px 6px; min-height: 0; }
+  .almanac-head { grid-template-columns: auto 1fr; }
+  .almanac-head-spacer { display: none; }
+  .almanac-figure.is-right { float: none; max-width: none; margin: 0.6rem auto; }
+}
+@media (max-width: 520px) {
+  .almanac { padding: 0.6rem 0.5rem 2rem; }
+  .almanac-left, .almanac-right { padding: 1.2rem 0.9rem 1.3rem; }
+  .almanac-cards, .almanac-toc { grid-template-columns: minmax(0, 1fr); }
+}

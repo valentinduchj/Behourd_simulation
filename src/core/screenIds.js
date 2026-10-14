@@ -1,0 +1,22 @@
+// Identifiants des écrans : toujours naviguer via ces constantes.
+export const SCREENS = Object.freeze({
+  MAIN_MENU: 'main-menu',
+  NEW_GAME: 'new-game',
+  NEW_TEAM: 'new-team',
+  NEW_CAPTAIN: 'new-captain',
+  TEAM: 'team',
+  CENTRE: 'centre',
+  TAVERN: 'tavern',
+  BOROUGH: 'borough',
+  SCRIPTORIUM: 'scriptorium',
+  TRAINING: 'training',
+  LEAGUE: 'league',
+  LOAD: 'load',
+  OPTIONS: 'options',
+  ADMIN: 'admin',
+  COMBAT: 'combat',
+  MATCH: 'match',
+  FAREWELL: 'farewell',
+  ALMANAC: 'almanac',
+  FRENCH_CUP: 'french-cup',
+});

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- Vignette de l'Almanach : Le Bourg (maisons à colombages, four à pain fumant, enseigne) -->
+  <path d="M6 86 L154 86" stroke="#6b5a3a" stroke-width="1.6"/>
+  <g stroke="#4a3220" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="16" y="46" width="34" height="40" fill="#efe0bf"/>
+    <path d="M12 48 L33 26 L54 48 Z" fill="#a8452f"/>
+    <path d="M16 60 L50 60 M33 46 L33 86 M16 46 L33 60 L50 46" fill="none" stroke="#6b4a2b"/>
+    <rect x="27" y="70" width="12" height="16" fill="#6b4a2b"/>
+    <rect x="58" y="38" width="44" height="48" fill="#e8dcc0"/>
+    <path d="M54 40 L80 16 L106 40 Z" fill="#4f5a63"/>
+    <path d="M58 56 L102 56 M80 38 L80 86" fill="none" stroke="#6b4a2b"/>
+    <rect x="64" y="62" width="10" height="10" fill="#5c7f9c"/>
+    <rect x="86" y="62" width="10" height="10" fill="#5c7f9c"/>
+    <path d="M112 86 L112 70 Q128 50 144 70 L144 86 Z" fill="#c47a4a"/>
+    <path d="M122 86 L122 76 Q128 70 134 76 L134 86 Z" fill="#2a1a10"/>
+    <rect x="114" y="54" width="7" height="12" fill="#8a8274"/>
+  </g>
+  <g fill="#e9e3d8" opacity="0.8">
+    <circle cx="117" cy="48" r="4"/><circle cx="121" cy="40" r="5"/><circle cx="116" cy="31" r="6"/>
+  </g>
+  <path d="M128 78 Q128 74 131 76" stroke="#f0a030" stroke-width="2" fill="none"/>
+</svg>

@@ -1,0 +1,14 @@
+# Fichiers produits par tools/launcher/build.ps1 (recréés à chaque build)
+/build/
+/dist/
+
+# Python (lanceur)
+__pycache__/
+*.pyc
+
+# Système et éditeurs
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

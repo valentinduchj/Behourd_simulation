@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- Vignette de l'Almanach : Les Compétitions (couronne de la Reine, épées croisées, lauriers) -->
+  <g stroke="#4a3220" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 86 L126 22" stroke="#8e939a" stroke-width="4"/>
+    <path d="M126 86 L34 22" stroke="#8e939a" stroke-width="4"/>
+    <path d="M44 74 L50 82 M116 74 L110 82" stroke="#6b4a2b" stroke-width="5"/>
+    <path d="M58 58 L64 30 L74 46 L80 24 L86 46 L96 30 L102 58 Z" fill="#e0b43a"/>
+    <path d="M58 58 L102 58 L100 66 L60 66 Z" fill="#c9962a"/>
+    <circle cx="80" cy="62" r="3" fill="#a8322d"/>
+    <circle cx="68" cy="62" r="2" fill="#2d5a9a"/>
+    <circle cx="92" cy="62" r="2" fill="#2d5a9a"/>
+  </g>
+  <g fill="#5d8a3a" stroke="#3a5a24" stroke-width="1">
+    <path d="M40 92 Q30 74 38 56" fill="none" stroke-width="2"/>
+    <ellipse cx="33" cy="84" rx="5" ry="2.5" transform="rotate(-50 33 84)"/>
+    <ellipse cx="31" cy="73" rx="5" ry="2.5" transform="rotate(-70 31 73)"/>
+    <ellipse cx="33" cy="62" rx="5" ry="2.5" transform="rotate(-100 33 62)"/>
+    <path d="M120 92 Q130 74 122 56" fill="none" stroke-width="2"/>
+    <ellipse cx="127" cy="84" rx="5" ry="2.5" transform="rotate(50 127 84)"/>
+    <ellipse cx="129" cy="73" rx="5" ry="2.5" transform="rotate(70 129 73)"/>
+    <ellipse cx="127" cy="62" rx="5" ry="2.5" transform="rotate(100 127 62)"/>
+  </g>
+</svg>

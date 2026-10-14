@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="40" height="64">
+  <!-- La Reine : couronne d'or, voile, robe pourpre, manteau doublé d'hermine, sceptre -->
+  <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+    <!-- Manteau (derrière) -->
+    <path d="M11 25 Q20 21 29 25 L35 63 Q20 65.5 5 63Z" fill="#7a1f2a"/>
+    <!-- Robe -->
+    <path d="M13.5 26 Q20 23 26.5 26 L30 62 Q20 64 10 62Z" fill="#5b2c6e"/>
+    <path d="M17 30 h6 l2 31 q-5 1.2 -10 0z" fill="#e0b43a"/>
+    <path d="M17.5 36 h5 M17 42 h6 M16.6 48 h6.8 M16.2 54 h7.6" stroke="#b07d1a" stroke-width="0.7"/>
+    <!-- Bordure d'hermine du manteau -->
+    <path d="M11 25 L5 63 h3 L13 27Z" fill="#f4f1e8"/>
+    <path d="M29 25 L35 63 h-3 L27 27Z" fill="#f4f1e8"/>
+    <!-- Bras -->
+    <path d="M13.5 27 L10.5 42 L13.5 43.5 L16 31Z" fill="#5b2c6e"/>
+    <path d="M26.5 27 L29.5 42 L26.5 43.5 L24 31Z" fill="#5b2c6e"/>
+    <circle cx="12" cy="43.5" r="2" fill="#e8bf98"/>
+    <circle cx="28" cy="43.5" r="2" fill="#e8bf98"/>
+    <!-- Sceptre -->
+    <rect x="29.3" y="22" width="1.4" height="24" fill="#c99a2e"/>
+    <circle cx="30" cy="21" r="2.1" fill="#e0b43a"/>
+    <circle cx="30" cy="21" r="0.9" fill="#b8402f" stroke="none"/>
+    <!-- Col d'hermine -->
+    <path d="M12.5 24.5 Q20 30 27.5 24.5 Q27 29 20 30.5 Q13 29 12.5 24.5Z" fill="#f4f1e8"/>
+    <!-- Voile et visage -->
+    <path d="M13.5 17 Q13.5 8 20 8 Q26.5 8 26.5 17 L27.5 26 Q20 27.5 12.5 26Z" fill="#f4ecd8"/>
+    <circle cx="20" cy="16.5" r="5.3" fill="#e8bf98"/>
+    <path d="M15 14.5 Q15 10.5 20 10.5 Q25 10.5 25 14.5 Q22.5 12.5 20 12.8 Q17.5 12.5 15 14.5Z" fill="#8a5a2a"/>
+    <!-- Couronne -->
+    <path d="M13.5 10.5 L13.5 4.5 L16.2 7.5 L18 3 L20 6.5 L22 3 L23.8 7.5 L26.5 4.5 L26.5 10.5Z" fill="#e0b43a"/>
+    <rect x="13.5" y="9" width="13" height="2.2" fill="#c99a2e"/>
+  </g>
+  <g stroke="none">
+    <circle cx="18" cy="3" r="0.9" fill="#f4ecd8"/><circle cx="22" cy="3" r="0.9" fill="#f4ecd8"/>
+    <circle cx="13.5" cy="4.5" r="0.8" fill="#f4ecd8"/><circle cx="26.5" cy="4.5" r="0.8" fill="#f4ecd8"/>
+    <circle cx="16.5" cy="10.1" r="0.8" fill="#b8402f"/><circle cx="20" cy="10.1" r="0.9" fill="#2d5a9a"/><circle cx="23.5" cy="10.1" r="0.8" fill="#b8402f"/>
+    <circle cx="18.1" cy="16.4" r="0.7" fill="#1a1a1a"/><circle cx="21.9" cy="16.4" r="0.7" fill="#1a1a1a"/>
+    <path d="M18.7 19 q1.3 0.9 2.6 0" fill="none" stroke="#a8452f" stroke-width="0.6"/>
+  </g>
+</svg>
