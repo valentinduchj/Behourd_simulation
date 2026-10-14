@@ -1,29 +1,37 @@
 import { h } from '../../utils/dom.js';
 import { openModal } from './Modal.js';
-import { getDisplayedPatchNotes, formatPatchDate } from '../../systems/patchNotes/PatchNoteService.js';
+import { getDisplayedMilestones, formatPatchDate } from '../../systems/patchNotes/PatchNoteService.js';
 
 /**
- * Patch Notes : historique des évolutions, de la plus récente à la plus ancienne (données :
- * data/patchNotes.js ; sélection : PatchNoteService). Aucun contenu n'est écrit ici.
+ * Patch Notes : les versions majeures seulement (0.4, 0.5, 0.6…), de la plus récente à la plus
+ * ancienne, chacune avec ses grosses évolutions (données : data/patchNotes.js › PATCH_MILESTONES ;
+ * sélection : PatchNoteService). Aucun contenu n'est écrit ici.
  */
 export function openPatchNotes({ currentVersion = null } = {}) {
-  const notes = getDisplayedPatchNotes();
+  const milestones = getDisplayedMilestones({ currentVersion });
   const body = h(
     'div',
     { class: 'patch-notes' },
-    notes.length
-      ? notes.map((note) => h(
+    milestones.length
+      ? milestones.map((milestone) => h(
         'article',
-        { class: `patch-note ${note.version === currentVersion ? 'is-current' : ''}`.trim(), 'data-version': note.version },
+        {
+          class: `patch-note ${milestone.isCurrent ? 'is-current' : ''} ${milestone.inProgress ? 'is-in-progress' : ''}`.replace(/\s+/g, ' ').trim(),
+          'data-version': milestone.version,
+        },
         h(
           'header',
           { class: 'patch-note-header' },
-          h('h3', { class: 'patch-note-version' }, note.version),
-          note.version === currentVersion ? h('span', { class: 'patch-note-badge' }, 'Version actuelle') : null,
-          note.date ? h('span', { class: 'patch-note-date' }, formatPatchDate(note.date)) : null,
+          h('h3', { class: 'patch-note-version' }, `Version ${milestone.version}`),
+          milestone.inProgress ? h('span', { class: 'patch-note-badge is-in-progress' }, 'En cours') : null,
+          milestone.isCurrent ? h('span', { class: 'patch-note-badge' }, `Version actuelle : ${currentVersion}`) : null,
+          milestone.date ? h('span', { class: 'patch-note-date' }, formatPatchDate(milestone.date)) : null,
         ),
-        note.title ? h('p', { class: 'patch-note-title' }, note.title) : null,
-        note.sections.map((section) => h(
+        milestone.title ? h('p', { class: 'patch-note-title' }, milestone.title) : null,
+        h('p', { class: 'patch-note-range' }, milestone.count > 1
+          ? `Regroupe les versions ${milestone.from} à ${milestone.to}${milestone.inProgress ? ' (en cours)' : ''}.`
+          : `Version ${milestone.from}.`),
+        milestone.sections.map((section) => h(
           'section',
           { class: 'patch-note-section', 'data-section': section.key },
           h('h4', { class: 'patch-note-section-title' }, h('span', { 'aria-hidden': 'true' }, section.icon), ` ${section.label}`),

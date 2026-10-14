@@ -1,7 +1,6 @@
-// Patch Notes — historique des évolutions, affiché depuis l'écran principal.
-//
-// Ajouter une version = ajouter une entrée ici (l'ordre est libre : l'affichage trie de la plus
-// récente à la plus ancienne). Aucun code d'interface à modifier.
+// Patch Notes — historique des évolutions, ouvert depuis l'écran principal. Depuis la v0.76, seules
+// les versions majeures (PATCH_MILESTONES) sont affichées ; PATCH_NOTES garde le détail de chaque
+// version (README, référence), dans l'ordre que l'on veut.
 //
 //   { version: 'x.y.z', date: 'AAAA-MM-JJ' | null, title?, <rubrique>: [texte, …] }
 //
@@ -20,7 +19,123 @@ export const PATCH_NOTE_SECTIONS = Object.freeze([
   Object.freeze({ key: 'fixes', label: 'Corrections', icon: '🔧' }),
 ]);
 
+// Versions majeures (v0.76) : SEULES affichées dans les Patch Notes. Chacune regroupe les versions
+// qui la précèdent — 0.6 = 0.51 à 0.60.x, 0.7 = 0.61 à 0.70.x (systems/patchNotes/PatchNoteService.js,
+// getMilestoneId) — et ne garde que les grosses évolutions, réécrites ici (mêmes rubriques que
+// PATCH_NOTE_SECTIONS). Les notes détaillées (PATCH_NOTES, plus bas) restent la référence de chaque
+// version mais ne sont plus affichées. La version majeure dont le numéro n'est pas encore atteint
+// (ex. 0.8 tant qu'on est en 0.7x) s'affiche « en cours ».
+//
+// Ajouter une version : son détail dans PATCH_NOTES, et, si elle compte, une ligne dans la version
+// majeure qui la contient.
+export const PATCH_MILESTONES = Object.freeze([
+  {
+    version: '0.8',
+    title: 'Entraînement, succès et son',
+    newFeatures: [
+      'Ma Lice d’entraînement : vos combattants s’affrontent entre eux (1 contre 1, 3 contre 3, 5 contre 5) avec les vraies règles, sans aucune conséquence, et un journal qui explique chaque coup.',
+      'Deux talents par combattant : le second se révèle gratuitement au Scriptorium ; avec deux talents, on choisit lequel remplacer.',
+      '40 succès à conquérir, réunis dans la Salle des exploits — dont des exploits secrets.',
+      'Le son : trois musiques en fondu enchaîné, une ambiance par lieu et des effets sonores (coups, KO, fanfare, exploits), tout réglable dans les Options.',
+    ],
+    gameplayChanges: [
+      'Une fatigue qui compte : courbatures après chaque combat, combattants fatigués moins efficaces, épuisés envoyés au Banquet.',
+      'Coupe de France : la fatigue est remise à 0 à l’entrée dans la compétition, puis se garde d’un combat à l’autre.',
+    ],
+    graphics: [
+      'Sept nouvelles partitions d’écusson (15 au choix).',
+    ],
+    improvements: [
+      'Patch Notes resserrées : seules les versions majeures et leurs grosses évolutions.',
+    ],
+  },
+  {
+    version: '0.7',
+    title: 'Le vrai béhourd',
+    newFeatures: [
+      'Les quatre saisons : une année de 100 jours qui change le monde (rivière asséchée, forêt enneigée…), les combats et les talents saisonniers.',
+      '50 talents aux vrais effets, en combat comme hors combat ; les artefacts de Flavia deviennent une amélioration par paliers.',
+      'Le Centre : configurations d’affectation enregistrées et réappliquées d’un clic ; palmarès sur les fiches de club.',
+    ],
+    gameplayChanges: [
+      'La position avant tout : Lutteur redoutable contre la barrière, Hastier qui frappe par-dessus l’épaule, Runner qui prend à revers ; fin de la boucle des classes.',
+      'La fatigue évolue pendant la manche : on s’épuise, on souffle, on récupère au sol et pendant les temps morts.',
+      'Huit manières de combattre pour les équipes adverses, de l’Ordonnance au Chasseur de têtes.',
+      '150 PV par combattant : des manches plus longues, plus de place au placement.',
+    ],
+    improvements: [
+      'Carnet de bord repensé : un sceau pour le combat du jour, une tuile par domaine.',
+    ],
+    graphics: [
+      'Effets des talents et des moments forts : runes, survie à 1 PV, combos, gros coups, pétales et étincelles de victoire.',
+    ],
+  },
+  {
+    version: '0.6',
+    title: 'Talents, palmarès et Coupe',
+    newFeatures: [
+      'Le Scriptorium et les talents : un Bureau d’étude où chaque combattant révèle son talent ; la Professeure Flavia, son chat, un second bureau et les artefacts.',
+      'Palmarès et trophées : armoire à trophées et pancarte des classements dans la Taverne, historique des clubs.',
+      'Statut « Elite » pour les 16 meilleurs combattants de France.',
+      'Huit nouveaux lieux de départ : six par Terre.',
+    ],
+    gameplayChanges: [
+      'La Coupe de France se dispute à la fin de chaque saison : arbre final, récompenses en deniers à chaque victoire.',
+    ],
+    balanceChanges: [
+      'Un royaume plus rude : recrues de 2,5★ et plus plus chères, potentiel plus rare, clubs adverses qui progressent moins vite.',
+    ],
+    graphics: [
+      'Un Bourg qui s’anime : campement de tentes, artisans au travail, habitants, chiens et oiseaux.',
+    ],
+  },
+  {
+    version: '0.5',
+    title: 'Le domaine et la Coupe de France',
+    newFeatures: [
+      'La Coupe de France au Château de Gabarnac : 54 compagnies, poules puis tableau final.',
+      'Se déplacer sur la carte : les chemins du Centre mènent à la Taverne et au Bourg.',
+      'Un écran principal vivant, avec les Patch Notes.',
+      'Équipes enregistrées : trois équipes de 8 combattants, rappelées d’un clic.',
+    ],
+    gameplayChanges: [
+      'Le potentiel fixe un plafond aux compétences.',
+      'Les équipes adverses adoptent un comportement selon leur force.',
+      'Taverne : le prix d’une recrue dépend de ses étoiles.',
+    ],
+    improvements: [
+      'Placement dans la Lice repensé : votre équipe, la Lice et les adversaires sur un seul écran.',
+    ],
+  },
+  {
+    version: '0.4',
+    title: 'Un camp vivant',
+    graphics: [
+      'Le Centre s’anime : les combattants nagent, mangent, luttent, frappent les mannequins, chargent le foin et fendent du bois.',
+    ],
+    gameplayChanges: [
+      'L’Infirmerie est retirée du Centre.',
+    ],
+  },
+]);
+
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '0.76.1',
+    date: '2026-10-14',
+    title: 'Mesure d’audience',
+    improvements: [
+      'Balise Google Analytics (gtag.js) ajoutée en tête de la page du jeu.',
+    ],
+  },
+  {
+    version: '0.76.0',
+    date: '2026-10-14',
+    title: 'Des Patch Notes resserrées',
+    improvements: [
+      'Patch Notes : seules les versions majeures (0.4, 0.5, 0.6…) sont présentées, chacune avec ses grosses évolutions et les versions qu’elle regroupe ; la prochaine s’affiche « en cours ».',
+    ],
+  },
   {
     version: '0.75.0',
     date: '2026-10-14',

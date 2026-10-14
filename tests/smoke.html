@@ -1301,6 +1301,29 @@
       const pnCustom = pnDisplayed({ notes: [{ version: '0.41.9', fixes: ['x'] }, { version: '0.100.0', fixes: ['a'], improvements: [] }, { version: '0.42.0', newFeatures: ['b'] }, { version: '0.9.0', fixes: ['c'] }] });
       check(pnCustom.map((n) => n.version).join() === '0.100.0,0.42.0' && pnCustom[0].sections.map((s) => s.key).join() === 'fixes',
         'patch notes : nouvelle version ajoutée par les données seules ; rubriques vides masquées');
+      // v0.76 : seules les versions majeures s'affichent, chacune regroupant les versions qui la précèdent.
+      const PNS = await import('../src/systems/patchNotes/PatchNoteService.js');
+      const { PATCH_MILESTONES: pnMilestones } = await import('../src/data/patchNotes.js');
+      const pnMajor = PNS.getDisplayedMilestones({ currentVersion: pnConfig.version });
+      const pnSix = pnMajor.find((m) => m.version === '0.6');
+      const pnIds = new Set(pnMilestones.map((m) => m.version));
+      check(['0.40.0', '0.41.0', '0.50.0', '0.51.0', '0.60.1', '0.61.0', '0.70.0', '0.71.0', '0.100.0'].map(PNS.getMilestoneId).join() === '0.4,0.5,0.5,0.6,0.6,0.7,0.7,0.8,0.10'
+          && PNS.shortVersion('0.51.0') === '0.51' && PNS.shortVersion('0.60.1') === '0.60.1',
+        'patch notes : chaque version majeure regroupe les versions qui la précèdent (0.6 = 0.51 à 0.60.x)');
+      check(pnMajor.map((m) => m.version).join() === '0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
+          && pnMajor[0].inProgress && pnMajor[0].isCurrent && pnMajor.filter((m) => m.isCurrent).length === 1
+          && pnData.every((n) => pnIds.has(PNS.getMilestoneId(n.version)))
+          && pnMajor.every((m) => m.sections.length && m.sections.reduce((s, x) => s + x.items.length, 0) <= 10),
+        `patch notes : seules les versions majeures (${pnMajor.map((m) => m.version).join(', ')}), la plus récente « en cours » ; chaque version détaillée a sa majeure ; 10 grosses évolutions au plus par majeure`);
+      const { openPatchNotes: pnOpen } = await import('../src/ui/components/PatchNotesModal.js');
+      const pnModal = pnOpen({ currentVersion: pnConfig.version });
+      await wait(10);
+      const pnArticles = [...document.querySelectorAll('.patch-notes-modal .patch-note')];
+      check(pnArticles.length === 5 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.8' && /En cours/.test(pnArticles[0].textContent)
+          && /Regroupe les versions 0\.51 à 0\.60\.1/.test(pnArticles.find((a) => a.dataset.version === '0.6').textContent)
+          && !pnArticles.some((a) => /^0\.\d+\.\d+$/.test(a.dataset.version)),
+        'patch notes : la fenêtre n’affiche que les versions majeures, avec les versions qu’elles regroupent');
+      pnModal.close(true);
       const { clampDuration: scClamp, listSequences: scList, pickNextSequence: scPick, fadeOpacity: scFade } = await import('../src/ui/mainMenu/showcaseRotation.js');
       const { MAIN_MENU_VIDEOS: scVideos, SHOWCASE_TIMING: scTiming } = await import('../src/data/mainMenuShowcase.js');
       const scLeft = scList('left');
@@ -3559,7 +3582,10 @@
       patchButton.click();
       await wait(10);
       const shownVersions = [...(modal()?.querySelectorAll('.patch-note-version') ?? [])].map((el) => el.textContent);
-      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === services.config.version && shownVersions.at(-1) === '0.42.0' && !shownVersions.includes('0.41.0')
+      // (v0.76 : versions majeures seulement ; la version du jeu est dans celle marquée « actuelle ».)
+      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === 'Version 0.8' && shownVersions.at(-1) === 'Version 0.4'
+        && !shownVersions.some((v) => v.includes(services.config.version))
+        && modal().querySelector('.patch-note.is-current .patch-note-badge:not(.is-in-progress)')?.textContent.includes(services.config.version)
         && modal().querySelector('.patch-note.is-current .patch-note-section li'),
         `patch notes (interface) : ${shownVersions.join(' → ')}`);
       button('Fermer', modal()).click();

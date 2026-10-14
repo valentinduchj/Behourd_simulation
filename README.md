@@ -119,6 +119,11 @@ Le joueur suit son club, et le carnet de bord annonce le résultat.
 
 Une journée de championnat sautée par l'avance rapide (Admin › Temps) est disputée automatiquement.
 
+## Mesure d'audience (v0.76.1)
+
+- **Balise Google** (gtag.js, identifiant `G-CNGBN6LNEW`) placée juste après `<head>` dans `index.html`. Elle se charge depuis googletagmanager.com à chaque ouverture du jeu, en ligne comme en local (lanceur), et ne touche à rien d'autre ; la page de tests (`tests/smoke.html`) ne la charge pas.
+- Sans connexion, ou si un bloqueur l'empêche, le jeu fonctionne normalement.
+
 ## Le Centre : tri des affectations et bouton [+] du Banquet
 
 - **Compétences au maximum** (v0.73.2) : dans le tableau des affectations, une compétence qui ne peut plus progresser s'affiche en rouge — à 100, ou au plafond fixé par le potentiel du combattant (`isStatMaxed`, `systems/fighters/stats.js`). Recalculé à chaque affichage : si le potentiel monte (ou avec le talent Prodige), la compétence redevient améliorable et perd sa couleur. Une infobulle et une légende l'expliquent ; les PV et la fatigue ne sont jamais concernés.
@@ -535,9 +540,10 @@ Le potentiel (0 à 3 flammes) fixe jusqu'où les **compétences** (Lutte, Hast, 
 **Patch Notes**
 - Le bouton **Patch Notes** se trouve sous le numéro de version. Il ouvre l'historique des évolutions, de la plus récente à la plus ancienne.
 - Rubriques : nouvelles fonctionnalités, améliorations, modifications de gameplay, équilibrage, évolutions graphiques, corrections. Une rubrique vide n'est pas affichée.
-- **Données** : `data/patchNotes.js` (`PATCH_NOTES`). Ajouter une version = ajouter une entrée `{ version, date, title, newFeatures[], improvements[], gameplayChanges[], balanceChanges[], graphics[], fixes[] }`, sans toucher à l'interface.
-- **Historique minimal** : `PATCH_NOTES_MIN_VERSION = '0.42.0'`. Une version antérieure présente dans les données n'est jamais affichée.
-- Tri et filtre : `systems/patchNotes/PatchNoteService.js` (comparaison numérique : 0.100.0 > 0.42.0). Affichage : `ui/components/PatchNotesModal.js`.
+- **Versions majeures seulement** (v0.76) : la fenêtre ne présente que 0.4, 0.5, 0.6, 0.7, 0.8… Chacune regroupe les versions qui la **précèdent** (0.6 = 0.51 à 0.60.x ; 0.7 = 0.61 à 0.70.x ; `getMilestoneId`) et n'affiche que ses grosses évolutions, écrites dans `PATCH_MILESTONES` (mêmes rubriques). Sous le titre : « Regroupe les versions 0.51 à 0.60.1 », la date de la dernière. Tant que son numéro n'est pas atteint (0.8 pendant les 0.7x), la majeure porte la mention « En cours » ; celle qui contient la version du jeu porte « Version actuelle ». Un test vérifie que chaque version détaillée a sa majeure et qu'une majeure garde 10 évolutions au plus.
+- **Données** : `data/patchNotes.js`. Ajouter une version = ajouter son détail dans `PATCH_NOTES` (`{ version, date, title, newFeatures[], improvements[], gameplayChanges[], balanceChanges[], graphics[], fixes[] }`, gardé pour mémoire, plus affiché) et, si elle compte, une ligne dans la majeure qui la contient (`PATCH_MILESTONES`), sans toucher à l'interface.
+- **Historique minimal** (détail des versions, `getDisplayedPatchNotes`) : `PATCH_NOTES_MIN_VERSION = '0.42.0'`. Les versions majeures, elles, remontent jusqu'à 0.4.
+- Tri et filtre : `systems/patchNotes/PatchNoteService.js` (comparaison numérique : 0.100.0 > 0.42.0). Regroupement : `getDisplayedMilestones`. Affichage : `ui/components/PatchNotesModal.js`.
 
 **Vitrine (arrière-plan animé)**
 - De chaque côté du menu passent de courtes séquences de 3 à 6 secondes, chacune avec un fondu au noir à l'entrée et à la sortie :
@@ -1833,6 +1839,7 @@ src/
   - indicateur sur 30 jours (bilan net), élagage de l'historique, persistance, âge +1 par saison ;
   - fiche de club (bouton, flèches) ;
 - les migrations ;
+- les Patch Notes (v0.76) : regroupement des versions (0.6 = 0.51 à 0.60.x), seules les majeures affichées (0.8 en cours, version actuelle), chaque version détaillée rattachée, 10 évolutions au plus, fenêtre ;
 - la fatigue (v0.75) : trois états et Sang-froid, courbatures (par manche, KO, plafond de Bon vivant, une seule fois, sauvegardées), avance rapide comprise et jamais pour une fatigue suivie le temps du combat, Centre (épuisé refusé sauf au Banquet, envoyé d'office le matin, fatigué deux fois moins efficace), configurations, interface (colonne colorée, lieux grisés, bloc de fin de combat) ;
 - le son (v0.74.1) : ambiances et effets en vrais enregistrements (tous les fichiers présents, licences CC0 créditées, aucune synthèse), musique principale à l'écran principal, camp sans oiseaux en hiver ;
 - le son (v0.74) : fichiers présents, musique et ambiance de chaque lieu, Warlike Pulse au lancement de la manche et retour après le combat, foule de la Coupe, oiseaux absents en hiver, ambiances toujours sous la musique, volumes et coupure, coups et KO calés sur le rejeu (pas d'avalanche), silence avant le premier clic puis fondus enchaînés (arrêt programmé, jamais immédiat), Options ;
