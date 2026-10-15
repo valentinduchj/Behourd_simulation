@@ -31,6 +31,7 @@ import { openOptionsModal } from '../components/OptionsModal.js';
 import { announcePendingAchievements } from '../hub/achievementNotifier.js';
 import { countUnlocked } from '../../systems/achievements/AchievementService.js';
 import { ordinal } from '../../utils/format.js';
+import { startTutorial, isTutorialActive } from '../tutorial/Tutorial.js';
 
 /**
  * Base des écrans de la phase de gestion : calendrier en haut, contenu au centre,
@@ -88,6 +89,11 @@ export class HubScreen extends BaseScreen {
     // ui/screens/registerScreens.js.)
     // Succès obtenus hors de l'écran (chargement d'une ancienne sauvegarde) : annoncés ici, une fois.
     announcePendingAchievements(this.session);
+    if (this.params.justCreated) {
+      showToast(`${this.session.playerFighters.length} combattants ont rejoint ${this.team.name} !`, 'success');
+    }
+    // Nouvelle partie (v0.81) : le tavernier fait visiter le domaine (data/tutorial.js).
+    if (this.params.tutorial && !isTutorialActive()) startTutorial();
     if (this.params.dayReport) {
       openLogbook(this.session, this.params.dayReport, {
         onGoToCup: () => this.goToCup(),

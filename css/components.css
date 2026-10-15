@@ -692,3 +692,55 @@ td .elite-badge { margin-right: 0.3rem; }
 
 /* Voyage (v0.73.2) : le fondu ne couvre que la carte du lieu. */
 .travel-veil.is-map { position: fixed; }
+
+/* ---------- Tutoriel (v0.81) : sur-couche du tavernier ---------- */
+/* Au-dessus des fenêtres (100), sous les notifications (200) et le voile de voyage (900). */
+.tutorial-layer { position: fixed; inset: 0; z-index: 150; pointer-events: none; }
+.tutorial-veil, .tutorial-guard { position: fixed; pointer-events: auto; }
+/* Le jeu reste visible, légèrement flouté et assombri, sauf la zone de l'étape. */
+.tutorial-veil { background: rgba(28, 18, 8, 0.32); backdrop-filter: blur(2.5px); -webkit-backdrop-filter: blur(2.5px); }
+.tutorial-guard { background: transparent; cursor: default; }
+.tutorial-ring {
+  position: fixed; pointer-events: none; border-radius: var(--radius);
+  box-shadow: 0 0 0 3px #e2bd66, 0 0 18px 4px rgba(226, 189, 102, 0.55);
+}
+/* Zone à cliquer : l'anneau pulse. */
+.tutorial-ring.is-click { animation: tutorial-pulse 1.3s ease-in-out infinite; }
+@keyframes tutorial-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #e2bd66, 0 0 14px 3px rgba(226, 189, 102, 0.5); }
+  50% { box-shadow: 0 0 0 5px #f4d27a, 0 0 28px 10px rgba(244, 210, 122, 0.7); }
+}
+.tutorial-bubble {
+  position: fixed; pointer-events: auto; display: flex; align-items: flex-end; gap: 0.2rem;
+  width: min(38rem, calc(100vw - 24px)); padding: 0.9rem 1rem 0.8rem 0.4rem;
+  background: #fbf6ea; color: #2a2016; border: 2px solid #a88a58; border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(30, 18, 6, 0.45);
+  font-size: 1.02rem; line-height: 1.45;
+}
+.tutorial-portrait {
+  flex: none; align-self: flex-start; width: 230px; height: auto; margin: -4.6rem 0.5rem -0.8rem -2.2rem;
+  filter: drop-shadow(0 6px 8px rgba(30, 18, 6, 0.45));
+}
+.tutorial-body { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; flex: 1; }
+.tutorial-chapter {
+  margin: 0; font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #8f2a22;
+}
+.tutorial-chapter-number { font-weight: 700; }
+.tutorial-text { margin: 0; }
+.tutorial-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.95rem; }
+.tutorial-list li { padding: 0.25rem 0.5rem; background: #f1e8d4; border-left: 3px solid var(--spec-color, #b07d1a); border-radius: 4px; }
+.tutorial-list-icon { margin-right: 0.25rem; }
+.tutorial-gain { color: #5c4a33; }
+.tutorial-action { margin: 0; padding: 0.35rem 0.55rem; font-weight: 600; color: #27508d; background: #e3ecf8; border-radius: 4px; }
+.tutorial-footer { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.2rem; }
+.tutorial-skip {
+  padding: 0; border: 0; background: none; color: #7a674c; font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer;
+}
+.tutorial-skip:hover { color: #8f2a22; }
+.tutorial-dots { display: flex; gap: 4px; margin-left: auto; }
+.tutorial-dot { width: 7px; height: 7px; border-radius: 50%; background: #d3bf96; }
+.tutorial-dot.is-current { background: #8f2a22; }
+.tutorial-bubble.is-waiting .tutorial-dots { margin-right: 0; }
+@media (max-width: 560px) {
+  .tutorial-portrait { width: 110px; margin: -2.4rem 0 0 -0.8rem; }
+}

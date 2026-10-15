@@ -119,6 +119,17 @@ Le joueur suit son club, et le carnet de bord annonce le résultat.
 
 Une journée de championnat sautée par l'avance rapide (Admin › Temps) est disputée automatiquement.
 
+## Tutoriel du tavernier (v0.81.0)
+
+- **Quand** : à la fin de la création (compagnie puis capitaine), la partie s'ouvre au **Bourg** et le tutoriel démarre. Rien n'est enregistré : une partie chargée ne le relance pas.
+- **Sur-couche** (`src/ui/tutorial/Tutorial.js`) : posée sur le jeu, elle suit le joueur d'un écran à l'autre. La zone expliquée reste nette (anneau doré, qui pulse quand il faut cliquer) ; le reste est légèrement flouté et assombri, et ne répond ni aux clics ni au clavier. La bulle porte le portrait du tavernier (`assets/tutorial/tavernier.webp`) et se place à côté de la zone.
+- **Trois étapes** (`src/data/tutorial.js`, une liste de bulles) :
+  1. *(1/3) Vos combattants et le Centre* : le domaine, La Compagnie (rôles des Lutteurs, Hastiers et Runners, tirés de `data/specialties.js`), les étoiles, le Centre et ses pôles (tirés de `data/activities.js`), puis un clic sur la **Petite lice** et sur son bouton **+**, le tableau des affectations et la fatigue.
+  2. *(2/3) La Taverne et les recrues* : un clic sur **La Taverne**, les recrues, le tavernier, l'effectif maximal et les deniers.
+  3. *(3/3) Le fil des jours* : le jour, la frise et ses événements, « Passer la journée » (montré, jamais cliqué), le championnat (points tirés de `LEAGUE_RULES`), l'Almanach.
+- **Bulles** : `advance: 'next'` (bouton « Suivant », zone non cliquable), `'click'` (seule la zone est cliquable, le clic fait avancer), `'select'` (un lieu à choisir sur la carte du Centre). Une bulle peut aussi laisser regarder le résultat du clic (`watch`) : après le « + » de la Petite lice, la bulle s'efface 2 secondes et la carte du Centre reste visible, le temps de voir les combattants s'y rendre. « Passer le tutoriel » est toujours présent ; « Terminer » apparaît sur la dernière bulle, une fois les trois étapes vues.
+- **Fin** : « Terminer » ou « Passer le tutoriel » ramène au **Centre** (`TUTORIAL_END_SCREEN`).
+
 ## Colonne de droite : deux encarts (v0.80.0)
 
 - **Ma compagnie** : La Compagnie (vos combattants), Le Coffre (inventaire, en fenêtre), La Ligue (classement).

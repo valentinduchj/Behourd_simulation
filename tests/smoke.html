@@ -1312,7 +1312,7 @@
       check(['0.40.0', '0.41.0', '0.50.0', '0.51.0', '0.60.1', '0.61.0', '0.70.0', '0.71.0', '0.100.0'].map(PNS.getMilestoneId).join() === '0.4,0.5,0.5,0.6,0.6,0.7,0.7,0.8,0.10'
           && PNS.shortVersion('0.51.0') === '0.51' && PNS.shortVersion('0.60.1') === '0.60.1',
         'patch notes : chaque version majeure regroupe les versions qui la précèdent (0.6 = 0.51 à 0.60.x)');
-      check(pnMajor.map((m) => m.version).join() === '0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
+      check(pnMajor.map((m) => m.version).join() === '0.9,0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
           && pnMajor[0].inProgress === pnOngoing && pnMajor[0].isCurrent && pnMajor.filter((m) => m.isCurrent).length === 1
           && pnData.every((n) => pnIds.has(PNS.getMilestoneId(n.version)))
           && pnMajor.every((m) => m.sections.length && m.sections.reduce((s, x) => s + x.items.length, 0) <= 10),
@@ -1321,7 +1321,7 @@
       const pnModal = pnOpen({ currentVersion: pnConfig.version });
       await wait(10);
       const pnArticles = [...document.querySelectorAll('.patch-notes-modal .patch-note')];
-      check(pnArticles.length === 5 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.8' && /En cours/.test(pnArticles[0].textContent) === pnOngoing
+      check(pnArticles.length === 6 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.9' && /En cours/.test(pnArticles[0].textContent) === pnOngoing
           && /Regroupe les versions 0\.51 à 0\.60\.1/.test(pnArticles.find((a) => a.dataset.version === '0.6').textContent)
           && !pnArticles.some((a) => /^0\.\d+\.\d+$/.test(a.dataset.version)),
         'patch notes : la fenêtre n’affiche que les versions majeures, avec les versions qu’elles regroupent');
@@ -3585,7 +3585,7 @@
       await wait(10);
       const shownVersions = [...(modal()?.querySelectorAll('.patch-note-version') ?? [])].map((el) => el.textContent);
       // (v0.76 : versions majeures seulement ; la version du jeu est dans celle marquée « actuelle ».)
-      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === 'Version 0.8' && shownVersions.at(-1) === 'Version 0.4'
+      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === 'Version 0.9' && shownVersions.at(-1) === 'Version 0.4'
         && !shownVersions.some((v) => v.includes(services.config.version))
         && modal().querySelector('.patch-note.is-current .patch-note-badge:not(.is-in-progress)')?.textContent.includes(services.config.version)
         && modal().querySelector('.patch-note.is-current .patch-note-section li'),
@@ -3678,8 +3678,18 @@
       captainName.dispatchEvent(new Event('input'));
       check(app.querySelector('.captain-preview .fighter-name-text')?.textContent === 'Arthur' && app.querySelector('.captain-preview .captain-crown'), 'capitaine : aperçu avec la couronne');
       button('Créer le capitaine et commencer', app).click();
-      await wait(10);
+      await wait(30);
       const created = services.gameState.session;
+      // v0.81 : la partie commence au Bourg, sous le tutoriel du tavernier ; on le passe ici
+      // (parcours complet plus bas), puis on ouvre La Compagnie.
+      const tutoAtStart = window.behourd.screens.currentId === 'borough' && Boolean(document.querySelector('.tutorial-layer .tutorial-bubble'))
+        && /\(1\/3\)/.test(document.querySelector('.tutorial-chapter')?.textContent ?? '');
+      button('Passer le tutoriel', document.querySelector('.tutorial-bubble'))?.click();
+      await wait(30);
+      check(tutoAtStart && !document.querySelector('.tutorial-layer') && !document.body.classList.contains('has-tutorial') && window.behourd.screens.currentId === 'centre',
+        'création : la partie s’ouvre au Bourg avec le tutoriel (1/3) ; « Passer le tutoriel » le referme et mène au Centre');
+      button('La Compagnie', app.querySelector('.hub-nav')).click();
+      await wait(10);
       const arthur = created?.playerFighters[0];
       check(created && arthur.name === 'Arthur' && arthur.isCaptain === true && arthur.specialtyId === 'hastier' && arthur.spriteId === chosenSprite, 'capitaine : premier membre de l’effectif, nom, spécialité et sprite choisis');
       check(arthur.age === 21 && arthur.potential >= 2 && ['wrestling', 'polearm', 'percussion', 'endurance'].every((s) => arthur.stats[s] >= 15 && arthur.stats[s] <= 35) && arthur.stats.hp === 150 && arthur.stats.fatigue === 0, 'capitaine : 21 ans, potentiel ≥ 2, compétences 15–35, PV et fatigue habituels');
@@ -6293,6 +6303,105 @@
           && new Set(draws.map((e) => e.patternId)).size > 5 && new Set(draws.map((e) => e.colors.primary)).size > 5
           && shown && shown.outerHTML.includes(MENU_EMBLEM.resolvedColors().primary),
           `écran principal : emblème tiré au hasard (partition « ${MENU_EMBLEM.patternId} », ${colors.join(', ')}) — partition et trois couleurs distinctes`);
+      }
+
+      // ---------- v0.81 : tutoriel du tavernier ----------
+      {
+        const TU = await import('../src/ui/tutorial/Tutorial.js');
+        const { TUTORIAL_STEPS: steps, TUTORIAL_CHAPTERS: chapters } = await import('../src/data/tutorial.js');
+        check(chapters.length === 3 && steps.every((st) => chapters.some((c) => c.id === st.chapter)) && steps.at(-1).advance === 'next'
+          && steps.filter((st) => st.advance !== 'next').every((st) => st.action && st.target)
+          && chapters.every((c, i) => steps.findIndex((st) => st.chapter === c.id) > (i ? steps.findIndex((st) => st.chapter === chapters[i - 1].id) : -1)),
+          'tutoriel : trois étapes dans l’ordre, chaque bulle « à cliquer » a sa consigne et sa zone, la dernière se termine par un bouton');
+        const tg = createRandomGame({ rng: createRng('tutoriel-tavernier') });
+        services.gameState.setSession(tg);
+        const day0 = tg.calendar.currentDay;
+        window.behourd.screens.show('borough', { justCreated: true, tutorial: true });
+        await wait(80);
+        const bubble = () => document.querySelector('.tutorial-bubble');
+        const veils = [...document.querySelectorAll('.tutorial-veil')];
+        const portrait = bubble()?.querySelector('img.tutorial-portrait');
+        await portrait?.decode().catch(() => {});
+        check(TU.isTutorialActive() && window.behourd.screens.currentId === 'borough' && veils.length === 4
+          && /blur/.test(getComputedStyle(veils[0]).backdropFilter || getComputedStyle(veils[0]).webkitBackdropFilter || '')
+          && portrait?.getAttribute('src').endsWith('tavernier.webp') && portrait.naturalWidth > 0
+          && button('Passer le tutoriel', bubble()) && button('Suivant', bubble()) && !button('Terminer', bubble()),
+          'tutoriel : sur-couche au Bourg — jeu flouté, portrait du tavernier, « Passer le tutoriel » et « Suivant » (pas encore « Terminer »)');
+        // Hors de la zone, rien ne répond (voiles par-dessus le jeu ; un clic, même synthétique, est arrêté).
+        app.querySelector('[data-hub-item="centre"]').click();
+        await wait(20);
+        const veilStyle = getComputedStyle(veils[0]);
+        check(window.behourd.screens.currentId === 'borough' && TU.getTutorialState().stepId === 'welcome' && veilStyle.pointerEvents === 'auto' && veilStyle.position === 'fixed'
+          && Number(getComputedStyle(document.querySelector('.tutorial-layer')).zIndex) > 100,
+          'tutoriel : le reste du jeu ne répond pas aux clics (« Le Centre » sans effet)');
+        // Parcours complet : « Suivant », ou le clic demandé.
+        const seen = [];
+        let finishEarly = false;
+        let blockedOther = null;
+        let wrongTile = null;
+        let watched = false;
+        let skipAlways = true;
+        for (let guard = 0; guard < 40 && TU.isTutorialActive(); guard++) {
+          const st = TU.getTutorialState();
+          const step = steps[st.index];
+          seen.push(`${st.chapter}:${step.id}@${window.behourd.screens.currentId}`);
+          skipAlways &&= Boolean(button('Passer le tutoriel', bubble()));
+          const finish = bubble().querySelector('.tutorial-finish');
+          if (finish && st.index < steps.length - 1) finishEarly = true;
+          if (step.advance === 'next') {
+            (finish ?? bubble().querySelector('.tutorial-next')).click();
+          } else if (step.advance === 'click') {
+            if (step.id === 'company-button') {
+              // Seule la zone demandée répond : « La Ligue » reste sans effet.
+              app.querySelector('[data-hub-item="league"]').click();
+              await wait(10);
+              blockedOther = window.behourd.screens.currentId === 'borough' && TU.getTutorialState().stepId === 'company-button' && !bubble().querySelector('.tutorial-next');
+            }
+            [...document.querySelectorAll(step.target)].find((el) => el.getBoundingClientRect().width).click();
+            if (step.watch) {
+              // Après le « + » : 2 s pour voir les combattants rejoindre la Petite lice, bulle effacée.
+              await wait(step.watch.ms / 2);
+              watched = TU.getTutorialState().stepId === step.id && bubble().hidden && !document.querySelector('.tutorial-ring').classList.contains('is-click');
+              await wait(step.watch.ms / 2 + 60);
+            }
+          } else if (step.advance === 'select') {
+            const scr = window.behourd.screens.current;
+            const at = (gx, gy) => {
+              const rect = scr.canvas.getBoundingClientRect();
+              const pt = scr.renderer.toScreen(gx, gy);
+              return { clientX: rect.left + pt.x, clientY: rect.top + pt.y, bubbles: true };
+            };
+            scr.canvas.dispatchEvent(new MouseEvent('click', at(4, 3))); // le Banquet : refusé
+            await wait(10);
+            wrongTile = TU.getTutorialState().stepId === 'lice' && scr.selectedActivityId !== 'banquet';
+            scr.canvas.dispatchEvent(new MouseEvent('click', at(10.5, 2.5)));
+          }
+          await wait(40);
+        }
+        const order = seen.map((x) => x.split(':')[0]).join('');
+        check(!TU.isTutorialActive() && seen.length === steps.length && /^1+2+3+$/.test(order) && !finishEarly && skipAlways
+          && !document.querySelector('.tutorial-layer') && !document.body.classList.contains('has-tutorial'),
+          `tutoriel : (1/3) → (2/3) → (3/3), « Passer » toujours là, « Terminer » seulement à la fin, puis le calque disparaît (${seen.length} bulles${seen.length === steps.length ? '' : ` : ${seen.join(' ')}`})`);
+        check(seen.some((x) => x.endsWith('roles@team')) && seen.some((x) => x.endsWith('centre@centre')) && seen.some((x) => x.endsWith('recruits@tavern')) && blockedOther,
+          'tutoriel : on clique soi-même « La Compagnie », « Le Centre », « La Taverne » — les autres boutons restent bloqués');
+        check(wrongTile && tg.playerFighters.some((f) => f.activityId === 'lice'),
+          'tutoriel : clic sur la Petite lice demandé (un autre lieu de la carte ne compte pas), puis le bouton « + » y envoie des combattants');
+        check(watched, 'tutoriel : après le « + », 2 secondes pour regarder les combattants partir vers la Petite lice, puis la bulle suivante');
+        check(tg.calendar.currentDay === day0 && window.behourd.screens.currentId === 'centre',
+          'tutoriel : la journée ne passe jamais pendant le tutoriel ; « Terminer » ramène au Centre');
+        // Passer à tout moment ; quitter le domaine (menu principal) l'arrête aussi.
+        window.behourd.screens.show('centre', { tutorial: true });
+        await wait(40);
+        const startedAgain = TU.isTutorialActive();
+        button('Passer le tutoriel', bubble()).click();
+        await wait(10);
+        const skipped = !TU.isTutorialActive() && !document.querySelector('.tutorial-layer') && window.behourd.screens.currentId === 'centre';
+        TU.startTutorial();
+        await wait(20);
+        window.behourd.screens.show('main-menu', {});
+        await wait(40);
+        check(startedAgain && skipped && !TU.isTutorialActive() && !document.querySelector('.tutorial-layer'),
+          'tutoriel : « Passer le tutoriel » le referme aussitôt ; il s’arrête aussi en quittant le domaine');
       }
 
       // ---------- v0.79 : langues — français, anglais, espagnol ----------

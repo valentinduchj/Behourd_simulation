@@ -202,6 +202,7 @@ export class NewCaptainScreen extends BaseScreen {
       return;
     }
     this.services.gameState.setSession(session);
-    this.navigate(SCREENS.TEAM, { justCreated: true });
+    // v0.81 : la partie commence au Bourg, avec le tutoriel du tavernier.
+    this.navigate(SCREENS.BOROUGH, { justCreated: true, tutorial: true });
   }
 }

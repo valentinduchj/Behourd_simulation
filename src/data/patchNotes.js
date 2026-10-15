@@ -30,6 +30,13 @@ export const PATCH_NOTE_SECTIONS = Object.freeze([
 // majeure qui la contient.
 export const PATCH_MILESTONES = Object.freeze([
   {
+    version: '0.9',
+    title: 'Premiers pas',
+    newFeatures: [
+      'Un tutoriel en trois étapes : le tavernier fait visiter le domaine à chaque nouvelle partie — combattants, Centre, Taverne, fil des jours.',
+    ],
+  },
+  {
     version: '0.8',
     title: 'Entraînement, succès et son',
     newFeatures: [
@@ -122,6 +129,28 @@ export const PATCH_MILESTONES = Object.freeze([
 ]);
 
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '0.81.1',
+    date: '2026-10-15',
+    title: 'Le tutoriel, retouché',
+    improvements: [
+      'Après un clic sur « + » à la Petite lice, le tutoriel laisse 2 secondes pour voir les combattants s’y rendre.',
+      'La fin du tutoriel (Terminer ou Passer) ramène au Centre.',
+    ],
+    graphics: [
+      'Le portrait du tavernier est nettement plus grand dans les bulles du tutoriel.',
+    ],
+  },
+  {
+    version: '0.81.0',
+    date: '2026-10-15',
+    title: 'Le tavernier fait visiter',
+    newFeatures: [
+      'Tutoriel de début de partie : une fois la compagnie et le capitaine créés, la partie commence au Bourg et le tavernier guide le joueur en trois étapes — (1/3) les combattants et le Centre, (2/3) la Taverne et les recrues, (3/3) le fil des jours.',
+      'Le tutoriel se pose sur le jeu : la zone expliquée reste nette, le reste est légèrement flouté et ne répond pas aux clics. Certaines bulles demandent un clic (« La Compagnie », la Petite lice, le bouton « + », « La Taverne »).',
+      '« Passer le tutoriel » à tout moment ; « Terminer » une fois les trois étapes vues. Le tutoriel ne fait jamais passer la journée.',
+    ],
+  },
   {
     version: '0.80.0',
     date: '2026-10-15',

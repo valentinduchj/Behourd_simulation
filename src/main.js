@@ -14,6 +14,7 @@ import { AdminAuth } from './admin/AdminAuth.js';
 import { registerScreens } from './ui/screens/registerScreens.js';
 import { closeAllModals } from './ui/components/Modal.js';
 import { installAchievementNotifier } from './ui/hub/achievementNotifier.js';
+import { installTutorial } from './ui/tutorial/Tutorial.js';
 import { audio } from './audio/AudioEngine.js';
 import { audioDirector } from './audio/AudioDirector.js';
 import { setLanguage, readStoredLanguage, installDomTranslation, installCanvasTranslation, translateDocument } from './i18n/i18n.js';
@@ -55,6 +56,8 @@ async function boot() {
 
   const screens = new ScreenManager(document.getElementById('app'), services, { beforeShow: (id, params) => { closeAllModals(); audioDirector.onScreen(id, params); } });
   registerScreens(screens);
+  // Tutoriel (v0.81) : sur-couche qui suit le joueur d'un écran à l'autre.
+  installTutorial(screens);
   screens.show(SCREENS.MAIN_MENU);
   audio.tryAutoplay();
 

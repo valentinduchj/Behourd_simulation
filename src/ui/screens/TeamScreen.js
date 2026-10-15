@@ -3,7 +3,6 @@ import { SPECIALTIES, SPECIALTY_IDS } from '../../data/specialties.js';
 import { HubScreen } from './HubScreen.js';
 import { FighterCard } from '../components/FighterCard.js';
 import { openFighterSheet } from '../components/FighterSheet.js';
-import { showToast } from '../components/Toast.js';
 import { getRosterSize, isRosterFull } from '../../systems/roster/RosterService.js';
 import { ClubHistory } from '../components/ClubHistory.js';
 
@@ -51,9 +50,6 @@ export class TeamScreen extends HubScreen {
 
   mounted() {
     super.mounted();
-    if (this.params.justCreated) {
-      showToast(`${this.session.playerFighters.length} combattants ont rejoint ${this.team.name} !`, 'success');
-    }
   }
 
   openSheet(fighter) {
