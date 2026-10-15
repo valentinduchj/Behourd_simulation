@@ -26,6 +26,7 @@ import { SpecialtyBadge } from '../components/SpecialtyBadge.js';
 import { openModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { audioDirector, buildCombatCues, playCombatCues } from '../../audio/AudioDirector.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 const HINT = 'Cliquez sur le Marshal (tenue jaune rayée) pour préparer un combat d’entraînement. Le chemin de droite ramène au Centre.';
 
@@ -36,7 +37,7 @@ const HINT = 'Cliquez sur le Marshal (tenue jaune rayée) pour préparer un comb
  * détaillé facultatif (ui/report/trainingJournal.js).
  */
 export class TrainingScreen extends HubScreen {
-  static hubLocationId = 'centre';
+  static hubLocationId = 'training';
 
   renderContent() {
     this.arena ??= createArena();
@@ -396,7 +397,7 @@ export class TrainingScreen extends HubScreen {
       this.journalList.append(h(
         'li',
         { class: `journal-entry is-${entry.kind} tone-${entry.tone}${entry.side ? ` side-${entry.side.toLowerCase()}` : ''}`, 'data-kind': entry.kind },
-        h('p', { class: 'journal-title' }, h('span', { class: 'journal-time' }, `[${entry.time.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s]`), ' ', entry.title),
+        h('p', { class: 'journal-title' }, h('span', { class: 'journal-time' }, `[${entry.time.toLocaleString(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} s]`), ' ', entry.title),
         entry.lines.length ? h('ul', { class: 'journal-lines' }, entry.lines.map((line) => h('li', {}, line))) : null,
       ));
     }

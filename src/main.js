@@ -16,8 +16,15 @@ import { closeAllModals } from './ui/components/Modal.js';
 import { installAchievementNotifier } from './ui/hub/achievementNotifier.js';
 import { audio } from './audio/AudioEngine.js';
 import { audioDirector } from './audio/AudioDirector.js';
+import { setLanguage, readStoredLanguage, installDomTranslation, installCanvasTranslation, translateDocument } from './i18n/i18n.js';
 
 async function boot() {
+  // Langue (v0.79) : français par défaut ; anglais ou espagnol traduits à l'affichage.
+  await setLanguage(readStoredLanguage(), { store: false });
+  installCanvasTranslation();
+  installDomTranslation(document.body);
+  translateDocument();
+
   const storage = new StorageBackend(GAME_CONFIG.storage.prefix);
 
   // Données statiques chargées avant tout écran : clubs de l'IA (data/leagues/*.json).

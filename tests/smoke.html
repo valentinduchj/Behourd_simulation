@@ -1306,20 +1306,22 @@
       const { PATCH_MILESTONES: pnMilestones } = await import('../src/data/patchNotes.js');
       const pnMajor = PNS.getDisplayedMilestones({ currentVersion: pnConfig.version });
       const pnSix = pnMajor.find((m) => m.version === '0.6');
+      // La majeure n'est plus « en cours » une fois sa version ronde atteinte (0.80.0 clôt 0.8).
+      const pnOngoing = Number(pnConfig.version.split('.')[1]) % 10 !== 0;
       const pnIds = new Set(pnMilestones.map((m) => m.version));
       check(['0.40.0', '0.41.0', '0.50.0', '0.51.0', '0.60.1', '0.61.0', '0.70.0', '0.71.0', '0.100.0'].map(PNS.getMilestoneId).join() === '0.4,0.5,0.5,0.6,0.6,0.7,0.7,0.8,0.10'
           && PNS.shortVersion('0.51.0') === '0.51' && PNS.shortVersion('0.60.1') === '0.60.1',
         'patch notes : chaque version majeure regroupe les versions qui la précèdent (0.6 = 0.51 à 0.60.x)');
       check(pnMajor.map((m) => m.version).join() === '0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
-          && pnMajor[0].inProgress && pnMajor[0].isCurrent && pnMajor.filter((m) => m.isCurrent).length === 1
+          && pnMajor[0].inProgress === pnOngoing && pnMajor[0].isCurrent && pnMajor.filter((m) => m.isCurrent).length === 1
           && pnData.every((n) => pnIds.has(PNS.getMilestoneId(n.version)))
           && pnMajor.every((m) => m.sections.length && m.sections.reduce((s, x) => s + x.items.length, 0) <= 10),
-        `patch notes : seules les versions majeures (${pnMajor.map((m) => m.version).join(', ')}), la plus récente « en cours » ; chaque version détaillée a sa majeure ; 10 grosses évolutions au plus par majeure`);
+        `patch notes : seules les versions majeures (${pnMajor.map((m) => m.version).join(', ')}), la plus récente « en cours » tant que sa version ronde n’est pas atteinte ; chaque version détaillée a sa majeure ; 10 grosses évolutions au plus par majeure`);
       const { openPatchNotes: pnOpen } = await import('../src/ui/components/PatchNotesModal.js');
       const pnModal = pnOpen({ currentVersion: pnConfig.version });
       await wait(10);
       const pnArticles = [...document.querySelectorAll('.patch-notes-modal .patch-note')];
-      check(pnArticles.length === 5 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.8' && /En cours/.test(pnArticles[0].textContent)
+      check(pnArticles.length === 5 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.8' && /En cours/.test(pnArticles[0].textContent) === pnOngoing
           && /Regroupe les versions 0\.51 à 0\.60\.1/.test(pnArticles.find((a) => a.dataset.version === '0.6').textContent)
           && !pnArticles.some((a) => /^0\.\d+\.\d+$/.test(a.dataset.version)),
         'patch notes : la fenêtre n’affiche que les versions majeures, avec les versions qu’elles regroupent');
@@ -2564,7 +2566,7 @@
       const { ARTISAN_SPRITES: lcArtisans } = await import('../src/data/spectators.js');
       const { ALMANAC_ARTICLES: lcAlmanac } = await import('../src/data/almanac/index.js');
       const lcAlmanacText = JSON.stringify(lcAlmanac);
-      check(!Object.values(lcScreens).includes('my-lice') && !lcHub.some((l) => /lice/i.test(`${l.id} ${l.label}`)) && !lcArtisans.some((s) => s.id === 'artisan_master')
+      check(!Object.values(lcScreens).includes('my-lice') && !lcHub.some((l) => /lice/i.test(l.id) || (/lice/i.test(l.label) && l.screen !== lcScreens.TRAINING)) && !lcArtisans.some((s) => s.id === 'artisan_master')
         && !lcAlmanac.some((a) => a.id === 'ma-lice') && !/Ma Lice|ma-lice|maître d’œuvre|maître d'œuvre/.test(lcAlmanacText),
         'suppression : plus d’écran « Ma Lice », ni d’accès, ni de maître d’œuvre (sprite, données) ; absents de l’Almanach');
       // ---------- Manche : niveau des 5 engagés ----------
@@ -4230,9 +4232,21 @@
       // Le Bourg dans l'interface.
       afterMatch.player.resources.deniers = 250;
       // On s'y rend à pied : Centre, puis le chemin du sud-est (bas-droite).
-      const navLabels = [...app.querySelectorAll('.hub-nav .hub-nav-item .hub-nav-label')].map((el) => el.textContent);
-      check(navLabels.join() === 'La Compagnie,Le Centre,La Ligue', `navigation : la colonne ne propose plus que les interfaces globales et l’entrée au Centre (${navLabels.join(', ')})`);
-      button('Le Centre', app.querySelector('.hub-nav')).click();
+      // v0.80 : deux encarts — Ma compagnie (Compagnie, Coffre, Ligue) et Le domaine (Centre, Bourg, Taverne, Ma Lice, Scriptorium).
+      const navGroups = [...app.querySelectorAll('.hub-nav')].map((nav) => [...nav.querySelectorAll('.hub-nav-item .hub-nav-label')].map((el) => el.textContent).join());
+      check(navGroups.join(' | ') === 'La Compagnie,Le Coffre,La Ligue | Le Centre,Le Bourg,La Taverne,Ma Lice,Le Scriptorium', `navigation : deux encarts, Ma compagnie et Le domaine (${navGroups.join(' | ')})`);
+      // v0.80 : chaque lieu du domaine s'ouvre d'un clic depuis la colonne, sans passer par la carte.
+      const navVisits = [];
+      for (const [label, id] of [['Le Bourg', 'borough'], ['La Taverne', 'tavern'], ['Ma Lice', 'training'], ['Le Scriptorium', 'scriptorium']]) {
+        button(label, app.querySelector('.hub-nav-domain')).click();
+        await wait(20);
+        const active = app.querySelector('.hub-nav-domain .hub-nav-item.is-active .hub-nav-label')?.textContent;
+        navVisits.push(`${window.behourd.screens.currentId}/${active}`);
+        check(window.behourd.screens.currentId === id && active === label, `navigation : « ${label} » ouvre directement l’écran ${id}, bouton surligné (${navVisits.at(-1)})`);
+      }
+      check(Boolean(app.querySelector('.hub-nav-company .hub-chest .hub-chest-count')) && app.querySelector('.hub-nav-company .hub-nav-title')?.textContent === 'Ma compagnie' && app.querySelector('.hub-nav-domain .hub-nav-title')?.textContent === 'Le domaine',
+        'navigation : le Coffre est rangé dans l’encart « Ma compagnie », titres des deux encarts');
+      button('Le Centre', app.querySelector('.hub-nav-domain')).click();
       await wait(30);
       const exitPoint = (scr, gx, gy) => {
         const r = scr.canvas.getBoundingClientRect();
@@ -4287,7 +4301,7 @@
       await wait(10);
       const uiTired = afterMatch.playerFighters[1];
       uiTired.stats.fatigue = 45;
-      app.querySelector('.hub-chest').click();
+      app.querySelector('[data-hub-item="chest"]').click();
       await wait(10);
       const chestItem = () => modal().querySelector('.chest-item[data-item="pain_meteil"]');
       check(modal().querySelector('.modal-title').textContent === 'Le Coffre' && modal().querySelectorAll('.chest-item').length === 1 && chestItem().querySelector('.chest-item-qty').textContent === '×2' && chestItem().querySelector('img.item-image'),
@@ -4378,7 +4392,7 @@
       // ---------- La Taverne dans l'interface : scène, survol, fiche, tavernier ----------
       afterMatch.player.resources.deniers = 5000;
       afterMatch.tavernLevel = 1;
-      button('Le Centre', app.querySelector('.hub-nav')).click();
+      button('Le Centre', app.querySelector('.hub-nav-domain')).click();
       await wait(30);
       const navCentre2 = window.behourd.screens.current;
       navCentre2.drawFrame();
@@ -6235,6 +6249,107 @@
           && options.filter((o) => o.disabled).length === options.length - 2 && !options.find((o) => o.value === 'banquet').disabled
           && block && /Courbatures du lendemain/.test(block.textContent) && /envoyés? d’office au Banquet/.test(block.textContent),
           'fatigue : dans le Centre, colonne Fatigue colorée et lieux fermés à l’épuisé ; bilan des courbatures en fin de combat');
+      }
+
+      // ---------- v0.77 : Options en jeu (encart Succès / Sauvegarder / Menu principal) ----------
+      {
+        const { SETTINGS_SCHEMA: schema77 } = await import('../src/data/settingsSchema.js');
+        const og = createRandomGame({ rng: createRng('options-en-jeu') });
+        services.gameState.setSession(og);
+        window.behourd.screens.show('centre', {});
+        await wait(30);
+        const card = app.querySelector('.hub-actions');
+        const labels = [...card.querySelectorAll('button')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
+        card.querySelector('.hub-options').click();
+        await wait(20);
+        const dlg = document.querySelector('.options-modal');
+        const sections = dlg ? dlg.querySelectorAll('.options-section').length : 0;
+        const key = 'audio.muted';
+        const before = services.settings.get(key);
+        services.settings.set(key, !before);
+        const applied = services.settings.get(key) === !before;
+        services.settings.set(key, before);
+        [...dlg.querySelectorAll('.modal-actions button')].find((b) => b.textContent === 'Fermer').click();
+        await wait(20);
+        check(labels.some((t) => /^⚙ Options$/.test(t)) && labels.findIndex((t) => /Options/.test(t)) === labels.findIndex((t) => /Succès/.test(t)) + 1
+          && labels.includes('Sauvegarder') && labels.includes('Menu principal')
+          && sections === schema77.length && !dlg.querySelector('.options-admin') && applied
+          && !document.querySelector('.options-modal') && services.gameState.session === og && app.querySelector('.hub-actions'),
+          'options en jeu : bouton « Options » avec Succès, Sauvegarder et Menu principal ; mêmes réglages qu’au menu (sans le module Admin), dans une fenêtre — la partie reste ouverte');
+      }
+
+      // ---------- v0.78 : emblème de l'écran principal tiré au hasard à chaque ouverture ----------
+      {
+        const { MENU_EMBLEM } = await import('../src/ui/screens/MainMenuScreen.js');
+        const { EMBLEM_PATTERNS: patterns78 } = await import('../src/data/emblemPatterns.js');
+        const { PALETTE: palette78 } = await import('../src/data/palette.js');
+        const { createRandomEmblem: rnd78 } = await import('../src/systems/game/teamFactory.js');
+        const colors = Object.values(MENU_EMBLEM.colors);
+        const draws = Array.from({ length: 30 }, (_, i) => rnd78(createRng(`menu-${i}`)));
+        window.behourd.screens.show('main-menu', {});
+        await wait(30);
+        const shown = app.querySelector('.main-menu-emblem');
+        check(patterns78.some((p) => p.id === MENU_EMBLEM.patternId) && new Set(colors).size === 3 && colors.every((c) => palette78.some((p) => p.id === c))
+          && new Set(draws.map((e) => e.patternId)).size > 5 && new Set(draws.map((e) => e.colors.primary)).size > 5
+          && shown && shown.outerHTML.includes(MENU_EMBLEM.resolvedColors().primary),
+          `écran principal : emblème tiré au hasard (partition « ${MENU_EMBLEM.patternId} », ${colors.join(', ')}) — partition et trois couleurs distinctes`);
+      }
+
+      // ---------- v0.79 : langues — français, anglais, espagnol ----------
+      {
+        const I = await import('../src/i18n/i18n.js');
+        const { STRINGS: EN } = await import('../src/i18n/en.js');
+        const { STRINGS: ES } = await import('../src/i18n/es.js');
+        // Moteur : texte exact, phrase à trous (ordre libre, accord), bords, séparateurs, noms propres.
+        await I.setLanguage('en', { store: false, dictionary: {
+          'Banquet': 'Feast', 'Le Centre': 'The Centre', '{0} est épuisé (fatigue {1})': 'Exhausted ({1}): {0}',
+          '{0} combattant{1}': '{0} fighter{1?s:}', 'Victoire {0} !': 'Victory for {0}!', 'Capitaine : {0}': 'Captain: {0}',
+          'Été': 'Summer', 'hors combat': 'outside combat', 'pendant le placement': 'during placement', '{0} sur {1}': '{0} out of {1}',
+          'Les classements et trophées': 'Rankings and trophies',
+        } });
+        const tt = I.translateText;
+        const engineOk = [
+          tt('Banquet') === 'Feast', tt('  Banquet ') === '  Feast ', tt('🍗 Banquet ›') === '🍗 Feast ›',
+          tt('Thierry est épuisé (fatigue 72)') === 'Exhausted (72): Thierry', tt('3 combattants') === '3 fighters', tt('1 combattant') === '1 fighter',
+          tt('Le Centre · Été') === 'The Centre · Summer', tt('hors combat et pendant le placement') === 'outside combat and during placement',
+          tt('Victoire Les Loups de Lille !') === 'Victory for Les Loups de Lille!', tt('Les Loups de Lille') === 'Les Loups de Lille',
+          tt('Banquet (Été)') === 'Feast (Summer)', tt('🏆 Les classements et trophées') === '🏆 Rankings and trophies',
+          tt('Capitaine : Arnaud · Été') === 'Captain: Arnaud · Summer', tt('2 sur 3') === '2 out of 3',
+        ];
+        check(engineOk.every(Boolean), `langues : moteur de traduction (texte exact, trous, accords, icônes, séparateurs, noms propres gardés) — ${engineOk.map((ok, i) => (ok ? '' : i)).filter((x) => x !== '').join(',') || 'tout bon'}`);
+        // Dictionnaires : mêmes phrases en anglais et en espagnol, trous et balises de l'Almanach préservés.
+        const holes = (text) => [...text.matchAll(/\{(\d+)(?:\?[^}]*)?\}/g)].map((m) => m[1]);
+        const tags = (text) => [...text.matchAll(/\{\{[^}]+\}\}|\[\[[^\]|]+/g)].map((m) => m[0]).sort().join();
+        const consistent = (dict) => Object.entries(dict).every(([fr, tr]) => holes(tr).every((n) => holes(fr).includes(n)) && tags(fr) === tags(tr));
+        check(Object.keys(EN).length > 2400 && Object.keys(EN).length === Object.keys(ES).length && consistent(EN) && consistent(ES)
+          && EN['Passer la journée ▸'] === 'End the day ▸' && ES['Jouer'] === 'Jugar' && EN['Le Bourg'] === 'The Town',
+          `langues : dictionnaires anglais et espagnol complets (${Object.keys(EN).length} phrases), trous et balises préservés`);
+        // Écran principal : drapeau en haut à droite, trois langues, bascule et mémorisation.
+        await I.setLanguage('fr', { store: false });
+        window.behourd.screens.show('main-menu', {});
+        await wait(30);
+        const picker = app.querySelector('.language-picker');
+        picker.querySelector('.language-toggle').click();
+        const options = [...picker.querySelectorAll('.language-option')].map((b) => b.dataset.language).join();
+        picker.querySelector('[data-language="en"]').click();
+        await wait(150);
+        const playEn = [...app.querySelectorAll('.main-menu button')].map((b) => b.textContent);
+        const storedEn = localStorage.getItem('behourd.language');
+        const locale = I.currentLocale();
+        const htmlLang = document.documentElement.lang;
+        app.querySelector('.language-toggle').click();
+        app.querySelector('[data-language="es"]').click();
+        await wait(150);
+        const playEs = app.querySelector('.main-menu button')?.textContent;
+        app.querySelector('.language-toggle').click();
+        app.querySelector('[data-language="fr"]').click();
+        await wait(150);
+        const playFr = app.querySelector('.main-menu button')?.textContent;
+        check(picker && options === 'fr,en,es' && playEn.join() === 'Play,Load,Options,Quit game' && storedEn === 'en' && locale === 'en-GB' && htmlLang === 'en'
+          && playEs === 'Jugar' && playFr === 'Jouer' && localStorage.getItem('behourd.language') === 'fr' && I.getLanguage() === 'fr'
+          && CanvasRenderingContext2D.prototype.fillText.name === 'translated',
+          'langues : drapeau en haut à droite de l’écran principal, français / anglais / espagnol, bascule immédiate et mémorisée (français par défaut) ; texte des cartes traduit aussi');
+        localStorage.removeItem('behourd.language');
       }
     } catch (error) {
       lines.push(`ERROR ${error.stack ?? error}`);

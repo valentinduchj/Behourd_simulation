@@ -119,6 +119,38 @@ Le joueur suit son club, et le carnet de bord annonce le résultat.
 
 Une journée de championnat sautée par l'avance rapide (Admin › Temps) est disputée automatiquement.
 
+## Colonne de droite : deux encarts (v0.80.0)
+
+- **Ma compagnie** : La Compagnie (vos combattants), Le Coffre (inventaire, en fenêtre), La Ligue (classement).
+- **Le domaine** : Le Centre, Le Bourg, La Taverne, Ma Lice, Le Scriptorium — chaque lieu s'ouvre d'un clic, sans passer par la carte ; les chemins et les portes des cartes restent le moyen de s'y rendre « à pied ». Le bouton du lieu affiché est surligné.
+- **Données** : `src/ui/hub/hubLocations.js` (`HUB_NAV_GROUPS`) ; un bouton mène à un écran (`screen`) ou ouvre une fenêtre (`action`).
+
+## Trois langues : français, anglais, espagnol (v0.79.0)
+
+- **Choix de la langue** : drapeau en haut à droite de l'écran principal ; au clic, la liste Français / English / Español, chaque langue avec son drapeau. Le choix s'applique aussitôt (l'écran se redessine) et il est retenu (`localStorage`, clé `behourd.language`). Par défaut : français.
+- **Principe** : le jeu reste écrit en français. Une couche de traduction (`src/i18n/i18n.js`) remplace à l'affichage chaque texte français par sa traduction, lue dans `src/i18n/en.js` et `src/i18n/es.js` (`{ « texte français » : « traduction » }`, 2 590 phrases chacune) :
+  - l'interface HTML : textes et attributs (`title`, `aria-label`, `placeholder`, `alt`), suivis par un `MutationObserver` — fenêtres, bulles, carnet de bord compris ;
+  - le texte dessiné sur les cartes (canvas : étiquettes des lieux, dégâts…) : `fillText`, `strokeText`, `measureText` passent par la traduction ;
+  - les textes enrichis de l'Almanach : traduits en entier avant d'être découpés (gras, liens, valeurs des règles).
+- **Phrases à trous** : un texte composé par le code (« Thierry est épuisé (fatigue 72) ») est reconnu grâce à sa forme française (« {0} est épuisé (fatigue {1}) ») ; la traduction place les trous où il faut et peut accorder (`{1?s:}`). Les morceaux assemblés (« · », « — », « : », « et »…) sont traduits un par un.
+- **Noms propres** : jamais traduits — combattants, clubs, villes, châteaux, lieux, régions, titres des musiques, Béhourd, Coupe de France. Les pays d'Europe prennent leur nom dans la langue (« Spain », « España »).
+- **Nombres et dates** : au format de la langue (`currentLocale()` : « 1 250 » / « 1,250 » / « 1.250 », « 14 octobre 2026 » / « 14 October 2026 »). Rangs : « 1er » / « 1st » / « 1.º ».
+- **Glossaire** (à valider) : Lutteur / Hastier / Runner → Wrestler / Halberdier / Runner, Luchador / Alabardero / Corredor ; la Lice → the Lists, la Liza ; le Bourg → the Town, el Burgo ; deniers → deniers, denarios ; Combat de la Reine → Queen's Combat, Combate de la Reina ; Ligue 1 → League 1, Liga 1.
+- **Ajouter du texte** : on écrit le jeu en français comme avant, puis `py -I tools/i18n/missing.py` liste les phrases sans traduction ; on les ajoute à `en.js` et `es.js`.
+- **Contrôle** : un parcours automatique du jeu en anglais puis en espagnol (menus, Centre, Bourg, Taverne, Scriptorium, lice d'entraînement, Almanach complet, carnet de bord, combats, Coupe) ne laisse aucune phrase française en dehors des noms propres.
+
+## Emblème de l'écran principal (v0.78.0)
+
+- À chaque ouverture de la page, l'emblème au-dessus du titre est tiré au hasard : une des 15 partitions et trois couleurs distinctes de la palette (`createRandomEmblem`, le même tirage que les clubs ; `MENU_EMBLEM` dans `ui/screens/MainMenuScreen.js`).
+- Il reste le même tant que la page est ouverte (retour au menu principal compris) ; un rechargement en tire un nouveau.
+
+## Options en jeu (v0.77.0)
+
+- **Bouton « ⚙ Options »** dans l'encart de la colonne de droite, entre « Succès » et « Sauvegarder » (au-dessus de « Menu principal »), sur tous les écrans du domaine.
+- **Une fenêtre**, pas un changement d'écran : la partie reste ouverte et chaque réglage s'applique aussitôt (enregistré automatiquement). « Réinitialiser » (après confirmation) et « Fermer ».
+- **Mêmes réglages** que l'écran Options du menu principal : les deux partagent `OptionsSections` (`ui/screens/OptionsScreen.js`), générées depuis `data/settingsSchema.js`. Fenêtre : `ui/components/OptionsModal.js`.
+- **Sans le module Admin** en jeu : il quitte la partie ; il reste accessible depuis les Options du menu principal.
+
 ## Mesure d'audience (v0.76.1)
 
 - **Balise Google** (gtag.js, identifiant `G-CNGBN6LNEW`) placée juste après `<head>` dans `index.html`. Elle se charge depuis googletagmanager.com à chaque ouverture du jeu, en ligne comme en local (lanceur), et ne touche à rien d'autre ; la page de tests (`tests/smoke.html`) ne la charge pas.
@@ -1839,6 +1871,9 @@ src/
   - indicateur sur 30 jours (bilan net), élagage de l'historique, persistance, âge +1 par saison ;
   - fiche de club (bouton, flèches) ;
 - les migrations ;
+- les langues (v0.79) : moteur de traduction (texte exact, trous, accords, icônes, séparateurs, noms propres gardés), dictionnaires anglais et espagnol complets et cohérents (trous et balises de l'Almanach), drapeau, bascule immédiate et mémorisée, texte des cartes ;
+- l'emblème de l'écran principal (v0.78) : partition et trois couleurs distinctes tirées au hasard, affichées ;
+- les Options en jeu (v0.77) : bouton avec Succès, Sauvegarder et Menu principal, mêmes réglages qu'au menu sans le module Admin, fenêtre (la partie reste ouverte) ;
 - les Patch Notes (v0.76) : regroupement des versions (0.6 = 0.51 à 0.60.x), seules les majeures affichées (0.8 en cours, version actuelle), chaque version détaillée rattachée, 10 évolutions au plus, fenêtre ;
 - la fatigue (v0.75) : trois états et Sang-froid, courbatures (par manche, KO, plafond de Bon vivant, une seule fois, sauvegardées), avance rapide comprise et jamais pour une fatigue suivie le temps du combat, Centre (épuisé refusé sauf au Banquet, envoyé d'office le matin, fatigué deux fois moins efficace), configurations, interface (colonne colorée, lieux grisés, bloc de fin de combat) ;
 - le son (v0.74.1) : ambiances et effets en vrais enregistrements (tous les fichiers présents, licences CC0 créditées, aucune synthèse), musique principale à l'écran principal, camp sans oiseaux en hiver ;

@@ -1,4 +1,5 @@
 import { PATCH_MILESTONES, PATCH_NOTES, PATCH_NOTES_MIN_VERSION, PATCH_NOTE_SECTIONS } from '../../data/patchNotes.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 // Patch Notes : sélection et ordre des versions affichées (sans interface).
 
@@ -90,5 +91,5 @@ export function getDisplayedMilestones({ milestones = PATCH_MILESTONES, notes = 
 export function formatPatchDate(date) {
   if (!date) return null;
   const parsed = new Date(`${date}T12:00:00`);
-  return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString(currentLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
 }

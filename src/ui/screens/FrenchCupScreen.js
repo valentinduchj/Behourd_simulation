@@ -20,6 +20,7 @@ import { EmblemView } from '../components/EmblemView.js';
 import { ClubStars } from '../components/Rating.js';
 import { openModal, confirmModal, alertModal, choiceModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 const HINT = 'Cliquez sur la Lice pour préparer votre prochain combat, ou sur le tableau de la Coupe pour voir les résultats.';
 
@@ -383,9 +384,9 @@ export class FrenchCupScreen extends BaseScreen {
         { class: entry.won ? 'is-win' : 'is-loss' },
         h('span', { class: 'cup-path-label' }, entry.label),
         h('span', {}, `${entry.forfeit ? 'Forfait' : entry.won ? 'Victoire' : 'Défaite'} ${entry.roundsWon} – ${entry.roundsLost} contre ${this.name(entry.opponentId)}`),
-        cup.rewards?.[entry.matchId] ? h('span', { class: 'cup-path-reward' }, ` · +${cup.rewards[entry.matchId].toLocaleString('fr-FR')} deniers`) : null,
+        cup.rewards?.[entry.matchId] ? h('span', { class: 'cup-path-reward' }, ` · +${cup.rewards[entry.matchId].toLocaleString(currentLocale())} deniers`) : null,
       ))),
-      getTotalRewards(cup) ? h('p', { class: 'muted cup-rule' }, `Récompenses gagnées : ${getTotalRewards(cup).toLocaleString('fr-FR')} deniers`) : null);
+      getTotalRewards(cup) ? h('p', { class: 'muted cup-rule' }, `Récompenses gagnées : ${getTotalRewards(cup).toLocaleString(currentLocale())} deniers`) : null);
   }
 
   standingsTable(rows, { compact = false } = {}) {
@@ -779,7 +780,7 @@ export class FrenchCupScreen extends BaseScreen {
       playerWon
         ? h('p', { class: 'cup-winner-note' }, 'Votre compagnie remporte la Coupe de France !')
         : h('p', { class: 'cup-winner-note' }, `Votre compagnie : ${cup.playerEliminatedAt ?? '—'}`),
-      getTotalRewards(cup) ? h('p', { class: 'muted' }, `Récompenses de la Coupe : ${getTotalRewards(cup).toLocaleString('fr-FR')} deniers`) : null,
+      getTotalRewards(cup) ? h('p', { class: 'muted' }, `Récompenses de la Coupe : ${getTotalRewards(cup).toLocaleString(currentLocale())} deniers`) : null,
       h('div', { class: 'match-actions' },
         h('button', { type: 'button', class: 'btn', onclick: () => this.openBoard('bracket') }, 'Arbre final'),
         h('button', { type: 'button', class: 'btn', onclick: () => this.openBoard('fighters') }, 'Meilleurs combattants'),

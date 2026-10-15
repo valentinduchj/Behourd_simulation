@@ -7,10 +7,45 @@ import { confirmModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { openAdminAccess } from '../admin/adminAccess.js';
 
+/**
+ * Rubriques des Options, générées depuis data/settingsSchema.js : l'écran Options (menu principal)
+ * et la fenêtre Options en jeu (v0.77, components/OptionsModal.js) partagent le même contenu.
+ * `admin` : ajoute l'accès au module Admin (écran principal seulement : il quitte la partie).
+ */
+export function OptionsSections(services, { admin = false, navigate = null } = {}) {
+  const { settings } = services;
+  return h(
+    'div',
+    { class: 'options-sections' },
+    SETTINGS_SCHEMA.map((section) =>
+      h(
+        'section',
+        { class: 'panel options-section' },
+        h('h2', { class: 'section-title' }, section.label),
+        h(
+          'div',
+          { class: 'options-list' },
+          section.settings.map((def) => SettingControl(def, settings.get(def.key), (value) => settings.set(def.key, value))),
+        ),
+      )),
+    // Administration : accès au module Admin (outil de développement, code d'accès).
+    admin
+      ? h(
+        'section',
+        { class: 'panel options-section options-admin' },
+        h('h2', { class: 'section-title' }, 'Administration'),
+        h('p', { class: 'muted' }, 'Outils de développement : clubs, statistiques, ressources, temps, sauvegardes… Un code d’accès est demandé.'),
+        h('div', { class: 'button-row' }, h('button', {
+          type: 'button', class: 'btn', onclick: () => openAdminAccess({ services, navigate }),
+        }, 'Ouvrir le module Admin')),
+      )
+      : null,
+  );
+}
+
 /** Écran Options, entièrement généré depuis data/settingsSchema.js. */
 export class OptionsScreen extends BaseScreen {
   render() {
-    const { settings } = this.services;
     return h(
       'section',
       { class: 'screen screen-options' },
@@ -20,31 +55,7 @@ export class OptionsScreen extends BaseScreen {
         h('h1', {}, 'Options'),
         h('p', { class: 'screen-subtitle' }, 'Les réglages sont enregistrés automatiquement.'),
       ),
-      h(
-        'div',
-        { class: 'options-sections' },
-        SETTINGS_SCHEMA.map((section) =>
-          h(
-            'section',
-            { class: 'panel options-section' },
-            h('h2', { class: 'section-title' }, section.label),
-            h(
-              'div',
-              { class: 'options-list' },
-              section.settings.map((def) => SettingControl(def, settings.get(def.key), (value) => settings.set(def.key, value))),
-            ),
-          )),
-        // Administration : accès au module Admin (outil de développement, code d'accès).
-        h(
-          'section',
-          { class: 'panel options-section options-admin' },
-          h('h2', { class: 'section-title' }, 'Administration'),
-          h('p', { class: 'muted' }, 'Outils de développement : clubs, statistiques, ressources, temps, sauvegardes… Un code d’accès est demandé.'),
-          h('div', { class: 'button-row' }, h('button', {
-            type: 'button', class: 'btn', onclick: () => openAdminAccess({ services: this.services, navigate: (id) => this.navigate(id) }),
-          }, 'Ouvrir le module Admin')),
-        ),
-      ),
+      OptionsSections(this.services, { admin: true, navigate: (id) => this.navigate(id) }),
       h(
         'div',
         { class: 'screen-actions' },

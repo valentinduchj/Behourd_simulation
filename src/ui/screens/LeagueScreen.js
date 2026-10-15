@@ -6,6 +6,7 @@ import { getSeasonProgress } from '../../systems/league/SeasonService.js';
 import { HubScreen } from './HubScreen.js';
 import { LeagueTable } from '../components/LeagueTable.js';
 import { openClubSheet } from '../components/ClubSheet.js';
+import { ordinal } from '../../utils/format.js';
 
 const PREVIEW_SIZE = 5;
 
@@ -41,7 +42,7 @@ export class LeagueScreen extends HubScreen {
         h('p', { class: 'eyebrow' }, this.renderSeasonLine()),
         h('h1', {}, 'Championnat'),
         h('p', { class: 'hub-page-subtitle' }, playerRow
-          ? `Votre compagnie est ${playerRow.position}${playerRow.position === 1 ? 're' : 'e'} de ${getLeagueDefinition(current.id).name}.`
+          ? `Votre compagnie est ${ordinal(playerRow.position, { feminine: true })} de ${getLeagueDefinition(current.id).name}.`
           : ''),
       ),
       h(

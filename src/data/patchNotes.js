@@ -37,6 +37,7 @@ export const PATCH_MILESTONES = Object.freeze([
       'Deux talents par combattant : le second se révèle gratuitement au Scriptorium ; avec deux talents, on choisit lequel remplacer.',
       '40 succès à conquérir, réunis dans la Salle des exploits — dont des exploits secrets.',
       'Le son : trois musiques en fondu enchaîné, une ambiance par lieu et des effets sonores (coups, KO, fanfare, exploits), tout réglable dans les Options.',
+      'Le jeu en trois langues : français, anglais et espagnol, au choix par le drapeau de l’écran principal.',
     ],
     gameplayChanges: [
       'Une fatigue qui compte : courbatures après chaque combat, combattants fatigués moins efficaces, épuisés envoyés au Banquet.',
@@ -44,9 +45,10 @@ export const PATCH_MILESTONES = Object.freeze([
     ],
     graphics: [
       'Sept nouvelles partitions d’écusson (15 au choix).',
+      'Écran principal : un emblème différent à chaque ouverture du jeu.',
     ],
     improvements: [
-      'Patch Notes resserrées : seules les versions majeures et leurs grosses évolutions.',
+      'Options accessibles en jeu ; colonne de droite en deux encarts (Ma compagnie, Le domaine) : chaque lieu à un clic.',
     ],
   },
   {
@@ -120,6 +122,39 @@ export const PATCH_MILESTONES = Object.freeze([
 ]);
 
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '0.80.0',
+    date: '2026-10-15',
+    title: 'Le domaine à portée de clic',
+    improvements: [
+      'La colonne de droite se range en deux encarts : « Ma compagnie » (La Compagnie, Le Coffre, La Ligue) et « Le domaine » (Le Centre, Le Bourg, La Taverne, Ma Lice, Le Scriptorium).',
+      'Chaque lieu du domaine s’ouvre d’un clic depuis la colonne, en plus des chemins et des portes de la carte ; le bouton du lieu où l’on se trouve est surligné.',
+    ],
+  },
+  {
+    version: '0.79.0',
+    date: '2026-10-14',
+    title: 'Trois langues',
+    newFeatures: [
+      'Le jeu se joue en français, en anglais ou en espagnol : cliquez sur le drapeau en haut à droite de l’écran principal. Le choix est retenu ; le français reste la langue par défaut.',
+    ],
+  },
+  {
+    version: '0.78.0',
+    date: '2026-10-14',
+    title: 'Un emblème à chaque visite',
+    graphics: [
+      'Écran principal : l’emblème du jeu change à chaque ouverture — partition et trois couleurs tirées au hasard.',
+    ],
+  },
+  {
+    version: '0.77.0',
+    date: '2026-10-14',
+    title: 'Les Options en jeu',
+    improvements: [
+      'Options en jeu : un bouton « ⚙ Options » rejoint Succès, Sauvegarder et Menu principal. Les réglages s’ouvrent dans une fenêtre, sans quitter la partie, et s’appliquent aussitôt.',
+    ],
+  },
   {
     version: '0.76.1',
     date: '2026-10-14',

@@ -29,6 +29,7 @@ import { STAT_DEFINITIONS, getStatDefinition } from '../../data/stats.js';
 import { getRecruitPriceTable, getUnlockLevelForStars } from '../tavern/TavernRotationService.js';
 import { TALENTS, TALENT_RARITIES, TALENT_RULES } from '../../data/talents.js';
 import { ARTIFACTS, DESK_UPGRADE, NO_ARTIFACT, STUDY_RULES } from '../../data/scriptorium.js';
+import { currentLocale, translateText } from '../../i18n/i18n.js';
 
 // Faits de l'Almanach : valeurs LUES dans les règles du jeu (data/*.js, config), jamais
 // recopiées. Les articles y font référence par leur clé, ex. « {{fatigue.threshold}} » ;
@@ -42,7 +43,7 @@ import { ARTIFACTS, DESK_UPGRADE, NO_ARTIFACT, STUDY_RULES } from '../../data/sc
 const fr = (value) => String(Math.round(value * 100) / 100).replace('.', ',');
 const pct = (value) => `${fr(value * 100)} %`;
 const range = ({ min, max }) => (min === max ? `${min}` : `${min} à ${max}`);
-const deniers = (n) => `${n.toLocaleString('fr-FR')} denier${n > 1 ? 's' : ''}`;
+const deniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
 const statShort = (id) => getStatDefinition(id).short;
 const statLabel = (id) => getStatDefinition(id).label;
 const arena = ARENAS[DEFAULT_ARENA_ID];
@@ -199,7 +200,7 @@ export const ALMANAC_FACTS = Object.freeze({
   // Bourg
   'borough.multiplier': () => `×${UPGRADE_COST_PROGRESSION.firstMultiplier}`,
   'borough.chanceStep': () => pct(CHANCE_UPGRADE_STEP),
-  'borough.exampleCosts': () => upgradeCostSeries(BOROUGH_UPGRADES.find((u) => u.id === 'forest-capacity').baseCost).map((c) => c.toLocaleString('fr-FR')).join(' → '),
+  'borough.exampleCosts': () => upgradeCostSeries(BOROUGH_UPGRADES.find((u) => u.id === 'forest-capacity').baseCost).map((c) => c.toLocaleString(currentLocale())).join(' → '),
   // Coffre
   'item.painPrice': () => deniers(BOROUGH_SHOPS.baker.find((o) => o.itemId === 'pain_meteil').price),
   'item.hypocrasPrice': () => deniers(BOROUGH_SHOPS.baker.find((o) => o.itemId === 'hypocras').price),
@@ -224,7 +225,8 @@ export const ALMANAC_FACTS = Object.freeze({
   'climate.yearLength': () => `${CLIMATE_YEAR.length} jours`,
   'climate.seasonLength': () => `${CLIMATE_YEAR.seasonLength} jours`,
   'cup.rewardGroups': () => deniers(FRENCH_CUP_RULES.rewards.groups),
-  'cup.rewardKnockout': () => FRENCH_CUP_RULES.knockoutRounds.map((name, i) => `${name.toLowerCase()} ${deniers(FRENCH_CUP_RULES.rewards.knockout[i])}`).join(', '),
+  // Langue (v0.79) : nom du tour traduit avant d'être mis en minuscules.
+  'cup.rewardKnockout': () => FRENCH_CUP_RULES.knockoutRounds.map((name, i) => `${translateText(name).toLowerCase()} ${translateText(deniers(FRENCH_CUP_RULES.rewards.knockout[i]))}`).join(', '),
 });
 
 const usageText = (item) => item.usableIn.map((c) => (c === ITEM_USE_CONTEXTS.OUTSIDE_COMBAT ? 'hors combat' : 'pendant le placement')).join(' et ');

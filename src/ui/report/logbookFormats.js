@@ -5,6 +5,7 @@ import { getLeagueName } from '../../systems/league/LeagueService.js';
 import { getTalent } from '../../systems/talents/TalentService.js';
 import { TALENT_RARITIES } from '../../data/talents.js';
 import { getClimateSeason } from '../../systems/climate/ClimateService.js';
+import { ordinal as ordinalOf } from '../../utils/format.js';
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -139,7 +140,7 @@ export const LOGBOOK_FORMATS = {
   }),
   'season.end': (e, { session }) => {
     const playerId = session.player.teamId;
-    const ordinal = `${e.rank}${e.rank === 1 ? 're' : 'e'}`;
+    const ordinal = ordinalOf(e.rank, { feminine: true });
     const outcome = {
       promoted: `Promue en ${getLeagueName(e.leagueAfter)} !`,
       relegated: `Reléguée en ${getLeagueName(e.leagueAfter)}.`,

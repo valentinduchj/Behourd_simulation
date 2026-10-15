@@ -1,14 +1,18 @@
 import { ALMANAC_COLLECTIONS, ALMANAC_TABLES, getFact } from './almanacFacts.js';
 import { almanacRepository } from './AlmanacRepository.js';
+import { translateText } from '../../i18n/i18n.js';
 
 // Service de l'Almanach : prépare les articles pour l'affichage (valeurs des règles insérées,
 // tableaux et fiches générés) et répond aux questions de navigation. Il ne lit que les
 // règles : il ne modifie jamais l'état du jeu.
 
-/** Remplace les {{clés}} par les valeurs des règles (une clé inconnue reste visible, entre crochets). */
+/**
+ * Remplace les {{clés}} par les valeurs des règles (une clé inconnue reste visible, entre crochets).
+ * Langue (v0.79) : le texte est traduit en entier AVANT d'être découpé (gras, liens, valeurs).
+ */
 export function resolveText(text) {
   if (typeof text !== 'string') return text;
-  return text.replace(/\{\{([^}]+)\}\}/g, (_, key) => getFact(key) ?? `[${key}]`);
+  return translateText(text).replace(/\{\{([^}]+)\}\}/g, (_, key) => { const fact = getFact(key); return fact === undefined || fact === null ? `[${key}]` : translateText(String(fact)); });
 }
 
 function resolveBlock(block) {

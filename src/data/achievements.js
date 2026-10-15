@@ -1,3 +1,4 @@
+import { currentLocale } from '../i18n/i18n.js';
 // Succès (v0.73) — catalogue. Un succès s'obtient une seule fois par partie ; il est enregistré
 // avec la partie (session.achievements) et annoncé à l'écran (et au carnet de bord quand il tombe
 // pendant une journée). Logique : systems/achievements/AchievementService.js ; fenêtre :
@@ -46,7 +47,7 @@ export const ACHIEVEMENT_RULES = Object.freeze({
 });
 
 const R = ACHIEVEMENT_RULES;
-const n = (value) => value.toLocaleString('fr-FR');
+const n = (value) => value.toLocaleString(currentLocale());
 
 const achievement = (number, id, category, difficulty, kind, icon, name, description, extra = {}) => Object.freeze({
   number, id, category, difficulty, kind, icon, name, description, ...extra,

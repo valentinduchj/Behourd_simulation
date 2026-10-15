@@ -3,6 +3,7 @@ import { getSpecialty } from '../../data/specialties.js';
 import { COMBAT_RULES, COMBAT_PLAYBACK } from '../../data/combatRules.js';
 import { getBonusLabels } from '../../combat/presentation/bonusLabels.js';
 import { TALENTS } from '../../data/talents.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 // Journal détaillé d'un combat de Ma Lice d'entraînement (v0.71). Il LIT les événements émis
 // par le moteur (simulation.events) et les valeurs que le moteur a réellement appliquées
@@ -13,7 +14,7 @@ import { TALENTS } from '../../data/talents.js';
 // Entrée : { id, tick, time (s, sans l'introduction), kind, side?, title, lines: [texte], tone }
 //   kind : 'start' | 'attack' | 'stun' | 'lastStand' | 'ko' | 'lull' | 'end'
 
-const num = (value, digits = 1) => (Math.round(value * 10 ** digits) / 10 ** digits).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: digits });
+const num = (value, digits = 1) => (Math.round(value * 10 ** digits) / 10 ** digits).toLocaleString(currentLocale(), { minimumFractionDigits: 0, maximumFractionDigits: digits });
 const pct = (fraction) => `${fraction >= 0 ? '+' : '−'}${num(Math.abs(fraction) * 100)} %`;
 const times = (factor) => `×${num(factor, 3)}`;
 const short = (statId) => getStatDefinition(statId)?.short ?? statId;

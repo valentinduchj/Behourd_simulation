@@ -2,6 +2,7 @@ import { h } from '../../utils/dom.js';
 import { gameState } from '../../state/gameState.js';
 import { getFighterTalents, getTalentRarity, getTalentStyle } from '../../systems/talents/TalentService.js';
 import { getClimateSeason, getCurrentSeason } from '../../systems/climate/ClimateService.js';
+import { t } from '../../i18n/i18n.js';
 
 /**
  * Étiquette d'un talent, aux couleurs de sa famille (data/talents.js) : aucune règle ici, le
@@ -23,7 +24,8 @@ export function TalentBadge(talent, session = gameState.session) {
       'data-talent': talent.id,
       'data-rarity': rarity?.id ?? 'none',
       style: { '--talent-color': style.color, '--talent-text': style.text, '--talent-border': style.border },
-      title: `Talent${rarity ? ` ${rarity.name.toLowerCase()}` : ''} — ${talent.description}${seasonNote}`,
+      // Langue (v0.79) : description et note de saison traduites à part (texte assemblé).
+      title: `Talent${rarity ? ` ${rarity.name.toLowerCase()}` : ''} — ${t(talent.description)}${t(seasonNote)}`,
     },
     talent.name,
     season ? h('span', { class: 'talent-season', 'aria-hidden': 'true' }, ` ${season.icon}`) : null,

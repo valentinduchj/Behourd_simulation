@@ -417,6 +417,8 @@
 .hub-deniers { font-family: var(--font-display); font-size: 1.15rem; color: #8a6114; }
 
 .hub-nav { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.6rem; }
+/* Titre d'un encart de boutons (v0.80) : « Ma compagnie », « Le domaine ». */
+.hub-nav-title { margin: 0.1rem 0.5rem 0.15rem; font-family: var(--font-display); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
 .hub-nav-item {
   display: flex;
   align-items: center;
@@ -1433,7 +1435,7 @@ button.placement-card:not(:disabled):hover { border-color: #c99a2e; }
 .achievement-toast-name { font-family: var(--font-display); font-size: 1.12rem; }
 .achievement-toast-desc { font-size: 0.86rem; color: #5a4520; }
 
-.hub-achievements { display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
+.hub-achievements, .hub-options { display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
 .hub-achievements-count { font-variant-numeric: tabular-nums; color: var(--text-muted); }
 
 .achievements-panel { display: grid; gap: 0.9rem; }

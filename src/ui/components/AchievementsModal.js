@@ -3,6 +3,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES } from '../../data/achievements.js
 import { countUnlocked, getAchievementProgress, getAchievementState } from '../../systems/achievements/AchievementService.js';
 import { getClimateSeason } from '../../systems/climate/ClimateService.js';
 import { openModal } from './Modal.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 // Fenêtre des succès (v0.73, refondue en v0.73.2), ouverte depuis l'encart « Sauvegarde / Menu
 // principal » : la Salle des exploits. Des médaillons rangés par catégorie — dorés une fois
@@ -55,7 +56,7 @@ function AchievementCard(session, achievement, record) {
     unlocked ? h('p', { class: 'achievement-date' }, `✦ Obtenu · ${describeUnlock(record)}`) : null,
     progress ? h('div', { class: 'achievement-progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(progress.goal), 'aria-valuenow': String(progress.value) },
       h('span', { class: 'achievement-progress-fill', style: { width: `${Math.round((progress.value / progress.goal) * 100)}%` } }),
-      h('span', { class: 'achievement-progress-label' }, `${progress.value.toLocaleString('fr-FR')} / ${progress.goal.toLocaleString('fr-FR')}`)) : null));
+      h('span', { class: 'achievement-progress-label' }, `${progress.value.toLocaleString(currentLocale())} / ${progress.goal.toLocaleString(currentLocale())}`)) : null));
 }
 
 /** Ouvre la fenêtre des succès de la partie. */

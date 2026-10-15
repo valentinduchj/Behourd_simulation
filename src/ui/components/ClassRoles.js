@@ -2,6 +2,7 @@ import { h } from '../../utils/dom.js';
 import { SPECIALTIES } from '../../data/specialties.js';
 import { getStatDefinition } from '../../data/stats.js';
 import { COMBAT_RULES } from '../../data/combatRules.js';
+import { t } from '../../i18n/i18n.js';
 
 // Rappel des rôles du béhourd (combat Joueur contre IA, v0.65) : la formation en schéma (lice
 // vue de dessus : un Lutteur contre chaque barrière, un Hastier derrière chacun, le Runner au
@@ -69,9 +70,9 @@ export function ClassRoles({ compact = false, rules = COMBAT_RULES } = {}) {
         { 'data-class': classId },
         h('span', { class: 'class-roles-dot', style: { background: SPECIALTIES[classId].color } }),
         h('b', {}, `${SPECIALTIES[classId].icon} ${SPECIALTIES[classId].name}`),
-        ` (${short(rules.offenseStatByClass[classId])}) ${roleText(classId, rules)}`,
+        ` (${t(short(rules.offenseStatByClass[classId]))}) ${t(roleText(classId, rules))}`,
       ))),
-      h('p', { class: 'class-roles-blind' }, `🪖 ${blindSpotText(rules)}`),
+      h('p', { class: 'class-roles-blind' }, `🪖 ${t(blindSpotText(rules))}`),
       compact ? null : h('p', { class: 'class-roles-stats' }, statsText(rules)),
     ),
   );
@@ -83,12 +84,13 @@ export function ClassRoles({ compact = false, rules = COMBAT_RULES } = {}) {
  */
 export function ClassRolesInline({ rules = COMBAT_RULES } = {}) {
   const label = { lutteur: 'contre la barrière', hastier: 'derrière, à 2 cases', runner: 'au centre, dans le dos' };
-  const detail = [...ROLE_ORDER.map((classId) => `${SPECIALTIES[classId].name} : ${roleText(classId, rules)}`), blindSpotText(rules)].join('\n');
+  // Langue (v0.79) : chaque morceau traduit à part (texte assemblé).
+  const detail = [...ROLE_ORDER.map((classId) => `${t(SPECIALTIES[classId].name)} : ${t(roleText(classId, rules))}`), t(blindSpotText(rules))].join('\n');
   return h(
     'p',
     { class: 'class-roles-inline', 'aria-label': 'Rôles des classes', title: detail },
     h('span', { class: 'class-roles-title' }, 'Formation'),
-    h('span', { class: 'class-roles-inline-chain' }, ROLE_ORDER.map((classId) => `${SPECIALTIES[classId].icon} ${SPECIALTIES[classId].name} ${label[classId]}`).join(' · ')),
+    h('span', { class: 'class-roles-inline-chain' }, ROLE_ORDER.map((classId) => `${SPECIALTIES[classId].icon} ${t(SPECIALTIES[classId].name)} ${t(label[classId])}`).join(' · ')),
     h('span', { class: 'muted' }, '🪖 angle mort'),
   );
 }

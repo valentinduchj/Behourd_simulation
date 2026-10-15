@@ -18,9 +18,10 @@ import { getItemQuantity } from '../../systems/inventory/InventoryService.js';
 import { describeUsage } from '../../systems/items/ConsumableService.js';
 import { ItemImage } from '../components/ChestModal.js';
 import { queueSceneEffect } from '../hub/pendingVfx.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 const HINT = 'Cliquez sur un artisan (ou sa zone) pour voir ses améliorations. Le chemin en haut à gauche ramène au Centre.';
-const formatDeniers = (n) => `${n.toLocaleString('fr-FR')} denier${n > 1 ? 's' : ''}`;
+const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
 
 /** Valeur actuelle de l'infrastructure concernée par une amélioration (activité améliorée). */
 function currentValue(session, upgrade) {

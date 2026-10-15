@@ -26,9 +26,10 @@ import { hasUnseenTavernRotation, markTavernRotationSeen } from '../hub/pendingV
 import { listTrophies } from '../../systems/trophies/TrophyService.js';
 import { TROPHY_CABINET } from '../../data/trophies.js';
 import { openFighterStatsBoard, openTrophyCabinet } from '../components/TavernBoards.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 const HINT = 'Survolez un combattant pour voir sa spécialité et ses étoiles ; cliquez pour sa fiche. Le tavernier se tient derrière le comptoir ; la pancarte affiche les classements, l’armoire vos trophées ; la porte ramène au Centre.';
-const formatDeniers = (n) => `${n.toLocaleString('fr-FR')} denier${n > 1 ? 's' : ''}`;
+const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
 
 /**
  * La Taverne : un lieu à explorer. Les recrues de l'offre en cours flânent dans la salle

@@ -12,7 +12,7 @@ import { getSeasonProgress, isOffSeason } from '../../systems/league/SeasonServi
 import { openSeasonCup } from '../../systems/frenchCup/FrenchCupManager.js';
 import { ClubStars } from '../components/Rating.js';
 import { LeagueMiniTable } from '../components/LeagueTable.js';
-import { HUB_LOCATIONS } from '../hub/hubLocations.js';
+import { HUB_NAV_GROUPS } from '../hub/hubLocations.js';
 import { BaseScreen } from './BaseScreen.js';
 import { EmblemView } from '../components/EmblemView.js';
 import { CalendarBar } from '../components/CalendarBar.js';
@@ -27,8 +27,10 @@ import { getTeamLocation } from '../../systems/geography/GeographyService.js';
 import { travelThrough } from '../navigation/travel.js';
 import { takeUnnotifiedReveals } from '../../systems/talents/StudyService.js';
 import { openAchievements as openAchievementsModal } from '../components/AchievementsModal.js';
+import { openOptionsModal } from '../components/OptionsModal.js';
 import { announcePendingAchievements } from '../hub/achievementNotifier.js';
 import { countUnlocked } from '../../systems/achievements/AchievementService.js';
+import { ordinal } from '../../utils/format.js';
 
 /**
  * Base des écrans de la phase de gestion : calendrier en haut, contenu au centre,
@@ -153,29 +155,18 @@ export class HubScreen extends BaseScreen {
         this.renderLocation(),
       ),
       h('div', { class: 'hub-card hub-treasury' }, h('span', { class: 'hub-treasury-label' }, 'Trésor'), this.deniersEl),
-      // Le Coffre : inventaire (fenêtre), sans quitter l'écran ni toucher au déroulement de la journée.
-      h('button', { type: 'button', class: 'hub-card hub-chest', onclick: () => this.openChest() },
-        h('span', { class: 'hub-nav-icon', 'aria-hidden': 'true' }, '🧰'),
-        h('span', { class: 'hub-nav-text' }, h('span', { class: 'hub-nav-label' }, 'Le Coffre'), this.chestCountEl)),
       // L'Almanach : la documentation du jeu ; « Retour » ramène à cet écran, partie intacte.
       h('button', { type: 'button', class: 'hub-card hub-chest hub-almanac', onclick: () => this.navigate(SCREENS.ALMANAC, { returnTo: this.id }) },
         h('span', { class: 'hub-nav-icon', 'aria-hidden': 'true' }, '📖'),
         h('span', { class: 'hub-nav-text' }, h('span', { class: 'hub-nav-label' }, 'L’Almanach'), h('span', { class: 'hub-nav-hint' }, 'Les règles du jeu'))),
-      h(
+      // Deux encarts (v0.80) : « Ma compagnie » (Compagnie, Coffre, Ligue) et « Le domaine »
+      // (Centre, Bourg, Taverne, Ma Lice, Scriptorium), d'un clic, sans passer par les chemins.
+      HUB_NAV_GROUPS.map((group) => h(
         'nav',
-        { class: 'hub-card hub-nav', 'aria-label': 'Lieux' },
-        HUB_LOCATIONS.map((location) => h(
-          'button',
-          {
-            type: 'button',
-            class: `hub-nav-item ${location.id === activeId ? 'is-active' : ''}`.trim(),
-            'aria-current': location.id === activeId ? 'page' : null,
-            onclick: () => this.navigate(location.screen, location.params),
-          },
-          h('span', { class: 'hub-nav-icon', 'aria-hidden': 'true' }, location.icon),
-          h('span', { class: 'hub-nav-text' }, h('span', { class: 'hub-nav-label' }, location.label), h('span', { class: 'hub-nav-hint' }, location.hint)),
-        )),
-      ),
+        { class: `hub-card hub-nav hub-nav-${group.id}`, 'aria-label': group.label },
+        h('p', { class: 'hub-nav-title' }, group.label),
+        group.items.map((item) => this.renderNavItem(item, activeId)),
+      )),
       this.renderLeagueCard(),
       h(
         'div',
@@ -184,9 +175,33 @@ export class HubScreen extends BaseScreen {
         // Succès (v0.73) : avancement, et la liste complète dans une fenêtre.
         h('button', { type: 'button', class: 'btn hub-achievements', onclick: () => this.openAchievements() },
           h('span', { 'aria-hidden': 'true' }, '🏅'), ' Succès ', this.achievementsCountEl),
+        // Options en jeu (v0.77) : dans une fenêtre, la partie reste ouverte.
+        h('button', { type: 'button', class: 'btn hub-options', onclick: () => openOptionsModal(this.services) },
+          h('span', { 'aria-hidden': 'true' }, '⚙'), ' Options'),
         h('button', { type: 'button', class: 'btn btn-primary', onclick: () => this.save() }, 'Sauvegarder'),
         h('button', { type: 'button', class: 'btn', onclick: () => this.backToMenu() }, 'Menu principal'),
       ),
+    );
+  }
+
+  /**
+   * Bouton de la colonne : un écran (lieu ou interface), ou le Coffre, qui s'ouvre en fenêtre
+   * sans quitter l'écran ni toucher au déroulement de la journée.
+   */
+  renderNavItem(item, activeId) {
+    const active = item.id === activeId;
+    const isChest = item.action === 'chest';
+    return h(
+      'button',
+      {
+        type: 'button',
+        class: `hub-nav-item ${active ? 'is-active' : ''} ${isChest ? 'hub-chest' : ''}`.replace(/\s+/g, ' ').trim(),
+        'data-hub-item': item.id,
+        'aria-current': active ? 'page' : null,
+        onclick: () => (isChest ? this.openChest() : this.navigate(item.screen, item.params)),
+      },
+      h('span', { class: 'hub-nav-icon', 'aria-hidden': 'true' }, item.icon),
+      h('span', { class: 'hub-nav-text' }, h('span', { class: 'hub-nav-label' }, item.label), isChest ? this.chestCountEl : h('span', { class: 'hub-nav-hint' }, item.hint)),
     );
   }
 
@@ -205,7 +220,7 @@ export class HubScreen extends BaseScreen {
       { class: 'hub-card hub-league', 'aria-label': 'Ma ligue' },
       h('p', { class: 'eyebrow' }, progress ? `Ma ligue · saison ${progress.season}` : 'Ma ligue'),
       h('p', { class: 'hub-league-name' }, getLeagueName(league)),
-      player ? h('p', { class: 'hub-league-position' }, `${player.position}${player.position === 1 ? 're' : 'e'} sur ${rows.length} · ${player.points} pt${player.points > 1 ? 's' : ''}`) : null,
+      player ? h('p', { class: 'hub-league-position' }, `${ordinal(player.position, { feminine: true })} sur ${rows.length} · ${player.points} pt${player.points > 1 ? 's' : ''}`) : null,
       progress ? h('p', { class: 'hub-league-progress' }, `Journée ${progress.played} / ${progress.total}`) : null,
       LeagueMiniTable(excerpt, { around: excerpt.length }),
       h(

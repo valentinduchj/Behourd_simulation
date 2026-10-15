@@ -25,10 +25,11 @@ import { FighterName } from '../components/CaptainCrown.js';
 import { PotentialFlames } from '../components/Potential.js';
 import { TalentBadge, TalentBadges } from '../components/TalentBadge.js';
 import { spectatorUrl } from '../../render/spectators.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 const HINT = 'Cliquez sur le Bureau d’étude pour envoyer un combattant révéler ses talents (deux au plus), ou sur la Professeure Flavia pour améliorer le Scriptorium. La porte ramène au Centre.';
 const days = (n) => `${n} jour${n > 1 ? 's' : ''}`;
-const deniers = (n) => `${n.toLocaleString('fr-FR')} denier${n > 1 ? 's' : ''}`;
+const deniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
 const pct = (v) => `${Math.round(v * 1000) / 10} %`.replace('.', ',');
 
 /**

@@ -67,6 +67,7 @@ import {
   getCup, findMatch, createCupPlayerMatch, recordPlayerMatch, describeMatch, getCupCrowdSize,
 } from '../../systems/frenchCup/FrenchCupManager.js';
 import { pointsFor } from '../../systems/frenchCup/CupGroups.js';
+import { currentLocale } from '../../i18n/i18n.js';
 
 /** « 1 de vos combattants a été mis KO : rétabli pour la manche suivante. » (accordé au nombre). */
 export function koSummary(count, lastsWholeMatch) {
@@ -1400,7 +1401,7 @@ export class MatchScreen extends BaseScreen {
       this.cupRecorded = true;
       // Récompense de la victoire (versée une seule fois par combat, FrenchCupManager).
       const paid = getCup(this.session).rewards?.[this.cupMatch.id] ?? 0;
-      if (paid) showToast(`Victoire ! +${paid.toLocaleString('fr-FR')} deniers`, 'success');
+      if (paid) showToast(`Victoire ! +${paid.toLocaleString(currentLocale())} deniers`, 'success');
       if (this.services.settings.get('gameplay.autosave')) {
         try { this.services.saves.save(this.session); } catch { /* sauvegarde manuelle toujours possible */ }
       }
@@ -1428,7 +1429,7 @@ export class MatchScreen extends BaseScreen {
         h('p', { class: 'final-score' }, `${Math.max(this.match.scoreA, this.match.scoreB)} – ${Math.min(this.match.scoreA, this.match.scoreB)}`),
         h('p', { class: 'final-points' }, note),
         won && cup.rewards?.[this.cupMatch.id]
-          ? h('p', { class: 'final-points home-reward cup-reward' }, `💰 Récompense de la Coupe : +${cup.rewards[this.cupMatch.id].toLocaleString('fr-FR')} deniers`)
+          ? h('p', { class: 'final-points home-reward cup-reward' }, `💰 Récompense de la Coupe : +${cup.rewards[this.cupMatch.id].toLocaleString(currentLocale())} deniers`)
           : null,
         h('ol', { class: 'round-summary' }, this.match.rounds.map((round) => h(
           'li',

@@ -1,14 +1,17 @@
 import { h } from '../../utils/dom.js';
 import { SCREENS } from '../../core/screenIds.js';
-import { Emblem } from '../../models/Emblem.js';
+import { createRandomEmblem } from '../../systems/game/teamFactory.js';
 import { BaseScreen } from './BaseScreen.js';
 import { EmblemView } from '../components/EmblemView.js';
 import { alertModal, confirmModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { openPatchNotes } from '../components/PatchNotesModal.js';
 import { MainMenuShowcase } from '../mainMenu/MainMenuShowcase.js';
+import { LanguagePicker } from '../components/LanguagePicker.js';
 
-const MENU_EMBLEM = new Emblem({ colors: { primary: 'gueules', secondary: 'or', tertiary: 'sable' }, patternId: 'chef' });
+// Emblème du jeu (v0.78) : partition et trois couleurs tirées au hasard à chaque ouverture de la
+// page (chargement du module), le même tirage que les clubs ; il ne change plus ensuite.
+export const MENU_EMBLEM = createRandomEmblem(Math.random);
 
 /** Le système demande-t-il moins d'animations ? */
 function prefersReducedMotion() {
@@ -42,6 +45,8 @@ export class MainMenuScreen extends BaseScreen {
       { class: 'screen screen-main-menu' },
       this.showcasePanels.left,
       this.showcasePanels.right,
+      // Langue (v0.79) : en haut à droite ; l'écran se redessine dans la langue choisie.
+      LanguagePicker({ onChange: () => this.navigate(SCREENS.MAIN_MENU) }),
       h(
         'div',
         { class: 'main-menu' },
