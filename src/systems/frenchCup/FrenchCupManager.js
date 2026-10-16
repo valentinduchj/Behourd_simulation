@@ -18,7 +18,8 @@ import { recordCupProgress } from '../achievements/AchievementService.js';
 // Coupe de France (FrenchCupManager) : compétition permanente, indépendante du calendrier.
 // Elle vit tout entière dans session.frenchCup (tirage, poules, tableau, statistiques) et ne
 // touche JAMAIS aux championnats, au calendrier ni au palmarès des combattants (la fatigue de la
-// compagnie est remise à 0 à l'entrée dans la Coupe, puis suit les règles normales)
+// compagnie est remise à 0 à l'entrée dans la Coupe et avant chaque combat ; pendant un combat,
+// elle se garde d'une manche à l'autre)
 // (combats « isolés » : Match.isolated).
 //
 // Déroulement par étapes (cup.step) :
@@ -91,12 +92,18 @@ export function createEdition(session, { seed = `${Date.now()}`, force = false, 
  */
 export function resetCupFatigue(session, cup = session.frenchCup) {
   if (!cup || cup.fatigueReset) return 0;
+  const count = restCompany(session);
+  cup.fatigueReset = true;
+  return count;
+}
+
+/** Toute la compagnie du joueur à fatigue 0. Renvoie le nombre de combattants qui en avaient. */
+function restCompany(session) {
   let count = 0;
   for (const fighter of session.playerFighters) {
     if ((fighter.stats.fatigue ?? 0) !== 0) count += 1;
     setStat(fighter, 'fatigue', 0);
   }
-  cup.fatigueReset = true;
   session.markDirty?.();
   return count;
 }
@@ -347,7 +354,8 @@ export function recordPlayerMatch(session, matchId, playedRounds) {
 
 /**
  * Combat du joueur pour la Lice (MatchScreen) : la compagnie du joueur en camp A, combat isolé
- * (aucun effet sur le palmarès ni le championnat ; vraie fatigue de la compagnie). null : combat introuvable,
+ * (aucun effet sur le palmarès ni le championnat ; compagnie remise à fatigue 0, puis vraie fatigue
+ * pendant le combat). null : combat introuvable,
  * déjà joué ou sans le joueur.
  */
 export function createCupPlayerMatch(session, matchId) {
@@ -355,8 +363,10 @@ export function createCupPlayerMatch(session, matchId) {
   const match = cup ? findMatch(cup, matchId) : null;
   if (!match || match.status !== 'pending' || match !== getPlayerPendingMatch(cup)) return null;
   const opponentId = match.teamAId === cup.playerTeamId ? match.teamBId : match.teamAId;
-  // Vraie fatigue de la compagnie (v0.73.1) : remise à 0 à l'entrée dans la Coupe, puis elle évolue
-  // normalement d'un combat à l'autre.
+  // Fatigue (v0.81.2) : toute la compagnie repart reposée (0) au début de chaque combat de Coupe ;
+  // pendant le combat, c'est la vraie fatigue, qui se garde d'une manche à l'autre (récupération
+  // habituelle entre deux manches, jamais de remise à 0).
+  restCompany(session);
   return createMatch({ teamAId: cup.playerTeamId, teamBId: opponentId, matchday: match.id, kind: 'cup', isolated: true, playerFatigue: true });
 }
 

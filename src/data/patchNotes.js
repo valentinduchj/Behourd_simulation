@@ -35,6 +35,9 @@ export const PATCH_MILESTONES = Object.freeze([
     newFeatures: [
       'Un tutoriel en trois étapes : le tavernier fait visiter le domaine à chaque nouvelle partie — combattants, Centre, Taverne, fil des jours.',
     ],
+    gameplayChanges: [
+      'Coupe de France : la compagnie repart reposée (fatigue 0) au début de chaque combat ; pendant le combat, la fatigue se garde d’une manche à l’autre.',
+    ],
   },
   {
     version: '0.8',
@@ -129,6 +132,14 @@ export const PATCH_MILESTONES = Object.freeze([
 ]);
 
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '0.81.2',
+    date: '2026-10-16',
+    title: 'Coupe de France : reposés à chaque combat',
+    gameplayChanges: [
+      'Coupe de France : vos combattants repartent à fatigue 0 au début de chaque combat (et plus seulement à l’entrée dans la compétition). Pendant le combat, la fatigue n’est jamais remise à 0 entre deux manches : seule la récupération habituelle s’applique.',
+    ],
+  },
   {
     version: '0.81.1',
     date: '2026-10-15',

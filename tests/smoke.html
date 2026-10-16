@@ -6049,7 +6049,7 @@
           'affectations : compétence à 100 ou au plafond du potentiel en rouge (couleur perdue si le potentiel monte) ; PV et fatigue jamais');
       }
 
-      // ---------- v0.73.1 : Coupe de France — vraie fatigue, remise à 0 à l'entrée seulement ----------
+      // ---------- v0.73.1 / v0.81.2 : Coupe de France — vraie fatigue, remise à 0 avant chaque combat ----------
       {
         const CF = await import('../src/systems/frenchCup/FrenchCupManager.js');
         const F = await import('../src/systems/fighters/FatigueService.js');
@@ -6061,17 +6061,26 @@
         const pending = CF.getPlayerPendingMatch(fCup);
         const m1 = CF.createCupPlayerMatch(fg, pending.id);
         const hero = fg.playerFighters[0];
+        hero.talents = [];
         const atEntry = fg.playerFighters.every((f) => (f.stats.fatigue ?? 0) === 0);
-        // Une manche : la fatigue de fin de manche est la vraie fatigue du combattant.
+        // Manche 1 : la fatigue de fin de manche est la vraie fatigue du combattant ; entre deux
+        // manches, seule la récupération habituelle s'applique (jamais de remise à 0).
         const roundF = { fightersTeamA: [hero.id], fightersTeamB: [], simulation: { final: [{ id: hero.id, fatigue: 37 }] } };
-        F.applyEngineRoundFatigue(fg, m1, roundF, { continues: false });
+        F.applyEngineRoundFatigue(fg, m1, roundF, { continues: true });
+        const betweenRounds = hero.stats.fatigue;
+        const roundG = { fightersTeamA: [hero.id], fightersTeamB: [], simulation: { final: [{ id: hero.id, fatigue: 64 }] } };
+        F.applyEngineRoundFatigue(fg, m1, roundG, { continues: false });
+        const endOfMatch = hero.stats.fatigue;
+        // v0.81.2 : combat suivant (ou combat repris) : toute la compagnie repart reposée.
+        fg.playerFighters[1].stats.fatigue = 45;
         const m2 = CF.createCupPlayerMatch(fg, pending.id);
         const reloadedMatch = new MatchF(JSON.parse(JSON.stringify(m1.toJSON())));
         const legacyIsolated = new MatchF({ teamAId: 'a', teamBId: 'b', isolated: true });
-        check(atEntry && fCup.fatigueReset && m1.isolated && m1.playerFatigue === true && hero.stats.fatigue === 37 && F.getMatchFatigue(fg, m2, hero) === 37
-          && CF.resetCupFatigue(fg) === 0 && hero.stats.fatigue === 37 && reloadedMatch.playerFatigue === true && legacyIsolated.playerFatigue === false
+        check(atEntry && fCup.fatigueReset && m1.isolated && m1.playerFatigue === true && betweenRounds > 0 && betweenRounds < 37 && endOfMatch === 64
+          && F.getMatchFatigue(fg, m2, hero) === 0 && fg.playerFighters.every((f) => (f.stats.fatigue ?? 0) === 0)
+          && CF.resetCupFatigue(fg) === 0 && reloadedMatch.playerFatigue === true && legacyIsolated.playerFatigue === false
           && new MatchF({ teamAId: 'a', teamBId: 'b' }).playerFatigue === true,
-          'Coupe de France : fatigue remise à 0 à l’entrée seulement, puis la vraie fatigue se garde d’un combat à l’autre (jamais remise à 0 entre deux tours) ; palmarès toujours isolé');
+          `Coupe de France : compagnie remise à 0 au début de chaque combat ; entre deux manches, la fatigue se garde (37 → ${betweenRounds} après récupération, jamais 0) ; palmarès toujours isolé`);
       }
       // ---------- v0.74 : musiques, ambiances, effets sonores ----------
       {

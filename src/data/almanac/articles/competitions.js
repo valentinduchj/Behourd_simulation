@@ -93,7 +93,7 @@ export const COMPETITIONS_ARTICLES = [
       ] },
       { type: 'h', text: 'Les récompenses' },
       { type: 'p', text: 'Chaque victoire de votre compagnie rapporte des deniers, une seule fois : {{cup.rewardGroups}} par victoire en poules (même sans qualification), puis {{cup.rewardKnockout}}.' },
-      { type: 'callout', tone: 'tip', title: 'Hors du calendrier', text: 'La Coupe ne touche ni au championnat ni aux journées. La fatigue de vos combattants est remise à 0 quand vous y entrez, puis elle se garde d’un combat à l’autre : faites tourner l’effectif. Pendant la Coupe, le domaine est fermé : on ne revient au Centre, à la Taverne et au Bourg qu’avec la nouvelle saison.' },
+      { type: 'callout', tone: 'tip', title: 'Hors du calendrier', text: 'La Coupe ne touche ni au championnat ni aux journées. Vos combattants repartent reposés (fatigue 0) au début de chaque combat ; pendant un combat, la fatigue se garde d’une manche à l’autre : faites tourner l’effectif entre les manches. Pendant la Coupe, le domaine est fermé : on ne revient au Centre, à la Taverne et au Bourg qu’avec la nouvelle saison.' },
     ],
     related: ['championnat', 'reine', 'combat-deroulement'],
   },

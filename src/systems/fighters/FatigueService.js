@@ -22,8 +22,8 @@ export function getFighterColorIntensity(fighter) {
 }
 
 // Combattants du joueur : leur vraie fatigue, sauf dans un combat qui la suit seulement le temps du
-// combat (match.playerFatigue === false). Coupe de France (v0.73.1) : vraie fatigue, remise à 0 une
-// seule fois à l'entrée dans la Coupe (FrenchCupManager.resetCupFatigue). Adversaires : toujours
+// combat (match.playerFatigue === false). Coupe de France (v0.81.2) : vraie fatigue pendant le combat,
+// remise à 0 au début de chaque combat (FrenchCupManager.createCupPlayerMatch). Adversaires : toujours
 // une fatigue suivie le temps du combat.
 function isPlayerFighter(session, fighter, match = null) {
   const realFatigue = match ? (match.playerFatigue ?? !match.isolated) : true;

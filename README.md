@@ -375,11 +375,12 @@ Les règles **pendant** la manche ne changent pas (gain tour par tour, malus au-
 - **Affichage** : grille de 5 colonnes × 3 rangées (`.pattern-list`), 3 colonnes sur petit écran. L'aperçu se met à jour au clic.
 - **Sauvegardes** : l'identifiant de la partition est enregistré tel quel ; un identifiant inconnu retombe sur la partition par défaut (`getEmblemPattern`).
 
-### Coupe de France : fatigue remise à zéro au départ
+### Coupe de France : fatigue remise à zéro avant chaque combat
 
-- **Règle** : au début de chaque édition (`createEdition`), la fatigue de **tous** les combattants du joueur passe à 0 (`resetCupFatigue`, `systems/frenchCup/FrenchCupManager.js`).
-- **Une seule fois** : le drapeau `cup.fatigueReset` est sauvegardé avec la Coupe. Un rechargement ne refait jamais la remise à zéro.
-- **Ensuite, la vraie fatigue** (v0.73.1) : les combats de Coupe du joueur utilisent la vraie fatigue des combattants (`Match.playerFatigue = true`). Elle se garde d'un combat à l'autre, avec les règles habituelles (fatigue tour par tour, récupération entre deux manches) ; elle n'est plus remise à 0 entre deux tours. Les adversaires de Coupe partent reposés à chaque combat. Pendant la Coupe, le domaine est fermé : le Banquet n'est pas accessible, seuls les objets du Coffre (Pain au méteil) font redescendre la fatigue.
+- **Entrée dans la Coupe** : au début de chaque édition (`createEdition`), la fatigue de **tous** les combattants du joueur passe à 0 (`resetCupFatigue`, `systems/frenchCup/FrenchCupManager.js`). Le drapeau `cup.fatigueReset` est sauvegardé avec la Coupe.
+- **Avant chaque combat** (v0.81.2) : toute la compagnie repart à fatigue 0 quand un combat de Coupe commence dans la Lice (`createCupPlayerMatch`). Un combat abandonné puis repris recommence à la première manche, compagnie reposée.
+- **Pendant le combat** : jamais de remise à 0 entre deux manches. La fatigue évolue tour par tour, puis la récupération habituelle s'applique entre deux manches (− 10 pour ceux qui viennent de combattre, − 15 pour les remplaçants). Les courbatures de fin de combat s'ajoutent, et sont effacées au combat suivant ; celles du dernier combat de Coupe restent pour la saison suivante.
+- **Vraie fatigue pendant le combat** (v0.73.1) : les combats de Coupe du joueur utilisent la vraie fatigue des combattants (`Match.playerFatigue = true`). Les adversaires de Coupe partent reposés à chaque combat, comme votre compagnie. Pendant la Coupe, le domaine est fermé : le Banquet n'est pas accessible.
 - **Ensuite** : les règles habituelles s'appliquent (fatigue des combats, repos…).
 
 ### Ma Lice d'entraînement
@@ -1679,7 +1680,7 @@ Quand le joueur affronte un club de l'IA (championnat, Combat de la Reine), chaq
     - le message « Temps mort » pendant la pause ;
     - la sueur selon la fatigue du moment, et de la vapeur pour qui souffle.
   - **Le rejeu** reconstitue la fatigue de chacun tour par tour (événements `fatigue`), sans rien recalculer.
-  - **Champ d'application** : championnat, Combat de la Reine et Coupe de France (fatigue réelle des combattants du joueur ; en Coupe, remise à 0 à l'entrée dans la compétition seulement). Les combats simulés (IA contre IA, avance rapide) gardent leurs forfaits (vainqueurs +20 à 50, vaincus +50 à 60).
+  - **Champ d'application** : championnat, Combat de la Reine et Coupe de France (fatigue réelle des combattants du joueur ; en Coupe, remise à 0 au début de chaque combat). Les combats simulés (IA contre IA, avance rapide) gardent leurs forfaits (vainqueurs +20 à 50, vaincus +50 à 60).
 - **Rejeu** (`combat/presentation/CombatPlayback.js`) : le moteur calcule toute la manche et produit des événements (« A attaque B », « B est KO ») ; la présentation les rejoue : déplacements, élans d'attaque échelonnés dans l'ordre d'endurance, barres de PV, dégâts flottants (orange si le coup est avantagé par la position), KO. Un tour dure 0,64 s à la vitesse ×1 (`COMBAT_PLAYBACK.tickSeconds`, ralenti de moitié) ; vitesses ×1, ×2, ×4 et « Passer à la fin ». Le score n'est dévoilé qu'au résultat de la manche, avec un bilan (KO, dégâts infligés par chacun).
   - **À l'écran** (v0.68.1) : au lancement, la page descend jusqu'à la lice, juste sous le rappel de la formation (collant, détaché par une ombre). Un simple redessin de la même étape (« Les moins fatigués », une case cochée) garde la position dans la page.
   - **Lisibilité en mêlée** (v0.68.1) : les barres de PV et les pastilles sont dessinées après tous les combattants (aucun sprite ne les cache) ; deux chiffres de dégâts au même endroit s'empilent au lieu de se recouvrir ; le compteur de combo « ×N » s'affiche à droite du chiffre (`VFX_CONFIG.combo.shiftX`), un seul par cible (le plus récent).

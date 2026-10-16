@@ -2,7 +2,7 @@
 export const GAME_CONFIG = Object.freeze({
   title: 'Béhourd',
   subtitle: 'Gestion de compagnie médiévale',
-  version: '0.81.1',
+  version: '0.81.2',
 
   roster: Object.freeze({
     size: 8,

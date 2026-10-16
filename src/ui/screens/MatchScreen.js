@@ -118,8 +118,8 @@ export class MatchScreen extends BaseScreen {
     const queenEvent = this.params.cupMatchId ? null : getPendingQueenCombat(this.session);
     this.kind = this.params.cupMatchId ? 'cup' : queenEvent ? 'queen' : 'championship';
     if (this.isCup) {
-      // Coupe de France : combat isolé (ni palmarès, ni championnat), hors calendrier ; la fatigue de
-      // vos combattants, remise à 0 à l'entrée dans la Coupe, évolue normalement d'un combat à l'autre.
+      // Coupe de France : combat isolé (ni palmarès, ni championnat), hors calendrier ; vos combattants
+      // repartent à fatigue 0 au début de chaque combat (createCupPlayerMatch), puis la gardent d'une manche à l'autre.
       const cup = getCup(this.session);
       this.cupMatch = cup ? findMatch(cup, this.params.cupMatchId) : null;
       this.match = createCupPlayerMatch(this.session, this.params.cupMatchId);
@@ -1436,7 +1436,7 @@ export class MatchScreen extends BaseScreen {
           { class: round.winnerTeamId === playerId ? 'is-win' : 'is-loss' },
           `Manche ${round.number} — victoire ${ofClub(name(round.winnerTeamId))} (${round.scoreA} – ${round.scoreB})`,
         ))),
-        h('p', { class: 'muted' }, 'La Coupe de France ne touche ni au championnat ni au calendrier. La fatigue de vos combattants, remise à 0 à l’entrée dans la Coupe, se garde d’un combat à l’autre.'),
+        h('p', { class: 'muted' }, 'La Coupe de France ne touche ni au championnat ni au calendrier. Vos combattants repartent reposés (fatigue 0) au début de chaque combat ; pendant le combat, leur fatigue se garde d’une manche à l’autre.'),
       ),
       this.renderSorenessBlock(),
       h('div', { class: 'match-actions' },

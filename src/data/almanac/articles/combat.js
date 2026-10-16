@@ -144,7 +144,7 @@ export const COMBAT_ARTICLES = [
         '**Temps mort** : à deux contre deux ou moins, quand tout le monde est épuisé, chacun recule d’un pas et reprend son souffle quelques secondes avant de se retaper.',
         '**Entre deux manches**, tout l’effectif récupère un peu : {{fatigue.betweenAligned}} pour ceux qui viennent de combattre, {{fatigue.betweenBench}} pour les remplaçants.',
       ] },
-      { type: 'p', text: 'Cette fatigue est bien réelle : elle reste après le combat. Le Banquet et le Pain au méteil la font redescendre ([[fatigue]]). En Coupe de France, elle est remise à 0 quand votre compagnie entre dans la compétition, puis suit les règles habituelles d’un combat à l’autre.' },
+      { type: 'p', text: 'Cette fatigue est bien réelle : elle reste après le combat. Le Banquet et le Pain au méteil la font redescendre ([[fatigue]]). En Coupe de France, votre compagnie repart reposée (fatigue 0) au début de chaque combat ; pendant le combat, la fatigue se garde d’une manche à l’autre.' },
     ],
     related: ['fatigue', 'selection'],
   },
