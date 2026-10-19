@@ -4,10 +4,11 @@ import { RESERVE_POOL } from '../../data/leagues.js';
 import { calculateClubLevel, getStarRating } from '../fighters/ratings.js';
 import { clubDatabase } from '../clubs/ClubDatabase.js';
 import { addResource } from '../economy/wallet.js';
+import { addItem } from '../inventory/InventoryService.js';
 import { findFreeCombatDay, generateQueenCombatDate, getPendingQueenEvent } from '../calendar/CalendarService.js';
 import { getLeagueDefinition } from '../league/LeagueService.js';
 import { createMatch, simulateMatch, playerParticipants } from '../match/MatchService.js';
-import { queenRewardBonus } from '../talents/TalentEffects.js';
+import { queenRewardBonus, queenFerveurBonus } from '../talents/TalentEffects.js';
 import { createArena } from '../../combat/Arena.js';
 import { recordQueenResult } from '../achievements/AchievementService.js';
 
@@ -97,6 +98,12 @@ export function calculateReward(stars, rng = Math.random, config = QUEEN_COMBAT_
   const base = getBaseReward(stars, config);
   const factor = 1 + (rng() * 2 - 1) * config.rewardVariation;
   return Math.round(base * factor) * (config.rewardMultiplier ?? 1);
+}
+
+/** Ferveurs de la Reine pour une victoire contre un club de `stars` étoiles : ses étoiles pleines. */
+export function getFerveurReward(stars, config = QUEEN_COMBAT_CONFIG) {
+  if (!config.ferveur) return 0;
+  return Math.max(0, Math.floor(Number(stars) || 0)) * (config.ferveur.perFullStar ?? 1);
 }
 
 /** Propositions du moins étoilé au plus étoilé ; à égalité, l'ordre du tirage est conservé (tri stable). */
@@ -212,6 +219,8 @@ export function selectOpponent(session, event, teamId) {
   const option = (event.data.options ?? []).find((candidate) => candidate.teamId === teamId);
   if (!option) throw new Error('Ce club ne fait pas partie des adversaires proposés.');
   event.data.selectedTeamId = teamId;
+  // Étoiles au moment du choix (celles affichées) : elles fixent les Ferveurs promises.
+  event.data.selectedStars = getClubStars(session, teamId);
   event.data.stage = 'selected';
   session.markDirty();
   return option;
@@ -248,12 +257,18 @@ export function resolveQueenCombat(session, event, match, { auto = false, rng = 
   const bonus = won ? queenRewardBonus(playerParticipants(session, match)) : 0;
   const reward = won ? Math.round(option.reward * (1 + bonus)) : 0;
   if (reward) addResource(session, CURRENCY, reward);
+  // Ferveurs de la Reine (v0.97) : les étoiles pleines de l'adversaire, dans Le Coffre.
+  const opponentStars = event.data.selectedStars ?? getClubStars(session, option.teamId);
+  // Talent Dévot (v1.0) : une Ferveur de plus (non cumulable).
+  const ferveurs = won ? getFerveurReward(opponentStars) + queenFerveurBonus(playerParticipants(session, match)) : 0;
+  if (ferveurs) addItem(session, QUEEN_COMBAT_CONFIG.ferveur.itemId, ferveurs);
   const side = match.sideOf(playerId);
   event.data.result = {
     won,
     roundsFor: side === 'A' ? match.scoreA : match.scoreB,
     roundsAgainst: side === 'A' ? match.scoreB : match.scoreA,
     reward,
+    ferveurs,
   };
   // Les autres Combats de la Reine du jour, après celui du joueur (hors carnet de bord).
   simulateSecondaryMatches(session, event, rng);

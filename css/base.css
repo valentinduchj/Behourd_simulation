@@ -104,6 +104,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Application Android (v0.82) : le jeu s'étend sous l'encoche de la caméra ; le contenu s'en écarte. */
+html.is-android body {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;

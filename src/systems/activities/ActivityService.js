@@ -9,7 +9,7 @@ import { formatChance } from './format.js';
 import { isAtPotentialCap } from '../fighters/stats.js';
 import { getStatDefinition } from '../../data/stats.js';
 import { getCurrentSeason, getSeasonForDay, getSeasonalClosure } from '../climate/ClimateService.js';
-import { isStudying, STUDYING_REASON } from '../talents/StudyService.js';
+import { isAway, awayReason } from '../talents/StudyService.js';
 import { getFatigueState } from '../fighters/FatigueService.js';
 import { FATIGUE_RULES } from '../../data/fatigue.js';
 
@@ -94,7 +94,7 @@ export function assignActivity(session, fighterId, activityId) {
   if (!fighter) return { ok: false, reason: 'Combattant introuvable.' };
   if (fighter.activityId === activityId) return { ok: true, reason: null };
   // En étude au Scriptorium : indisponible pour le Centre jusqu'à la fin de son étude.
-  if (activityId !== null && isStudying(session, fighter)) return { ok: false, reason: `${fighter.name} — ${STUDYING_REASON}` };
+  if (activityId !== null && isAway(session, fighter)) return { ok: false, reason: `${fighter.name} — ${awayReason(session, fighter)}` };
   if (isCentreClosed(session)) return { ok: false, reason: CENTRE_CLOSED_REASON };
   // Épuisé (v0.75) : il ne peut aller qu'au Banquet (ou rester au repos).
   if (activityId !== null && activityId !== EXHAUSTED_REFUGE && getFatigueState(fighter).id === 'exhausted') {
@@ -128,7 +128,7 @@ export function quickAssign(session, activityId, threshold) {
   const assigned = [];
   const full = [];
   for (const fighter of session.playerFighters) {
-    if (fighter.activityId === activityId || !(fighter.stats[stat] > limit) || isStudying(session, fighter)) continue;
+    if (fighter.activityId === activityId || !(fighter.stats[stat] > limit) || isAway(session, fighter)) continue;
     if (assignActivity(session, fighter.id, activityId).ok) assigned.push(fighter);
     else full.push(fighter);
   }
@@ -242,7 +242,7 @@ export function resolveActivitiesForDay(ctx) {
       continue;
     }
     // (Garde-fou : un combattant en étude n'a pas d'activité ; s'il en garde une, elle est retirée.)
-    if (isStudying(ctx.session, fighter)) {
+    if (isAway(ctx.session, fighter)) {
       fighter.activityId = null;
       continue;
     }

@@ -30,10 +30,40 @@ export const PATCH_NOTE_SECTIONS = Object.freeze([
 // majeure qui la contient.
 export const PATCH_MILESTONES = Object.freeze([
   {
+    version: '1.1',
+    title: 'Le Sentier des pins',
+    newFeatures: [
+      'Expéditions singulières : trois combattants, dix duels d’affilée dans une lice de forêt, des bonus à choisir entre deux combats — la victoire ou tout perdre.',
+      'Les dix adversaires connus d’avance sur la carte du Baron ; vingt bonus d’expédition et dix récompenses de fin.',
+      'Une nouvelle lice deux fois plus petite, en pleine forêt : grands pins, cabane de chasseur, villageois et bêtes ; pluie d’automne et neige d’hiver.',
+      'Quatre succès pour les expéditions singulières : Le Sentier des pins, Trois debout, Loup solitaire, Seigneur des cimes.',
+      'Sur téléphone, l’expédition singulière se joue en plein écran dans la forêt, commandes sous les pouces.',
+      'De nouveaux bruitages de combat : des lames d’acier qui s’entrechoquent et la lourde chute d’un combattant mis KO.',
+    ],
+  },
+  {
+    version: '1.0',
+    title: 'Au creux de la main',
+    newFeatures: [
+      'Sur téléphone, les cartes se zooment : pincer pour agrandir, glisser pour se déplacer, « Vue d’ensemble » pour revenir.',
+      'Sur téléphone, le Centre sépare les lieux et les affectations ; la Compagnie montre au choix la fatigue, les mises à terre ou le potentiel.',
+      'Sur téléphone, glisser pour fermer les volets, appui long pour la fiche rapide d’un combattant, et des vibrations aux gestes qui comptent.',
+      'Sur téléphone, les affectations par lieu (compétences du combattant choisi en haut) et un classement qui tient sur un écran.',
+      'Nouveau lieu : Les Expéditions, au-delà du Bourg — le marché, la rivière, la montagne et le Baron.',
+      'Les Combats de la Reine rapportent des Ferveurs de la Reine (une par étoile pleine de l’adversaire), gardées dans Le Coffre pour le Baron.',
+      'Le Baron propose ses expéditions contre des Ferveurs : un combattant part 20 à 30 jours et revient avec la récompense annoncée sur la carte — deniers, potentiel, une recrue offerte ou un talent.',
+      'Talents exotiques (verts) : dix talents plus puissants que les épiques, rapportés seulement des expéditions — esquive, soin d’un allié, dernier rempart…',
+      'Six talents de voyageurs, à la Taverne et au Scriptorium : Marcheur, Retour du pèlerin, Dévot, Éclaireur, Voyageur aguerri et Compagnon du Baron.',
+      'Trois nouveaux succès autour des expéditions : Première route, Pèlerins d’Europe, Merveilles d’ailleurs.',
+    ],
+  },
+  {
     version: '0.9',
     title: 'Premiers pas',
     newFeatures: [
       'Un tutoriel en trois étapes : le tavernier fait visiter le domaine à chaque nouvelle partie — combattants, Centre, Taverne, fil des jours.',
+      'Premier pas vers Android : le jeu s’installe comme une application, en paysage et en plein écran, avec le bouton retour du téléphone.',
+      'Une interface pensée pour le téléphone : la carte en plein écran, un dock flottant, la Compagnie en liste et fiche, le combat en grandes cartes du choix de l’effectif jusqu’à la victoire, la Coupe de France au pouce.',
     ],
     gameplayChanges: [
       'Coupe de France : la compagnie repart reposée (fatigue 0) au début de chaque combat ; pendant le combat, la fatigue se garde d’une manche à l’autre.',
@@ -132,6 +162,315 @@ export const PATCH_MILESTONES = Object.freeze([
 ]);
 
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '1.1.5',
+    date: '2026-10-19',
+    title: 'Le chant de l’acier',
+    improvements: [
+      'Nouveaux bruitages du combat : des épées qui s’entrechoquent pour les coups ; un long choc d’épées ou une masse qui sonne sur le métal pour les gros coups ; la lourde chute dans la terre pour un KO.',
+    ],
+  },
+  {
+    version: '1.1.4',
+    date: '2026-10-19',
+    title: 'La forêt sous les pouces',
+    improvements: [
+      'Sur téléphone, l’expédition singulière est refaite : la lice du Sentier en plein écran ; la frise des dix combats en haut ; l’adversaire en haut à droite (un appui ouvre sa fiche) ; les trois combattants en bas à gauche et « Combattre » en bas à droite ; propositions et victoire dans un volet qui monte du bas.',
+    ],
+  },
+  {
+    version: '1.1.3',
+    date: '2026-10-19',
+    title: 'Exploits de forêt',
+    newFeatures: [
+      'Quatre succès (Monde) pour les expéditions singulières : Le Sentier des pins (une première victoire), Trois debout (sans aucun KO), Loup solitaire (les dix combats avec le même combattant), Seigneur des cimes (gagner la tranche la plus chère).',
+    ],
+  },
+  {
+    version: '1.1.2',
+    date: '2026-10-19',
+    title: 'Le Baron',
+    gameplayChanges: [
+      'Le Capitaine des Expéditions devient le Baron (le capitaine de votre compagnie ne change pas). Le talent Compagnon du Capitaine devient Compagnon du Baron.',
+    ],
+    balanceChanges: [
+      'Expéditions moins chères : tranche 2 de 6 à 10 Ferveurs (au lieu de 8 à 13), tranche 3 de 11 à 18 (au lieu de 15 à 21).',
+    ],
+  },
+  {
+    version: '1.1.1',
+    date: '2026-10-19',
+    title: 'Retour de forêt',
+    fixes: [
+      'Expédition singulière : si plus personne n’est en état d’entrer en lice après une halte (KO ou épuisé à 100), l’expédition est perdue au lieu de rester bloquée.',
+      'L’Amulette de l’ours n’est plus proposée à un combattant qui la porte déjà.',
+      'À la victoire, un combattant ne peut plus recevoir plus de flammes de potentiel qu’il ne lui en manque (3 au plus).',
+    ],
+  },
+  {
+    version: '1.1.0',
+    date: '2026-10-19',
+    title: 'Le Sentier des pins',
+    newFeatures: [
+      'Expéditions singulières : on part avec trois combattants (ni en étude, ni épuisés) pour dix combats d’affilée en un contre un, une manche gagnante. Les jours ne passent pas pendant l’expédition.',
+      'Avant chaque combat, on choisit qui entre en lice ; la fatigue se garde d’un combat à l’autre. Un combattant battu est KO jusqu’à la fin : un autre reprend le même combat, contre l’adversaire qui garde sa fatigue. Les trois KO : l’expédition et ses Ferveurs sont perdues. On peut abandonner à tout moment.',
+      'Entre deux combats gagnés, trois propositions, on en garde une : vingt bonus d’expédition (Pierre à aiguiser, Repos au camp, Amulette de l’ours, Fumée des pins, Remise sur pied…) ou dix récompenses de fin (bourses, Ferveurs retrouvées, Flamme nouvelle, Parchemin ancien…).',
+      'Les dix adversaires sont connus d’avance, sur la carte du Capitaine : rôle, étoiles et talents. Leur niveau monte d’un combat à l’autre ; le dernier a un talent de combat (deux dans la tranche la plus chère).',
+      'Victoire : la récompense de la carte et les récompenses de fin ; un talent ou du potentiel va à l’un des trois, au choix.',
+      'Nouvelle lice, deux fois plus petite : Le Sentier des pins, en pleine forêt — grands pins, cabane de chasseur, villageois, enfants et bêtes. Pluie en automne, neige en hiver.',
+    ],
+    improvements: [
+      'Le bouton du jour devient « Expédition en cours » tant qu’elle dure ; la frise des dix combats est toujours visible en haut.',
+    ],
+  },
+  {
+    version: '1.0.0',
+    date: '2026-10-19',
+    title: 'Gens de route',
+    newFeatures: [
+      'Nouveaux talents ordinaires : Marcheur (expéditions 4 jours plus courtes), Retour du pèlerin (+6 % de dégâts finaux pendant les 10 jours qui suivent son retour), Dévot (+1 Ferveur de la Reine par Combat de la Reine gagné, non cumulable).',
+      'Nouveaux talents rares : Éclaireur (expéditions 1 Ferveur moins chères, 1 au moins, non cumulable), Voyageur aguerri (+2 dans chaque compétence de combat au retour d’expédition).',
+      'Nouveau talent épique : Compagnon du Capitaine — son expédition rapporte une seconde récompense de la même tranche (deniers, potentiel ou recrue, jamais un talent).',
+      'Trois succès (Monde) : Première route (un premier retour d’expédition), Pèlerins d’Europe (5 lieux différents), Merveilles d’ailleurs (3 talents exotiques différents dans la compagnie).',
+    ],
+    improvements: [
+      'Cartes du Capitaine : le coût réduit par un Éclaireur s’affiche en vert ; au choix du combattant, la durée raccourcie d’un Marcheur.',
+      'Carnet de bord : la seconde récompense et les compétences gagnées en voyage sont notées au retour.',
+    ],
+  },
+  {
+    version: '0.99.0',
+    date: '2026-10-19',
+    title: 'Ce que rapportent les routes',
+    newFeatures: [
+      'Expéditions : Pérégrinations et Expéditions singulières s’entreprennent toutes. Chacune emmène un combattant pendant 20 à 30 jours et annonce sa récompense sur la carte, donnée au retour.',
+      'Récompenses par tranche : 1 à 5 Ferveurs — 500 à 1 000 deniers, un talent ordinaire, +1 potentiel ou une recrue (potentiel 1 au moins) ; 8 à 13 — 1 500 à 3 000 deniers, un talent rare ou épique ; 15 à 21 — 5 000 à 7 000 deniers, un talent épique ou exotique.',
+      'Talent rapporté : s’il a déjà deux talents, on choisit au départ celui qu’il remplacera. Un combattant qui a déjà ce talent ne part pas.',
+      'Recrue ramenée : elle attend à la Taverne, offerte, et reste aux rotations jusqu’à son engagement.',
+      'Talents exotiques (verts), seulement par les expéditions : Fureur du Nord, Ascète des Météores, Druide de Brocéliande, Ours de Białowieża, Lame d’Avalon, Œil de Skellig, Avalanche, Dernier rempart, Écho des cimes, Feu follet.',
+    ],
+    improvements: [
+      'Combat : « Esquive ! » et soins (« +40 PV ») s’affichent dans la lice ; le journal d’entraînement les détaille.',
+      'Carnet de bord : une tuile « Expéditions » pour les retours (deniers, talent, recrue) ; le potentiel reste dans sa tuile.',
+    ],
+    balanceChanges: [
+      'Coût des expéditions : 1 à 5, 8 à 13 et 15 à 21 Ferveurs (au lieu de 1–5, 6–12, 13–16).',
+    ],
+  },
+  {
+    version: '0.98.0',
+    date: '2026-10-19',
+    title: 'Les routes du Capitaine',
+    newFeatures: [
+      'Expéditions : avec au moins une Ferveur de la Reine, le Capitaine propose trois expéditions par saison, en cartes illustrées — des lieux sauvages ou médiévaux d’Europe (Brocéliande, Mont-Blanc, Jumièges, Tintagel, les Météores…). Leur coût : 1 à 5, 6 à 12 et 13 à 16 Ferveurs.',
+      'Pérégrinations : un combattant part 20 à 30 jours ; il est indisponible (comme au Bureau d’étude) et revient avec un potentiel de plus (3 au plus), annoncé au carnet de bord.',
+      'Une seule expédition par saison : les autres cartes se grisent jusqu’aux nouvelles propositions. Les Expéditions singulières sont annoncées ; le Capitaine en dira plus bientôt.',
+    ],
+    improvements: [
+      'Carnet de bord : une victoire au Combat de la Reine indique les Ferveurs obtenues.',
+    ],
+  },
+  {
+    version: '0.97.0',
+    date: '2026-10-19',
+    title: 'La faveur de la Reine',
+    newFeatures: [
+      'Ferveurs de la Reine : chaque Combat de la Reine gagné rapporte autant de Ferveurs que d’étoiles pleines de l’adversaire (4 étoiles : 4 ; 2 étoiles et demie : 2). Ces petits billets roses s’empilent dans Le Coffre ; inutilisables pour l’instant, ils serviront auprès du Capitaine.',
+    ],
+    improvements: [
+      'Combat de la Reine : au choix de l’adversaire, la récompense en Ferveurs s’affiche à côté des deniers ; la fin du combat et le carnet de bord les mentionnent.',
+    ],
+  },
+  {
+    version: '0.96.0',
+    date: '2026-10-19',
+    title: 'Au-delà du Bourg',
+    newFeatures: [
+      'Nouveau lieu : Les Expéditions. Une carte de la taille du Centre, coupée par une rivière qu’enjambe un pont de bois : au nord, un marché (étals, marchandises, civils) ; au sud, la montagne. Le Capitaine y campe — on peut lui parler (ses expéditions arriveront plus tard).',
+      'Les Expéditions s’atteignent par leur bouton du domaine, ou à pied depuis le Bourg : un chemin et un poteau en bas du Bourg, entre le Bûcheron et le Sénéchal.',
+    ],
+    improvements: [
+      'Le Bourg n’a plus de carrefour : la rue du marché est rendue à l’herbe ; seule la grande rue, du Centre aux Expéditions, reste pavée.',
+      'La carte des Expéditions suit le climat : herbe et rocaille, rivière (basse en été, gelée en hiver), neige sur les pics, météo de la saison.',
+    ],
+    fixes: [
+      'Sur téléphone, au Centre, le volet fermé (lieux, affectations) s’affichait par-dessus la carte.',
+    ],
+  },
+  {
+    version: '0.95.0',
+    date: '2026-10-19',
+    title: 'Chacun à son poste',
+    newFeatures: [
+      'Sur téléphone, les affectations se font par lieu : une colonne par lieu avec ses combattants ; on touche un combattant — ses compétences (LUT, HAS, PER, END) et sa fatigue s’affichent en haut — puis le lieu où l’envoyer. Les lieux possibles sont soulignés, les lieux complets ou fermés grisés.',
+    ],
+    improvements: [
+      'Sur téléphone, le classement tient sur un écran : divisions en onglets, « Votre compagnie » épinglée à gauche (place, points, écart à la montée), lignes compactes qui s’ouvrent sur votre ligne.',
+    ],
+  },
+  {
+    version: '0.94.0',
+    date: '2026-10-19',
+    title: 'Tout en haut',
+    improvements: [
+      'Sur téléphone, « Remplacer ce talent » : les combattants à gauche, le résumé à droite, avec le choix du talent à remplacer en tête et mis en avant tant qu’il n’est pas fait — plus besoin de descendre tout en bas.',
+    ],
+    fixes: [
+      'Sur téléphone, le carnet de bord (fin de saison et autres longues fenêtres) s’ouvrait tout en bas : il s’ouvre maintenant en haut.',
+    ],
+  },
+  {
+    version: '0.93.0',
+    date: '2026-10-18',
+    title: 'Sous le pouce',
+    newFeatures: [
+      'Sur téléphone, un appui long sur un combattant (liste, carte d’effectif, recrue de la Taverne, carte du Centre) affiche sa fiche en bulle : classe, étoiles, compétences, fatigue, potentiel et talents.',
+      'Application Android : de courtes vibrations confirment les gestes qui comptent — cocher un combattant, buter sur un effectif complet, lancer une manche, gagner un combat.',
+    ],
+    improvements: [
+      'Sur téléphone, les volets se referment en les faisant glisser : vers le bas (lieux, affectations, tableau de la Coupe, avec une poignée), vers la droite pour le menu.',
+      'Sur téléphone, le bouton principal du combat (« Valider l’effectif », « Placer dans La Lice ») reste en bas de l’écran, au pouce.',
+    ],
+  },
+  {
+    version: '0.92.0',
+    date: '2026-10-18',
+    title: 'Chaque chose à sa place',
+    newFeatures: [
+      'Sur téléphone, la liste de la Compagnie peut montrer, au choix, la fatigue, les mises à terre de la carrière ou le potentiel de chaque combattant (petit bouton à icône à côté de « La Compagnie »).',
+    ],
+    improvements: [
+      'Sur téléphone, au Centre, deux boutons à gauche : « Lieux » n’ouvre que les lieux, « Affectations » que les affectations — plus besoin de faire défiler tout le volet.',
+      'Sur téléphone, le prochain combat s’affiche en haut à droite, à côté des deniers : le milieu de la carte reste dégagé.',
+      'Sur téléphone, les deniers sont cerclés d’or.',
+    ],
+  },
+  {
+    version: '0.91.0',
+    date: '2026-10-18',
+    title: 'Au plus près',
+    newFeatures: [
+      'Sur téléphone, les cartes (Centre, Bourg, Taverne, Scriptorium, Ma Lice, Château de Gabarnac) se zooment : pincer pour agrandir ou revenir, glisser un doigt pour se déplacer ; le bouton « Vue d’ensemble » ramène la carte entière.',
+    ],
+    fixes: [
+      'Son : un bruitage dont le fichier n’avait pas pu être lu provoquait une erreur à chaque nouvelle tentative de le jouer.',
+    ],
+  },
+  {
+    version: '0.90.0',
+    date: '2026-10-18',
+    title: 'La Coupe au pouce',
+    newFeatures: [
+      'Sur téléphone, le menu (bouton en haut à droite) s’ouvre en volet sur le côté : état de la sauvegarde, grand bouton Sauvegarder, Succès, L’Almanach, Options, Patch Notes, et Menu principal à part en bas.',
+      'Sur téléphone, le tirage au sort de la Coupe de France montre la dernière compagnie tirée en grand et les neuf poules en blasons ; toucher une poule donne le nom de ses compagnies.',
+      'Sur téléphone, le Château de Gabarnac s’affiche en plein écran avec le prochain combat, le bouton « Combattre » et un dock : Gabarnac, Tableau, Arbre, Résultats.',
+      'Sur téléphone, le tableau de la Coupe s’ouvre en volet : rubriques à gauche, poules A à I en onglets avec les blasons ; l’arbre final se lit tour par tour, le parcours de la compagnie en or.',
+    ],
+    improvements: [
+      'Sur téléphone, la carte du château s’arrête au-dessus du dock : le tableau de la Coupe n’est plus caché.',
+      'Sur téléphone, « Abandonner la Coupe », Sauvegarder et Menu principal passent dans le menu de la Coupe.',
+    ],
+  },
+  {
+    version: '0.89.0',
+    date: '2026-10-17',
+    title: 'Béhourd Management',
+    improvements: [
+      'Le jeu s’appelle désormais « Béhourd Management » : écran principal, onglet du navigateur et application Android.',
+    ],
+  },
+  {
+    version: '0.88.0',
+    date: '2026-10-17',
+    title: 'La bulle et la chanson',
+    newFeatures: [
+      'Sur téléphone, toucher un talent (fiche d’un combattant, Taverne, combat…) affiche une bulle qui explique son effet ; un autre toucher la referme.',
+      'Application Android : l’écran de démarrage a son air, « Girls » ; la musique du jeu prend le relais ensuite.',
+    ],
+    improvements: [
+      'Sur téléphone, la création de l’équipe et du capitaine n’ouvre plus le clavier d’office : il s’ouvre quand on touche le champ du nom (de même dans les fenêtres de saisie).',
+    ],
+  },
+  {
+    version: '0.87.0',
+    date: '2026-10-17',
+    title: 'Le heaume à l’épée',
+    newFeatures: [
+      'Application Android : nouvelle icône — le heaume et l’épée sur fond de bannière.',
+      'Sur téléphone, la partie est sauvegardée dès que le jeu passe en arrière-plan (sauvegarde automatique active, jamais en plein combat) : Android peut fermer l’application sans rien perdre.',
+    ],
+    improvements: [
+      'Sur téléphone, les scènes (Centre, Bourg, Taverne, Scriptorium, Ma Lice, combat) se dessinent à 30 images par seconde : moins de calcul, moins de batterie.',
+      'Sur téléphone, en arrière-plan, plus rien ne se dessine et le son se tait ; il reprend au retour.',
+      'Sur un petit téléphone (peu de cœurs ou de mémoire), les effets visuels « complets » passent d’eux-mêmes en « réduits ».',
+    ],
+  },
+  {
+    version: '0.86.0',
+    date: '2026-10-17',
+    title: 'La lice au creux de la main',
+    newFeatures: [
+      'Sur téléphone, l’effectif engagé et le choix des combattants de chaque manche se font en grandes cartes (classe, étoiles, compétences, fatigue) ; l’adversaire et les actions restent à portée du pouce, à droite.',
+      'Sur téléphone, le résultat d’une manche tient sur un écran : vainqueur, score, meilleur combattant, et pour chacun mises à terre, dégâts et fatigue.',
+      'Sur téléphone, la fin du combat affiche en grand la victoire ou la défaite, les points, la recette et les manches ; le classement à côté, les autres combats et les courbatures repliés.',
+    ],
+    improvements: [
+      'Application Android : la Compagnie, le Championnat et les autres pages sont de nouveau centrés (la marge de l’encoche était comptée deux fois).',
+      'Sur téléphone, le bouton rond « Combattre » s’affiche sur une seule ligne.',
+    ],
+  },
+  {
+    version: '0.85.0',
+    date: '2026-10-17',
+    title: 'Le bassinet fleuri',
+    newFeatures: [
+      'Application Android : un écran de démarrage — un bassinet du temps de Charles VI posé dans l’herbe, que la végétation envahit (herbes, liane, fleurs), puis les lettres « BZW ». Un toucher le passe.',
+    ],
+    improvements: [
+      'Sur téléphone, chaque fin de combat ramène au Centre.',
+      'Sur téléphone, la Taverne et les autres lieux s’ouvrent sur leur carte : le volet des textes reste fermé jusqu’à ce qu’on le demande.',
+    ],
+  },
+  {
+    version: '0.84.0',
+    date: '2026-10-17',
+    title: 'Entrer en jeu sur téléphone',
+    newFeatures: [
+      'Application Android : l’écran principal tient sans défiler (titre à gauche, menu à droite) et propose « Continuer », qui reprend la dernière partie au Centre.',
+      'Nouvelle partie sur téléphone : directement la carte des Terres de France en plein écran, le choix du lieu à droite ; le blason et le capitaine s’affichent en grand à gauche, les choix à droite ; les trois étapes sont rappelées en bas.',
+    ],
+    improvements: [
+      'Sur téléphone, le carnet de bord présente le jour à gauche et le récit à droite ; la Coupe de France montre Gabarnac en plein écran avec le prochain combat et la poule à droite ; Ma Lice s’ouvre sur la lice, le volet fermé.',
+      'La version ordinateur ne change pas.',
+    ],
+  },
+  {
+    version: '0.83.0',
+    date: '2026-10-16',
+    title: 'Le jeu dans la poche',
+    newFeatures: [
+      'Interface mobile (application Android) : le Centre, le Bourg, la Taverne, le Scriptorium et Ma Lice s’affichent en plein écran ; un bandeau en haut (compagnie et jour, prochain événement, deniers, menu), les lieux à gauche, un dock flottant en bas (Compagnie, Domaine, Coffre, Ligue) et un gros bouton « Jour suivant », qui devient « Combattre » un jour de combat.',
+      'Ce qui se trouvait sous la carte (affectations, artisans, recrues, études) remonte du bas dans un volet ; un toucher sur le bandeau ouvre le calendrier complet, le menu réunit sauvegarde, succès, options, Almanach et menu principal.',
+      'La Compagnie sur téléphone : la liste des combattants à gauche, filtrable par classe, et la fiche complète à droite, sans fenêtre à ouvrir.',
+      'Le combat sur téléphone : la lice en plein écran ; vos combattants à placer forment une main de cartes (étoiles, quatre compétences, celle de la classe en avant, fatigue) et la fiche du combattant choisi rappelle ses compétences, son état, ses talents et son rôle. La manche se regarde en plein écran.',
+    ],
+    improvements: [
+      'Taverne : le potentiel des recrues (flammes) s’affiche sur leur carte, sans ouvrir leur fiche.',
+      'Le bouton retour du téléphone referme aussi le volet d’un lieu.',
+    ],
+  },
+  {
+    version: '0.82.0',
+    date: '2026-10-16',
+    title: 'Android, première étape',
+    newFeatures: [
+      'Le jeu existe en application Android de test : même jeu, même sauvegarde, en paysage imposé et en plein écran (barres du téléphone masquées, réaffichées d’un glissement).',
+      'Bouton retour du téléphone : il ferme la fenêtre ouverte, ramène au Centre depuis les autres lieux, propose le menu principal depuis le Centre, et ferme l’application au menu principal. « Quitter le jeu » ferme aussi l’application.',
+    ],
+    improvements: [
+      'En attendant l’interface mobile, l’application affiche le jeu comme sur un écran de 1280 pixels, réduit à la taille du téléphone. Le jeu s’écarte de l’encoche de la caméra.',
+    ],
+  },
   {
     version: '0.81.2',
     date: '2026-10-16',

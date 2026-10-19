@@ -6,6 +6,9 @@ import { getLocation, getStartLocations, isStartLocation } from '../../systems/g
 import { BaseScreen } from './BaseScreen.js';
 import { EuropeMap } from '../components/EuropeMap.js';
 import { LandMap } from '../components/LandMap.js';
+import { EUROPE_COUNTRIES } from '../../data/geography/europe.js';
+import { MobileSteps } from '../mobile/MobileSteps.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 /**
  * Nouvelle partie, étape 1 : le pays sur la carte de l'Europe, puis la Terre et le lieu de
@@ -20,6 +23,14 @@ export class NewGameScreen extends BaseScreen {
     this.landId = location?.landId ?? null;
     this.locationId = location?.id ?? null;
     this.step = location && hasLandMap(this.countryId) ? 'lands' : 'europe';
+    // Interface mobile (v0.84) : un seul pays jouable → directement la carte de ses Terres.
+    this.mobile = isMobileLayout();
+    const playable = EUROPE_COUNTRIES.filter((country) => country.selectable && hasLandMap(country.id));
+    this.skipEurope = this.mobile && playable.length === 1;
+    if (this.skipEurope) {
+      this.countryId = playable[0].id;
+      this.step = 'lands';
+    }
   }
 
   render() {
@@ -35,6 +46,7 @@ export class NewGameScreen extends BaseScreen {
       h('header', { class: 'screen-header' }, h('p', { class: 'eyebrow' }, 'Nouvelle partie · Étape 1 sur 3'), this.titleEl, this.subtitleEl),
       h('div', { class: 'new-game-layout' }, this.mapHost, this.panelHost),
       this.actionsHost,
+      MobileSteps(1),
     );
   }
 
@@ -85,7 +97,7 @@ export class NewGameScreen extends BaseScreen {
       })
       : EuropeMap({ onSelect: (country) => this.selectCountry(country), selectedId: this.countryId }));
     this.panelHost.replaceChildren(...(lands ? this.renderLandPanel() : this.renderCountryPanel()));
-    this.actionsHost.replaceChildren(lands
+    this.actionsHost.replaceChildren(lands && !this.skipEurope
       ? h('button', { type: 'button', class: 'btn', onclick: () => this.showStep('europe') }, '◂ Carte de l’Europe')
       : h('button', { type: 'button', class: 'btn', onclick: () => this.navigate(SCREENS.MAIN_MENU) }, 'Retour au menu'));
   }

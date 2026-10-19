@@ -33,6 +33,18 @@ export const ARENAS = Object.freeze({
       },
     ],
   },
+  // Le Sentier (v1.1, expéditions singulières) : une lice deux fois plus petite que La Lice
+  // (7 × 4), pour des duels en un contre un, en pleine forêt.
+  sentier: {
+    id: 'sentier',
+    name: 'Le Sentier',
+    width: 7,
+    height: 4,
+    sides: [
+      { area: { x: 0, y: 0, w: 3, h: 4 }, defaultSlots: [{ x: 1, y: 1 }, { x: 1, y: 2 }] },
+      { area: { x: 4, y: 0, w: 3, h: 4 }, defaultSlots: [{ x: 5, y: 2 }, { x: 5, y: 1 }] },
+    ],
+  },
 });
 
 export const DEFAULT_ARENA_ID = 'lice';

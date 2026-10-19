@@ -1,7 +1,7 @@
 import { ASSIGNMENT_PRESET_RULES } from '../../data/assignmentPresets.js';
 import { createId } from '../../utils/id.js';
 import { getActivity, getEffectiveActivity, isCentreClosed, CENTRE_CLOSED_REASON } from './ActivityService.js';
-import { isStudying } from '../talents/StudyService.js';
+import { isAway } from '../talents/StudyService.js';
 import { getCurrentSeason, getSeasonalClosure } from '../climate/ClimateService.js';
 import { getFatigueState } from '../fighters/FatigueService.js';
 import { FATIGUE_RULES } from '../../data/fatigue.js';
@@ -126,7 +126,7 @@ export function planAssignmentPreset(session, preset) {
     if (!fighter) { issues.push({ kind: 'departed', fighterId }); continue; }
     mentioned.add(fighter.id);
     if (activityId && !getActivity(activityId)) { issues.push({ kind: 'unknownActivity', fighterId, fighter, activityId }); continue; }
-    if (activityId && isStudying(session, fighter)) { issues.push({ kind: 'studying', fighterId, fighter, activityId }); continue; }
+    if (activityId && isAway(session, fighter)) { issues.push({ kind: 'studying', fighterId, fighter, activityId }); continue; }
     // Lieu fermé par la saison (rivière en été, forêt en hiver) : ignoré, signalé.
     if (activityId && getSeasonalClosure(activityId, season)) { issues.push({ kind: 'seasonClosed', fighterId, fighter, activityId }); continue; }
     // Épuisé (v0.75) : il ne peut aller qu'au Banquet ; il y est envoyé à la place.

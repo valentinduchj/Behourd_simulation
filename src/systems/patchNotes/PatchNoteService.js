@@ -39,10 +39,12 @@ const parts = (version) => String(version).split('.').map((n) => Number.parseInt
 /**
  * Version majeure qui contient une version : chaque majeure regroupe les versions qui la
  * précèdent — 0.51.0 … 0.60.x → « 0.6 » ; 0.61.0 … 0.70.x → « 0.7 » ; 0.40.0 → « 0.4 ».
+ * Après la 0.9 vient la 1.0 (v0.91) : 0.91.0 … 0.100.x et 1.0.x → « 1.0 ».
  */
 export function getMilestoneId(version) {
   const [major, minor] = parts(version);
-  return `${major}.${Math.ceil(minor / 10)}`;
+  const tenth = Math.ceil(minor / 10);
+  return tenth >= 10 ? `${major + 1}.0` : `${major}.${tenth}`;
 }
 
 /** « 0.51 » pour 0.51.0, « 0.60.1 » sinon. */

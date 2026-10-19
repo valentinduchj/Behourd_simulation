@@ -6,7 +6,8 @@
 //
 //   id           identifiant stable (enregistré dans les sauvegardes : ne jamais le changer)
 //   name         nom affiché sur l'étiquette
-//   rarity       famille : 'common' (niveau saison 1), 'rare' (saisons 2–3), 'epic' (saison 4)
+//   rarity       famille : 'common' (niveau saison 1), 'rare' (saisons 2–3), 'epic' (saison 4),
+//                'exotic' (v0.99 : seulement au retour d'une expédition du Baron)
 //   domain       domaine affiché (Combat, Forêt, Banquet…)
 //   description  texte de survol de l'étiquette (effet exact)
 //   effects      [{ type, …paramètres }] — LUS par les systèmes concernés (systems/talents/
@@ -44,10 +45,26 @@
 //     potentialBoost  { value, maxAge | null, anyAge } chances de hausse en plus à chaque vérification
 //     skillCapSteps   { value } plafond des compétences de N crans plus haut
 //     seasonImmune    {} la pénalité saisonnière de sa classe ne s'applique pas à lui (data/climate.js)
+//   Expéditions du Baron (v1.0) :
+//     expeditionDays  { value } ses expéditions durent N jours de moins
+//     expeditionDiscount { value } les expéditions coûtent N Ferveurs de moins (compagnie, non cumulable ; 1 au moins)
+//     expeditionTraining { value } à son retour d'expédition, +N dans chaque compétence de combat (plafond)
+//     expeditionBonusReward {} son expédition rapporte une seconde récompense de la même tranche (jamais un talent)
+//     queenFerveur    { value } Ferveurs en plus par Combat de la Reine gagné où il a combattu (non cumulable)
+//                  Un effet peut porter afterJourney (jours) : actif seulement pendant les N jours qui
+//                  suivent son retour d'expédition (TalentEffects.isEffectActive, contexte daysSinceReturn).
+//   Exotiques (v0.99, expéditions du Baron seulement) :
+//     fatigueIgnore   { when: 'selfHpBelow', threshold } ses pénalités de fatigue ne comptent pas
+//     allyHeal        { value, threshold, per: 'round' } soigne un allié tombé sous `threshold` de ses PV
+//     preferWounded   { value } choisit de préférence l'adversaire le plus blessé (poids du choix)
+//     auraGuard       { value } dégâts reçus en moins pour tous les combattants de sa manche (lui compris)
+//     dodgeChance     { value } chance d'esquiver chaque coup reçu
+//     finalDamage / damageTaken peuvent porter when: 'lastStanding' (dernier debout de son camp)
 //                  Tout effet peut porter season ('summer' | 'autumn' | 'winter' | 'spring') : il n'est
 //                  actif que pendant cette saison de l'année (TalentEffects.isEffectActive).
 //   season       talents saisonniers (v0.70) : saison où ils agissent ('all' : toute l'année)
-//   sources      d'où il peut venir : 'tavern' (recrue de la Taverne), 'study' (Scriptorium)
+//   sources      d'où il peut venir : 'tavern' (recrue de la Taverne), 'study' (Scriptorium),
+//                'expedition' (expéditions du Baron : les exotiques n'ont que celle-ci)
 //   weight       poids relatif lors d'un tirage parmi les talents d'une même famille
 
 /** Familles de talents : couleur de l'étiquette (fond, texte, bordure). */
@@ -55,12 +72,14 @@ export const TALENT_RARITIES = Object.freeze({
   common: Object.freeze({ id: 'common', name: 'Ordinaire', color: '#9fd3f2', text: '#10354d', border: '#4f97c4' }),
   rare: Object.freeze({ id: 'rare', name: 'Rare', color: '#ec8a2c', text: '#2e1604', border: '#a85512' }),
   epic: Object.freeze({ id: 'epic', name: 'Épique', color: '#141416', text: '#f4ecd8', border: '#000000' }),
+  exotic: Object.freeze({ id: 'exotic', name: 'Exotique', color: '#2f8a3e', text: '#f4f8ee', border: '#1b5a27' }),
 });
 
 /** Étiquette d'un talent dont la famille n'est pas encore décidée (couleur neutre, parchemin). */
 export const TALENT_UNRANKED_STYLE = Object.freeze({ color: '#efe3c4', text: '#3a2a14', border: '#a8874f' });
 
 const BOTH = Object.freeze(['tavern', 'study']);
+const EXPEDITION = Object.freeze(['expedition']);
 const talent = (id, name, rarity, domain, description, effects, extra = {}) => Object.freeze({
   id, name, rarity, domain, description, effects: Object.freeze(effects.map((e) => Object.freeze(e))), sources: BOTH, weight: 1, ...extra,
 });
@@ -105,6 +124,10 @@ export const TALENTS = Object.freeze([
   talent('peau-tannee', 'Peau tannée', 'common', 'Été', 'En été : +5 % de dégâts finaux. La chaleur lui réussit.', [{ type: 'finalDamage', value: 0.05, when: 'always', season: 'summer' }], { season: 'summer' }),
   talent('pas-feutre', 'Pas feutré', 'common', 'Automne', 'En automne : se déplace 10 % plus vite dans la lice, malgré les feuilles mortes.', [{ type: 'moveSpeed', value: 0.1, season: 'autumn' }], { season: 'autumn' }),
   talent('seve-nouvelle', 'Sève nouvelle', 'common', 'Printemps', 'Au printemps : +8 % de réussite quotidienne au Centre, quelle que soit son activité.', [{ type: 'activityChance', value: 0.08, activityId: null, season: 'spring' }], { season: 'spring' }),
+  // Expéditions du Baron (v1.0).
+  talent('marcheur', 'Marcheur', 'common', 'Expédition', 'Ses expéditions durent 4 jours de moins.', [{ type: 'expeditionDays', value: 4 }]),
+  talent('retour-du-pelerin', 'Retour du pèlerin', 'common', 'Expédition', 'Pendant les 10 jours qui suivent son retour d’expédition : +6 % de dégâts finaux.', [{ type: 'finalDamage', value: 0.06, when: 'always', afterJourney: 10 }]),
+  talent('devot', 'Dévot', 'common', 'Reine', '+1 Ferveur de la Reine par Combat de la Reine gagné où il a combattu (une seule par combat, même avec plusieurs Dévots).', [{ type: 'queenFerveur', value: 1 }]),
   // ---------- Rares (saisons 2–3) ----------
   talent('maitre-forestier', 'Maître forestier', 'rare', 'Forêt', '+5 deniers par réussite en Forêt et +10 % de réussite.', [{ type: 'activityReward', value: 5, activityIds: ['forest'] }, { type: 'activityChance', value: 0.1, activityId: 'forest' }]),
   talent('porte-etendard', 'Porte-étendard', 'rare', 'Aura', '+3 % de dégâts finaux pour tous les combattants de sa manche (lui compris).', [{ type: 'aura', value: 0.03, self: true }]),
@@ -121,6 +144,8 @@ export const TALENTS = Object.freeze([
   talent('fils-du-soleil', 'Fils du soleil', 'rare', 'Été', 'En été : la chaleur ne le pénalise pas (un Hastier garde toute son efficacité) et +5 % de Force d’arme d’hast en combat.', [{ type: 'seasonImmune', season: 'summer' }, { type: 'combatStats', value: 0.05, stat: 'polearm', when: 'always', season: 'summer' }], { season: 'summer' }),
   talent('coureur-des-brumes', 'Coureur des brumes', 'rare', 'Automne', 'En automne : les terrains humides ne le pénalisent pas (un Runner garde toute son efficacité) et +5 % de dégâts finaux.', [{ type: 'seasonImmune', season: 'autumn' }, { type: 'finalDamage', value: 0.05, when: 'always', season: 'autumn' }], { season: 'autumn' }),
   talent('sang-chaud', 'Sang chaud', 'rare', 'Hiver', 'En hiver : +10 % d’Endurance en combat et −5 % de dégâts reçus.', [{ type: 'combatStats', value: 0.1, stat: 'endurance', when: 'always', season: 'winter' }, { type: 'damageTaken', value: 0.05, season: 'winter' }], { season: 'winter' }),
+  talent('eclaireur', 'Éclaireur', 'rare', 'Expédition', 'Tant qu’il est dans la compagnie, les expéditions coûtent 1 Ferveur de moins (1 au moins). Non cumulable.', [{ type: 'expeditionDiscount', value: 1 }]),
+  talent('voyageur-aguerri', 'Voyageur aguerri', 'rare', 'Expédition', 'À son retour d’expédition : +2 dans chaque compétence de combat (HAS, LUT, PER, END), dans la limite de son plafond.', [{ type: 'expeditionTraining', value: 2 }]),
   // ---------- Épiques (saison 4) ----------
   talent('seigneur-de-guerre', 'Seigneur de guerre', 'epic', 'Aura', '+5 % de dégâts finaux à tous les autres combattants de sa manche, et +5 % pour lui.', [{ type: 'aura', value: 0.05, self: true }]),
   talent('immortel', 'Immortel', 'epic', 'Combat', 'Une fois par manche, il survit à un coup fatal à 1 PV et devient intouchable une seconde.', [{ type: 'lastStand', per: 'round', invulnerableTicks: 2 }]),
@@ -128,7 +153,19 @@ export const TALENTS = Object.freeze([
   talent('tresorier-du-roi', 'Trésorier du roi', 'epic', 'Économie', 'Double la recette des victoires à domicile, et +3 deniers par jour pour chaque combattant affecté en Forêt.', [{ type: 'homeRewardMultiplier', value: 2 }, { type: 'foresterDeniers', value: 3 }]),
   talent('elu-des-dieux', 'Élu des dieux', 'epic', 'Carrière', 'Son potentiel ne baisse jamais et peut monter à tout âge ; +10 % de chances à chaque vérification.', [{ type: 'potentialFloor', minAge: Infinity }, { type: 'potentialBoost', value: 0.1, maxAge: null, anyAge: true }]),
   talent('coeur-de-l-hiver', 'Cœur de l’hiver', 'epic', 'Hiver', 'En hiver : +12 % de dégâts finaux pour lui, et +4 % pour tous les autres combattants de sa manche.', [{ type: 'aura', value: 0.04, self: true, season: 'winter' }, { type: 'finalDamage', value: 0.08, when: 'always', season: 'winter' }], { season: 'winter' }),
+  talent('compagnon-du-capitaine', 'Compagnon du Baron', 'epic', 'Expédition', 'Son expédition rapporte une seconde récompense, tirée dans la même tranche : deniers, potentiel ou recrue — jamais un second talent.', [{ type: 'expeditionBonusReward' }]),
   talent('maitre-des-saisons', 'Maître des saisons', 'epic', 'Saisons', 'Toute l’année : aucune saison ne le pénalise, +4 % de dégâts finaux et +5 % de réussite quotidienne au Centre.', [{ type: 'seasonImmune' }, { type: 'finalDamage', value: 0.04, when: 'always' }, { type: 'activityChance', value: 0.05, activityId: null }], { season: 'all' }),
+  // ---------- Exotiques (v0.99 : expéditions du Baron seulement) ----------
+  talent('fureur-du-nord', 'Fureur du Nord', 'exotic', 'Combat', 'Sous 50 % de ses PV : +20 % de dégâts finaux, et la fatigue ne le pénalise plus.', [{ type: 'finalDamage', value: 0.2, when: 'selfHpBelow', threshold: 0.5 }, { type: 'fatigueIgnore', when: 'selfHpBelow', threshold: 0.5 }], { sources: EXPEDITION }),
+  talent('ascete-des-meteores', 'Ascète des Météores', 'exotic', 'Fatigue', 'Rester debout ne le fatigue pas pendant les manches, et ses pénalités de fatigue ne commencent qu’à 90.', [{ type: 'fatigueEffort', factor: 0 }, { type: 'fatigueThreshold', value: 40 }], { sources: EXPEDITION }),
+  talent('druide-de-broceliande', 'Druide de Brocéliande', 'exotic', 'Soin', 'Une fois par manche, soigne de 40 PV un allié qui tombe sous 25 % de ses PV.', [{ type: 'allyHeal', value: 40, threshold: 0.25, per: 'round' }], { sources: EXPEDITION }),
+  talent('ours-de-bialowieza', 'Ours de Białowieża', 'exotic', 'Combat', '−15 % de dégâts reçus et +10 % d’Endurance en combat.', [{ type: 'damageTaken', value: 0.15 }, { type: 'combatStats', value: 0.1, stat: 'endurance', when: 'always' }], { sources: EXPEDITION }),
+  talent('lame-d-avalon', 'Lame d’Avalon', 'exotic', 'Combat', 'Son premier coup de chaque manche : +40 % de dégâts finaux, et l’aléa est tiré deux fois (le meilleur est gardé).', [{ type: 'finalDamage', value: 0.4, when: 'firstStrike' }, { type: 'luckyRoll' }], { sources: EXPEDITION }),
+  talent('oeil-de-skellig', 'Œil de Skellig', 'exotic', 'Combat', 'Vise de préférence l’adversaire le plus blessé, et +12 % de dégâts finaux contre un adversaire sous 50 % de ses PV.', [{ type: 'preferWounded', value: 6 }, { type: 'finalDamage', value: 0.12, when: 'targetHpBelow', threshold: 0.5 }], { sources: EXPEDITION }),
+  talent('avalanche', 'Avalanche', 'exotic', 'Combat', 'Deux coups de plus dans ses combos, et se déplace 15 % plus vite dans la lice.', [{ type: 'comboHits', value: 2 }, { type: 'moveSpeed', value: 0.15 }], { sources: EXPEDITION }),
+  talent('dernier-rempart', 'Dernier rempart', 'exotic', 'Combat', 'Dernier debout de sa compagnie dans la manche : +30 % de dégâts finaux et −20 % de dégâts reçus.', [{ type: 'finalDamage', value: 0.3, when: 'lastStanding' }, { type: 'damageTaken', value: 0.2, when: 'lastStanding' }], { sources: EXPEDITION }),
+  talent('echo-des-cimes', 'Écho des cimes', 'exotic', 'Aura', '+7 % de dégâts finaux et −5 % de dégâts reçus pour tous les combattants de sa manche (lui compris).', [{ type: 'aura', value: 0.07, self: true }, { type: 'auraGuard', value: 0.05 }], { sources: EXPEDITION }),
+  talent('feu-follet', 'Feu follet', 'exotic', 'Combat', '15 % de chances d’esquiver chaque coup reçu : il ne subit alors aucun dégât.', [{ type: 'dodgeChance', value: 0.15 }], { sources: EXPEDITION }),
 ]);
 
 export const TALENT_RULES = Object.freeze({

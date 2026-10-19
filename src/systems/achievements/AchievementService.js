@@ -16,7 +16,8 @@ import { getCurrentSeason, yearOf } from '../climate/ClimateService.js';
 //
 // Enregistré avec la partie : session.achievements = {
 //   unlocked: { [id]: { day, year, climateSeason, leagueSeason } }   (obtenu une seule fois)
-//   counters: { bakerPurchases, activitySuccesses, commonTalents: [talentId…], winSeasons: [seasonId…] }
+//   counters: { bakerPurchases, activitySuccesses, commonTalents: [talentId…], winSeasons: [seasonId…],
+//               expeditionPlaces: [placeId…] (v1.0) }
 // }
 // Les compteurs partent de 0 pour une ancienne sauvegarde. Les succès « d'état » (deniers,
 // talents, étoiles…) se lisent dans la partie : ils sont aussi accordés au chargement.
@@ -44,6 +45,7 @@ export function getAchievementState(session) {
       activitySuccesses: Number(counters.activitySuccesses) || 0,
       commonTalents: Array.isArray(counters.commonTalents) ? [...new Set(counters.commonTalents)] : [],
       winSeasons: Array.isArray(counters.winSeasons) ? [...new Set(counters.winSeasons)] : [],
+      expeditionPlaces: Array.isArray(counters.expeditionPlaces) ? [...new Set(counters.expeditionPlaces)] : [],
     },
   };
   return session.achievements;
@@ -97,6 +99,11 @@ export function countBoroughPurchases(session) {
   return listArtisans().flatMap((artisan) => listUpgradesOf(artisan.id)).reduce((sum, upgrade) => sum + getPurchaseCount(session, upgrade.id), 0);
 }
 
+/** Talents exotiques différents portés dans la compagnie (succès 43). */
+export function exoticTalentCount(session) {
+  return new Set((session.playerFighters ?? []).flatMap((fighter) => getFighterTalents(session, fighter)).filter((talent) => talent.rarity === 'exotic').map((talent) => talent.id)).size;
+}
+
 const completedStudies = (session) => (session.studies ?? []).filter((study) => study.status === 'completed' && study.talentId);
 
 /** Conditions des succès d'état : { id: () => boolean }. */
@@ -126,6 +133,8 @@ function stateConditions(session) {
     'armoire-pleine': () => listTrophies(session).length >= R.trophies,
     'main-d-oeuvre': () => state.counters.activitySuccesses >= R.activitySuccesses,
     'quatre-saisons': () => state.counters.winSeasons.length >= 4,
+    'pelerins-d-europe': () => state.counters.expeditionPlaces.length >= R.expeditionPlaces,
+    'merveilles-d-ailleurs': () => exoticTalentCount(session) >= R.exoticTalents,
   };
 }
 
@@ -165,6 +174,8 @@ export function getAchievementProgress(session, id) {
     'armoire-pleine': () => listTrophies(session).length,
     'main-d-oeuvre': () => state.counters.activitySuccesses,
     'quatre-saisons': () => state.counters.winSeasons.length,
+    'pelerins-d-europe': () => state.counters.expeditionPlaces.length,
+    'merveilles-d-ailleurs': () => exoticTalentCount(session),
   };
   const value = values[id]?.() ?? 0;
   return { value: Math.min(value, entry.goal), goal: entry.goal };
@@ -281,6 +292,35 @@ export function recordRecruit(session, fighter) {
   if (talents.length) ids.push('chasseur-de-tetes');
   talents.forEach((id) => recordTalentDiscovered(session, id));
   return [...ids.map((id) => unlockAchievement(session, id)).filter(Boolean), ...checkAchievements(session)];
+}
+
+/** Départ en expédition (v1.0) : lieu compté pour Pèlerins d'Europe. */
+export function recordExpeditionDeparture(session, placeId) {
+  const state = getAchievementState(session);
+  if (placeId && !state.counters.expeditionPlaces.includes(placeId)) {
+    state.counters.expeditionPlaces.push(placeId);
+    session.markDirty?.();
+  }
+  return checkAchievements(session);
+}
+
+/** Retour d'expédition (v1.0) : Première route, puis les états (talents exotiques…). */
+export function recordExpeditionReturn(session, { report = null } = {}) {
+  return [unlockAchievement(session, 'premiere-route', { report }), ...checkAchievements(session, { report })].filter(Boolean);
+}
+
+/**
+ * Victoire d'une expédition singulière (v1.1.3) : Le Sentier des pins ; Trois debout (aucun combat
+ * perdu, donc aucun KO) ; Loup solitaire (les dix combats, tous par le même combattant) ; Seigneur
+ * des cimes (tranche la plus chère). `run` : l'expédition gagnée (session.expeditions.run).
+ */
+export function recordSingularVictory(session, run, { report = null } = {}) {
+  const history = run?.history ?? [];
+  const ids = ['sentier-des-pins'];
+  if (history.length && history.every((fight) => fight.won)) ids.push('trois-debout');
+  if (history.length && history.every((fight) => fight.won && fight.fighterId === history[0].fighterId)) ids.push('loup-solitaire');
+  if (run?.band === 2) ids.push('seigneur-des-cimes');
+  return ids.map((id) => unlockAchievement(session, id, { report })).filter(Boolean);
 }
 
 /** Achat chez un artisan du Bourg : compteur des achats au Boulanger (succès 20), puis états. */

@@ -25,6 +25,7 @@ export const HUB_NAV_GROUPS = Object.freeze([
       Object.freeze({ id: 'tavern', label: 'La Taverne', icon: '🍺', screen: SCREENS.TAVERN, hint: 'Recrutement' }),
       Object.freeze({ id: 'training', label: 'Ma Lice', icon: '🎯', screen: SCREENS.TRAINING, hint: 'Combats d’entraînement' }),
       Object.freeze({ id: 'scriptorium', label: 'Le Scriptorium', icon: '📜', screen: SCREENS.SCRIPTORIUM, hint: 'Études et talents' }),
+      Object.freeze({ id: 'expeditions', label: 'Les Expéditions', icon: '🧭', screen: SCREENS.EXPEDITIONS, hint: 'Le Baron' }),
     ]),
   }),
 ]);

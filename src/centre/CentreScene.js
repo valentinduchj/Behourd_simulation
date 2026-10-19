@@ -3,7 +3,7 @@ import { listActivities } from '../systems/activities/ActivityService.js';
 import { generateRingDecor } from '../render/decor.js';
 import { ACTIVITY_VISUALS } from '../data/centreVisuals.js';
 import { getVisibleExits } from '../systems/navigation/LocationNavigationService.js';
-import { isStudying } from '../systems/talents/StudyService.js';
+import { isAway } from '../systems/talents/StudyService.js';
 
 const key = (x, y) => `${x},${y}`;
 
@@ -131,7 +131,7 @@ export class CentreScene {
     const groups = new Map();
     for (const fighter of this.session.playerFighters) {
       // En étude, il est au Scriptorium : absent du camp.
-      if (isStudying(this.session, fighter)) continue;
+      if (isAway(this.session, fighter)) continue;
       const groupId = fighter.activityId && this.getActivity(fighter.activityId) ? fighter.activityId : null;
       if (!groups.has(groupId)) groups.set(groupId, []);
       groups.get(groupId).push(fighter);

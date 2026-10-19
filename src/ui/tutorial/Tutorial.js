@@ -7,6 +7,7 @@ import { LEAGUE_RULES } from '../../data/leagues.js';
 import { MAX_TEAM_FIGHTERS } from '../../data/roster.js';
 import { translateText } from '../../i18n/i18n.js';
 import { assetUrl } from '../../utils/assets.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 // Tutoriel (v0.81) : une sur-couche posée sur le jeu lui-même (document.body), qui survit aux
 // changements d'écran. Le jeu reste vivant dessous ; le calque :
@@ -172,6 +173,9 @@ class TutorialRun {
     this.lastRect = undefined;
     const step = this.step;
     if (step.screen && host && host.currentId !== step.screen) host.show(step.screen);
+    // Interface mobile : le volet du lieu s'ouvre pour les zones qu'il contient, se referme sinon.
+    if (step.sheet) this.screen?.openMobileSheet?.();
+    else this.screen?.closeMobileSheet?.();
     this.renderBubble();
   }
 
@@ -210,7 +214,7 @@ class TutorialRun {
         ...paragraphs(step.text),
         step.list ? this.renderList(step.list) : null,
         ...paragraphs(step.after),
-        step.action ? h('p', { class: 'tutorial-action' }, h('span', { 'aria-hidden': 'true' }, '👉 '), fillText(step.action)) : null,
+        step.action ? h('p', { class: 'tutorial-action' }, h('span', { 'aria-hidden': 'true' }, '👉 '), fillText((isMobileLayout() && step.mobileAction) || step.action)) : null,
         footer,
       ),
     );

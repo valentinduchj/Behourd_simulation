@@ -44,6 +44,8 @@ export const ACHIEVEMENT_RULES = Object.freeze({
   queenStars: 5,
   legendStars: 5,
   yearDay: 101,
+  expeditionPlaces: 5,
+  exoticTalents: 3,
 });
 
 const R = ACHIEVEMENT_RULES;
@@ -94,6 +96,15 @@ export const ACHIEVEMENTS = Object.freeze([
   achievement(38, 'toit-de-la-france', 'competition', 'hard', 'event', '🏰', 'Sur le toit de la France', 'Remporter la Ligue 1.', { teaser: 'Plus haut, il n’y a que le ciel.' }),
   achievement(39, 'chasseur-de-tetes', 'fighters', 'medium', 'event', '🎯', 'Chasseur de têtes', 'Recruter à la Taverne une recrue qui a déjà un talent.'),
   achievement(40, 'quatre-saisons', 'world', 'medium', 'counter', '🍂', 'Quatre saisons, quatre victoires', 'Gagner au moins un combat dans chacune des quatre saisons.', { goal: 4 }),
+  // Expéditions du Baron (v1.0).
+  achievement(41, 'premiere-route', 'world', 'easy', 'event', '🧭', 'Première route', 'Voir un combattant revenir de sa première expédition.'),
+  achievement(42, 'pelerins-d-europe', 'world', 'medium', 'counter', '🗺', 'Pèlerins d’Europe', `Envoyer des combattants en expédition dans ${R.expeditionPlaces} lieux différents.`, { goal: R.expeditionPlaces }),
+  achievement(43, 'merveilles-d-ailleurs', 'world', 'hard', 'state', '🟢', 'Merveilles d’ailleurs', `Avoir en même temps ${R.exoticTalents} talents exotiques différents dans la compagnie.`, { goal: R.exoticTalents, teaser: 'Ce que l’on rapporte des confins ne ressemble à rien de connu.' }),
+  // Expéditions singulières (v1.1.3) : obtenus à la victoire (SingularRunService.claimVictory).
+  achievement(44, 'sentier-des-pins', 'world', 'easy', 'event', '🌲', 'Le Sentier des pins', 'Gagner une première expédition singulière.'),
+  achievement(45, 'trois-debout', 'world', 'medium', 'event', '🛡', 'Trois debout', 'Gagner une expédition singulière sans qu’aucun des trois combattants ne soit mis KO.'),
+  achievement(46, 'loup-solitaire', 'world', 'hard', 'event', '🐺', 'Loup solitaire', 'Gagner les dix combats d’une expédition singulière avec un seul et même combattant.', { teaser: 'Dix duels, et toujours le même à se relever.' }),
+  achievement(47, 'seigneur-des-cimes', 'world', 'hard', 'event', '👑', 'Seigneur des cimes', 'Gagner une expédition singulière de la tranche la plus chère (11 à 18 Ferveurs).', { teaser: 'Là-haut, les adversaires ont cinq étoiles.' }),
 ]);
 
 const BY_ID = new Map(ACHIEVEMENTS.map((entry) => [entry.id, entry]));

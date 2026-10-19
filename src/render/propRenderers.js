@@ -182,6 +182,146 @@ export const PROP_RENDERERS = {
     }
   },
 
+  // Grand pin (v1.1, Le Sentier) : tronc haut, quatre étages d'aiguilles sombres.
+  pine(view, prop) {
+    const { ctx } = view;
+    const base = tileCenter(view, prop);
+    const s = view.tile.w * (1.3 + ((prop.x * 11 + prop.y * 5) % 5) * 0.08);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
+    ctx.beginPath();
+    ctx.ellipse(base.x, base.y, s * 0.2, s * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5a3b22';
+    ctx.fillRect(base.x - s * 0.035, base.y - s * 0.3, s * 0.07, s * 0.3);
+    const dark = isWinter(view) ? ['#1f4a33', '#245238', '#2a5a3e', '#306244'] : ['#1d4f2f', '#235a35', '#2a643b', '#316e42'];
+    const layers = [[dark[0], 0.22, 0.6, 0.26], [dark[1], 0.42, 0.8, 0.21], [dark[2], 0.6, 0.98, 0.16], [dark[3], 0.78, 1.15, 0.1]];
+    for (const [color, bottom, apex, half] of layers) {
+      const left = { x: base.x - s * half, y: base.y - s * bottom };
+      const right = { x: base.x + s * half, y: base.y - s * bottom };
+      const top = { x: base.x, y: base.y - s * apex };
+      ctx.beginPath();
+      ctx.moveTo(left.x, left.y);
+      ctx.lineTo(right.x, right.y);
+      ctx.lineTo(top.x, top.y);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (isWinter(view)) drawSnowCap(view, top, left, right, 0.38);
+    }
+  },
+
+  // Cabane de chasseur (v1.1) : rondins, toit de bardeaux, cheminée, bois de cerf au-dessus de la porte.
+  cabin(view, prop) {
+    const { ctx } = view;
+    const { x, y, w = 2, h = 2 } = prop;
+    const H = view.tile.w * 0.42;
+    const D = view.toScreen(x, y + h);
+    const C = view.toScreen(x + w, y + h);
+    const B = view.toScreen(x + w, y);
+    PROP_RENDERERS.building(view, { ...prop, w, h, wall: '#8a5a32', roof: '#4a3a2a', height: 0.85 });
+    // Rondins : lignes sur les deux murs visibles.
+    ctx.strokeStyle = 'rgba(45, 25, 10, 0.55)';
+    ctx.lineWidth = 1;
+    for (let k = 1; k < 5; k++) {
+      const dy = (H * k) / 5;
+      ctx.beginPath();
+      ctx.moveTo(D.x, D.y - dy);
+      ctx.lineTo(C.x, C.y - dy);
+      ctx.lineTo(B.x, B.y - dy);
+      ctx.stroke();
+    }
+    // Cheminée de pierre, et sa fumée.
+    const top = view.toScreen(x + w * 0.7, y + h * 0.3);
+    const cx = top.x;
+    const cy = top.y - H - view.tile.w * 0.45;
+    ctx.fillStyle = '#7d7468';
+    ctx.fillRect(cx - view.tile.w * 0.06, cy - view.tile.w * 0.1, view.tile.w * 0.12, view.tile.w * 0.28);
+    if (!fireOut(view)) {
+      ctx.fillStyle = 'rgba(220, 220, 220, 0.45)';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(cx + i * view.tile.w * 0.06, cy - view.tile.w * (0.18 + i * 0.12), view.tile.w * (0.05 + i * 0.02), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // Bois de cerf au-dessus de la porte (mur avant).
+    const door = { x: (D.x + C.x) / 2, y: (D.y + C.y) / 2 - H * 0.82 };
+    ctx.strokeStyle = '#e8dcc0';
+    ctx.lineWidth = Math.max(1, view.tile.w * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(door.x - view.tile.w * 0.1, door.y - view.tile.w * 0.08);
+    ctx.lineTo(door.x, door.y);
+    ctx.lineTo(door.x + view.tile.w * 0.1, door.y - view.tile.w * 0.08);
+    ctx.stroke();
+  },
+
+  // Bêtes (v1.1) : poule, chien, cerf, chèvre — un peu de vie autour de la lice.
+  animal(view, prop, env = {}) {
+    const { ctx } = view;
+    const base = tileCenter(view, prop);
+    const u = view.tile.w;
+    const t = env.time ?? 0;
+    const kind = prop.kind ?? 'dog';
+    const looks = {
+      hen: { body: '#f2ece0', dark: '#c44a2a', size: 0.11, legs: 0.05, neck: 0.08 },
+      dog: { body: '#9a6a3c', dark: '#5e3e20', size: 0.16, legs: 0.08, neck: 0.07 },
+      deer: { body: '#a8743e', dark: '#6b4524', size: 0.22, legs: 0.17, neck: 0.16 },
+      goat: { body: '#e6e0d2', dark: '#7b6f5e', size: 0.16, legs: 0.1, neck: 0.09 },
+    };
+    const look = looks[kind] ?? looks.dog;
+    const bob = Math.sin(t * (kind === 'hen' ? 5 : 2) + prop.x * 3 + prop.y) * u * 0.012;
+    const s = u * look.size;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.beginPath();
+    ctx.ellipse(base.x, base.y, s * 1.1, s * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const by = base.y - u * look.legs - s * 0.4 + bob;
+    // Pattes.
+    ctx.strokeStyle = look.dark;
+    ctx.lineWidth = Math.max(1, u * 0.018);
+    for (const dx of kind === 'hen' ? [-0.2, 0.2] : [-0.6, -0.3, 0.3, 0.6]) {
+      ctx.beginPath();
+      ctx.moveTo(base.x + s * dx, by + s * 0.3);
+      ctx.lineTo(base.x + s * dx, base.y);
+      ctx.stroke();
+    }
+    // Corps et tête.
+    ctx.fillStyle = look.body;
+    ctx.beginPath();
+    ctx.ellipse(base.x, by, s, s * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(40, 25, 10, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    const hx = base.x + s * 0.95;
+    const hy = by - u * look.neck;
+    ctx.fillStyle = look.body;
+    ctx.beginPath();
+    ctx.ellipse(hx, hy, s * 0.38, s * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (kind === 'hen') {
+      ctx.fillStyle = look.dark;
+      ctx.beginPath();
+      ctx.arc(hx, hy - s * 0.3, s * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === 'deer' || kind === 'goat') {
+      ctx.strokeStyle = kind === 'deer' ? '#e8dcc0' : '#8a7a62';
+      ctx.lineWidth = Math.max(1, u * 0.015);
+      ctx.beginPath();
+      ctx.moveTo(hx - s * 0.1, hy - s * 0.2);
+      ctx.lineTo(hx - s * 0.25, hy - s * (kind === 'deer' ? 0.85 : 0.5));
+      ctx.moveTo(hx + s * 0.1, hy - s * 0.2);
+      ctx.lineTo(hx + s * 0.25, hy - s * (kind === 'deer' ? 0.85 : 0.5));
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = look.dark;
+      ctx.beginPath();
+      ctx.ellipse(hx - s * 0.2, hy - s * 0.15, s * 0.1, s * 0.2, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  },
+
   stump(view, prop) {
     const { ctx } = view;
     const base = tileCenter(view, prop);
@@ -341,6 +481,55 @@ export const PROP_RENDERERS = {
     ctx.strokeStyle = '#5f6366';
     ctx.lineWidth = 1;
     ctx.stroke();
+  },
+
+  // Montagne (v0.96, Les Expéditions) : pic rocheux sur plusieurs cases (w × h), deux faces
+  // éclairées, arêtes, éboulis, et un sommet enneigé (davantage en hiver). height : hauteur du
+  // pic en largeurs de case ; tone : couleur de la roche.
+  mountain(view, prop) {
+    const { ctx } = view;
+    const w = prop.w ?? 1;
+    const h = prop.h ?? 1;
+    const tone = prop.tone ?? '#8a8680';
+    const N = view.toScreen(prop.x, prop.y);
+    const E = view.toScreen(prop.x + w, prop.y);
+    const S = view.toScreen(prop.x + w, prop.y + h);
+    const W = view.toScreen(prop.x, prop.y + h);
+    const c = view.toScreen(prop.x + w / 2, prop.y + h / 2);
+    const apex = up({ x: c.x + view.tile.w * 0.04 * (w - h), y: c.y }, view.tile.w * (prop.height ?? 1.6));
+    // Faces arrière (à peine visibles), puis faces avant : gauche éclairée, droite à l'ombre.
+    fillPoly(view, [W, N, apex], shade(tone, -0.12), 'rgba(40, 35, 30, 0.35)');
+    fillPoly(view, [N, E, apex], shade(tone, -0.22), 'rgba(40, 35, 30, 0.35)');
+    fillPoly(view, [W, S, apex], shade(tone, 0.06), 'rgba(40, 35, 30, 0.45)');
+    fillPoly(view, [S, E, apex], shade(tone, -0.18), 'rgba(40, 35, 30, 0.45)');
+    // Arêtes et strates.
+    ctx.strokeStyle = 'rgba(50, 45, 40, 0.45)';
+    ctx.lineWidth = Math.max(1, view.tile.w * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(apex.x, apex.y);
+    ctx.lineTo(S.x, S.y);
+    for (const k of [0.45, 0.68]) {
+      const a = lerp(apex, W, k);
+      const b = lerp(apex, S, k);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(lerp(a, b, 0.55).x, lerp(a, b, 0.55).y + view.tile.w * 0.05);
+      const d = lerp(apex, E, k);
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(lerp(b, d, 0.5).x, lerp(b, d, 0.5).y + view.tile.w * 0.04);
+    }
+    ctx.stroke();
+    // Neige au sommet : toujours un peu, beaucoup en hiver.
+    const snow = isWinter(view) ? 0.62 : view.season === 'summer' ? 0.18 : 0.3;
+    drawSnowCap(view, apex, W, S, snow);
+    drawSnowCap(view, apex, S, E, snow * 0.9);
+    // Éboulis au pied.
+    ctx.fillStyle = shade(tone, -0.05);
+    for (let i = 0; i < 4; i++) {
+      const p = lerp(W, S, 0.15 + i * 0.22);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - view.tile.w * 0.02, view.tile.w * 0.07, view.tile.w * 0.035, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   },
 
   // Touffes de fleurs (posées au sol).

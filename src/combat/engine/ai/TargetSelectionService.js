@@ -76,6 +76,8 @@ export function scoreTargets(ctx, memory = {}, { onlyInReach = false } = {}) {
       tired: (w.tiredWeight ?? 0) * ((target.fatigue ?? 0) / 100),
       captain: target.isCaptain ? (w.captainWeight ?? 0) : 0,
       priority: w.classPriority?.[target.classId] ?? 0,
+      // Talent Œil de Skellig : l'adversaire le plus blessé l'attire.
+      wounded: unit.preferWounded ? unit.preferWounded * (1 - target.hp / target.maxHp) : 0,
       jitter: rng() * w.jitter,
     };
     const score = Object.values(terms).reduce((sum, v) => sum + v, 0);

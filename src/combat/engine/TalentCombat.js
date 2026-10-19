@@ -22,15 +22,22 @@ export function prepareTalentUnits(units) {
     unit.auraIds = allies.filter((ally) => effectsOf(ally, 'aura').some((e) => ally !== unit || e.self)).flatMap((ally) => effectsOf(ally, 'aura').map((e) => e.talentId));
     // Capitaine aligné avec un Garde du corps : dégâts reçus en moins.
     const guard = unit.isCaptain ? allies.filter((ally) => ally !== unit).reduce((total, ally) => total + sum(effectsOf(ally, 'guardCaptain')), 0) : 0;
-    unit.damageTakenReduction = (unit.damageTakenReduction ?? 0) + guard;
+    // Écho des cimes : dégâts reçus en moins pour toute la manche de son camp (lui compris).
+    const auraGuard = allies.reduce((total, ally) => total + sum(effectsOf(ally, 'auraGuard')), 0);
+    unit.damageTakenReduction = (unit.damageTakenReduction ?? 0) + guard + auraGuard;
     if (guard) unit.guarded = true;
     unit.hasCaptainAlly = allies.some((ally) => ally !== unit && ally.isCaptain);
   }
   return units;
 }
 
+/** Le combattant est-il le dernier debout de son camp (Dernier rempart) ? */
+export function isLastStanding(unit, fighters = []) {
+  return isActive(unit) && fighters.filter((other) => other.side === unit.side && isActive(other)).length === 1;
+}
+
 /** La condition `when` d'un bonus de dégâts finaux est-elle remplie pour ce coup ? */
-function conditionMet(effect, unit, target) {
+function conditionMet(effect, unit, target, fighters = []) {
   switch (effect.when) {
     case 'always': return true;
     case 'targetEngaged': return Boolean(target.targetId) && target.targetId !== unit.id;
@@ -42,6 +49,7 @@ function conditionMet(effect, unit, target) {
     case 'vsClass': return target.classId === effect.classId;
     case 'withCaptain': return Boolean(unit.hasCaptainAlly);
     case 'perKnockout': return (unit.knockdowns ?? 0) > 0;
+    case 'lastStanding': return isLastStanding(unit, fighters);
     default: return false;
   }
 }
@@ -55,7 +63,7 @@ export function talentStrikeModifiers(unit, target, fighters, rules) {
   let bonus = unit.auraBonus ?? 0;
   if (bonus) ids.push(...(unit.auraIds ?? []));
   for (const effect of effectsOf(unit, 'finalDamage')) {
-    if (!conditionMet(effect, unit, target)) continue;
+    if (!conditionMet(effect, unit, target, fighters)) continue;
     bonus += effect.when === 'perKnockout' ? effect.value * Math.min(effect.max ?? 1, unit.knockdowns ?? 0) : effect.value;
     ids.push(effect.talentId);
   }
@@ -68,8 +76,18 @@ export function talentStrikeModifiers(unit, target, fighters, rules) {
       ids.push(...effectsOf(other, 'enemyContact').map((e) => e.talentId));
     }
   }
-  const reduction = Math.min(0.9, target.damageTakenReduction ?? 0);
+  // Réductions conditionnelles de la cible (Dernier rempart : dernier debout de son camp).
+  let reduction = target.damageTakenReduction ?? 0;
+  for (const effect of effectsOf(target, 'damageTaken').filter((e) => e.when)) {
+    if (conditionMet(effect, target, unit, fighters)) reduction += effect.value ?? 0;
+  }
+  reduction = Math.min(0.9, reduction);
   return { bonus, reduction, ids: [...new Set(ids)] };
+}
+
+/** Fureur du Nord : ses pénalités de fatigue sont-elles ignorées pour ce coup ? */
+export function ignoresFatigue(unit, target, fighters) {
+  return effectsOf(unit, 'fatigueIgnore').some((effect) => conditionMet({ ...effect, when: effect.when ?? 'always' }, unit, target, fighters));
 }
 
 /** Bonus affichés au début de la manche pour un combattant qui a un talent : ['talent:<id>']. */

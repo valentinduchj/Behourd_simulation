@@ -1,7 +1,7 @@
 import { SAVED_TEAM_RULES } from '../../data/savedTeams.js';
 import { createId } from '../../utils/id.js';
 import { autoSelectSquad } from './MatchService.js';
-import { isStudying } from '../talents/StudyService.js';
+import { isAway } from '../talents/StudyService.js';
 
 // Équipes enregistrées du joueur (« SavedTeamManager ») : jusqu'à 3 compositions nommées de
 // 8 combattants, rappelées d'un clic dans l'écran « Effectif engagé ». Ce sont des raccourcis
@@ -89,7 +89,7 @@ export function loadSavedTeam(session, teamId) {
   if (!team) return null;
   const own = new Set(session.playerFighters.map((f) => f.id));
   // Un combattant en étude au Scriptorium reste dans l'équipe enregistrée, mais n'est pas sélectionné.
-  const studying = team.fighterIds.filter((id) => own.has(id) && isStudying(session, id));
+  const studying = team.fighterIds.filter((id) => own.has(id) && isAway(session, id));
   const fighterIds = team.fighterIds.filter((id) => own.has(id) && !studying.includes(id));
   const missing = team.fighterIds.filter((id) => !own.has(id));
   return { team, fighterIds, missing, studying, available: fighterIds.length, total: SAVED_TEAM_RULES.size, complete: fighterIds.length === SAVED_TEAM_RULES.size };

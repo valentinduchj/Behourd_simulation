@@ -1,8 +1,9 @@
 // Paramètres globaux du jeu. Tout ce qui est "réglage de conception" vit ici.
 export const GAME_CONFIG = Object.freeze({
-  title: 'Béhourd',
+  // Nom du jeu (v0.89) : « Béhourd Management » ; l'écran principal l'écrit sur deux lignes.
+  title: 'Béhourd Management',
   subtitle: 'Gestion de compagnie médiévale',
-  version: '0.81.2',
+  version: '1.1.5',
 
   roster: Object.freeze({
     size: 8,
@@ -31,6 +32,13 @@ export const GAME_CONFIG = Object.freeze({
   combat: Object.freeze({
     // Nombre de combattants alignés par camp dans La Lice (aperçu).
     fightersPerSide: 8,
+  }),
+
+  // Application Android (Capacitor) : largeur de mise en page. null (v0.83, interface mobile) :
+  // largeur réelle de l'appareil (paysage : ~914 px CSS). Un nombre (v0.82 : 1280) mettrait la page
+  // en page comme sur cet écran, réduite à la largeur du téléphone.
+  android: Object.freeze({
+    viewportWidth: null,
   }),
 
   admin: Object.freeze({

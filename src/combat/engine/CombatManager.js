@@ -69,6 +69,7 @@ export function simulateRound({ arena, units, rng = Math.random, rules = COMBAT_
   // Talents : effets d'équipe calculés une fois au début de la manche (combat/engine/TalentCombat.js).
   const fighters = prepareTalentUnits(units.map((unit) => ({
     ...unit, targetId: null, aiState: 'IDLE', lastStand: unit.lastStand ? { ...unit.lastStand } : null,
+    allyHeal: unit.allyHeal ? { ...unit.allyHeal, available: true } : null,
     facing: unit.facing ?? initialFacing(unit, units), perceived: new Map(), stunnedUntil: -1, lastMoveTick: -Infinity,
   })));
   const byId = new Map(fighters.map((unit) => [unit.id, unit]));

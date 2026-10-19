@@ -5,6 +5,8 @@
 //   target       ce qu'il vise : 'playerFighter' (un combattant de votre compagnie)
 //   effect       { type (ITEM_EFFECT_TYPES), value, duration (EFFECT_DURATIONS) } — appliqué par
 //                systems/items/ConsumableService.js selon son type, jamais selon l'objet
+//   keepsake     (v0.97) objet sans usage pour l'instant (usableIn vide, effect null) : il se
+//                garde et s'empile dans Le Coffre — ex. les Ferveurs de la Reine, pour le Baron
 //
 // Pour ajouter un objet : une entrée dans ITEMS (et, s'il se vend, une offre dans
 // data/borough.js › BOROUGH_SHOPS). Un nouveau type d'effet : ITEM_EFFECT_TYPES et son
@@ -53,6 +55,20 @@ export const ITEMS = Object.freeze([
     usableIn: Object.freeze([ITEM_USE_CONTEXTS.PLACEMENT]),
     target: 'playerFighter',
     effect: Object.freeze({ type: ITEM_EFFECT_TYPES.FINAL_DAMAGE_BONUS, value: 0.1, duration: EFFECT_DURATIONS.NEXT_ROUND }),
+  }),
+  // v0.97 : gagnées aux Combats de la Reine (QUEEN_COMBAT_CONFIG.ferveur) ; elles serviront plus
+  // tard auprès du Baron (Les Expéditions). Inutilisables, cumulables.
+  Object.freeze({
+    id: 'ferveur_reine',
+    name: 'Ferveur de la Reine',
+    icon: '🌸',
+    sprite: 'assets/sprites/items/ferveur_reine.svg',
+    description: 'Un petit billet de papier rose, scellé aux armes de la Reine : la marque de sa faveur après une victoire en son honneur. Le Baron saura quoi en faire.',
+    consumable: false,
+    keepsake: true,
+    usableIn: Object.freeze([]),
+    target: null,
+    effect: null,
   }),
 ]);
 

@@ -1,4 +1,4 @@
-import { SPECTATOR_SPRITES, QUEEN_SPRITE, ARTISAN_SPRITES, SCRIPTORIUM_SPRITES, TRAINING_SPRITES, getSpectatorSprite } from '../data/spectators.js';
+import { SPECTATOR_SPRITES, QUEEN_SPRITE, ARTISAN_SPRITES, SCRIPTORIUM_SPRITES, TRAINING_SPRITES, EXPEDITION_SPRITES, getSpectatorSprite } from '../data/spectators.js';
 import { assetUrl } from '../utils/assets.js';
 
 // Dessin des spectateurs (images partagées, chargées une seule fois).
@@ -24,7 +24,7 @@ export function spectatorUrl(spriteId, view = 'front') {
 export function preloadSpectators() {
   for (const sprite of SPECTATOR_SPRITES) for (const view of ['front', 'back']) getImage(sprite.id, view);
   getImage(QUEEN_SPRITE.id, 'front');
-  for (const sprite of [...ARTISAN_SPRITES, ...SCRIPTORIUM_SPRITES, ...TRAINING_SPRITES]) getImage(sprite.id, 'front');
+  for (const sprite of [...ARTISAN_SPRITES, ...SCRIPTORIUM_SPRITES, ...TRAINING_SPRITES, ...EXPEDITION_SPRITES]) getImage(sprite.id, 'front');
 }
 
 /**

@@ -13,6 +13,7 @@ import {
 import { buildPlayerResultEvent } from '../match/MatchdayService.js';
 import { runSeasonTransition } from '../climate/ClimateService.js';
 import { recordDay } from '../achievements/AchievementService.js';
+import { completeDueJourneys } from '../expeditions/ExpeditionService.js';
 
 /**
  * Étapes de résolution d'une journée (GameDay), exécutées dans l'ordre.
@@ -97,6 +98,11 @@ export const DAY_PHASES = [
     // Scriptorium : les études arrivées à leur date de fin révèlent leur talent (une seule fois).
     id: 'studies',
     run: ({ session, report }) => { completeDueStudies(session, { report }); },
+  },
+  {
+    // Expéditions du Baron (v0.98) : retour des pérégrinations (potentiel +1, au carnet).
+    id: 'journeys',
+    run: ({ session, report }) => { completeDueJourneys(session, { report }); },
   },
   {
     // Potentiel des combattants : une vérification tous les 15 jours (selon l'âge).

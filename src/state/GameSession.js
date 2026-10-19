@@ -87,6 +87,8 @@ export class GameSession {
     // [{ id, fighterId, startDay, duration, endDay, status, talentId, closedOnDay, notified }].
     // La disponibilité des combattants s'en déduit (jamais enregistrée à part).
     this.studies = (data.studies ?? []).map((study) => ({ ...study }));
+    // Expéditions du Baron (v0.98) : propositions de la saison, pérégrinations (ExpeditionService).
+    this.expeditions = data.expeditions ? JSON.parse(JSON.stringify(data.expeditions)) : null;
     // Améliorations du Scriptorium (Professeure Flavia) : second Bureau, artefacts achetés,
     // artefact actif (systems/talents/ScriptoriumUpgradeService.js).
     this.scriptorium = {
@@ -235,6 +237,7 @@ export class GameSession {
       trophies: this.trophies.map((trophy) => ({ ...trophy })),
       climate: { lastTransitionDay: this.climate?.lastTransitionDay ?? null },
       studies: this.studies.map((study) => ({ ...study })),
+      expeditions: this.expeditions ? JSON.parse(JSON.stringify(this.expeditions)) : null,
       scriptorium: { ...this.scriptorium, artifacts: [...this.scriptorium.artifacts] },
       achievements: structuredClone(this.achievements ?? { unlocked: {}, counters: {} }),
       createdAt: this.createdAt,

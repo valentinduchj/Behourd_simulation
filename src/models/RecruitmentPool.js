@@ -1,7 +1,9 @@
 import { Fighter } from './Fighter.js';
 
 /**
- * Offre de recrutement de la Taverne. Une candidature : { id, fighter, cost }.
+ * Offre de recrutement de la Taverne. Une candidature : { id, fighter, cost, gift? }.
+ * `gift` (v0.99) : recrue ramenée d'une expédition du Baron ({ placeId, byId }) — offerte,
+ * elle reste à la Taverne aux rotations jusqu'à son engagement.
  * `generatedOnDay` vaut null tant qu'aucune offre n'a été générée.
  */
 export class RecruitmentPool {
@@ -10,6 +12,7 @@ export class RecruitmentPool {
       id: candidate.id,
       cost: candidate.cost,
       fighter: candidate.fighter instanceof Fighter ? candidate.fighter : Fighter.fromJSON(candidate.fighter),
+      ...(candidate.gift ? { gift: { ...candidate.gift } } : {}),
     }));
     this.generatedOnDay = data.generatedOnDay ?? null;
   }
@@ -34,7 +37,7 @@ export class RecruitmentPool {
   toJSON() {
     return {
       generatedOnDay: this.generatedOnDay,
-      candidates: this.candidates.map(({ id, cost, fighter }) => ({ id, cost, fighter: fighter.toJSON() })),
+      candidates: this.candidates.map(({ id, cost, fighter, gift }) => ({ id, cost, fighter: fighter.toJSON(), ...(gift ? { gift: { ...gift } } : {}) })),
     };
   }
 

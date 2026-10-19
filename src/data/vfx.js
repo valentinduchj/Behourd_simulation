@@ -28,6 +28,7 @@ export const TALENT_VFX_COLORS = Object.freeze({
   common: Object.freeze({ fill: '#9fd3f2', stroke: '#1d4a66', rgb: '159, 211, 242' }),
   rare: Object.freeze({ fill: '#ec8a2c', stroke: '#5a2a05', rgb: '236, 138, 44' }),
   epic: Object.freeze({ fill: '#141416', stroke: '#e0b43a', rgb: '224, 180, 58' }),
+  exotic: Object.freeze({ fill: '#3fae52', stroke: '#123d1a', rgb: '63, 174, 82' }),
 });
 export const DEFAULT_VFX_LEVEL = 'full';
 

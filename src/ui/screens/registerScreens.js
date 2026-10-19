@@ -9,6 +9,8 @@ import { TavernScreen } from './TavernScreen.js';
 import { BoroughScreen } from './BoroughScreen.js';
 import { ScriptoriumScreen } from './ScriptoriumScreen.js';
 import { TrainingScreen } from './TrainingScreen.js';
+import { ExpeditionsScreen } from './ExpeditionsScreen.js';
+import { SingularExpeditionScreen } from './SingularExpeditionScreen.js';
 import { LeagueScreen } from './LeagueScreen.js';
 import { LoadScreen } from './LoadScreen.js';
 import { OptionsScreen } from './OptionsScreen.js';
@@ -50,6 +52,8 @@ export function registerScreens(manager) {
   manager.register(SCREENS.BOROUGH, BoroughScreen, domainScreen);
   manager.register(SCREENS.SCRIPTORIUM, ScriptoriumScreen, domainScreen);
   manager.register(SCREENS.TRAINING, TrainingScreen, domainScreen);
+  manager.register(SCREENS.EXPEDITIONS, ExpeditionsScreen, domainScreen);
+  manager.register(SCREENS.SINGULAR, SingularExpeditionScreen, requiresSession);
   manager.register(SCREENS.LEAGUE, LeagueScreen, domainScreen);
   manager.register(SCREENS.LOAD, LoadScreen);
   manager.register(SCREENS.OPTIONS, OptionsScreen);

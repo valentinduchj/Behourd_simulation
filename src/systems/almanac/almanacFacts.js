@@ -229,7 +229,7 @@ export const ALMANAC_FACTS = Object.freeze({
   'cup.rewardKnockout': () => FRENCH_CUP_RULES.knockoutRounds.map((name, i) => `${translateText(name).toLowerCase()} ${translateText(deniers(FRENCH_CUP_RULES.rewards.knockout[i]))}`).join(', '),
 });
 
-const usageText = (item) => item.usableIn.map((c) => (c === ITEM_USE_CONTEXTS.OUTSIDE_COMBAT ? 'hors combat' : 'pendant le placement')).join(' et ');
+const usageText = (item) => (!item.usableIn.length ? 'aucune : à garder' : item.usableIn.map((c) => (c === ITEM_USE_CONTEXTS.OUTSIDE_COMBAT ? 'hors combat' : 'pendant le placement')).join(' et '));
 
 export const ALMANAC_TABLES = Object.freeze({
   // Rôle de chaque statistique.
@@ -294,7 +294,8 @@ export const ALMANAC_TABLES = Object.freeze({
     columns: ['Objet', 'Prix', 'Utilisation', 'Effet'],
     rows: ITEMS.map((item) => {
       const offer = Object.values(BOROUGH_SHOPS).flat().find((o) => o.itemId === item.id);
-      const effect = item.effect.type === 'SET_FATIGUE' ? `Fatigue → ${item.effect.value}` : `+${pct(item.effect.value)} de dégâts finaux, manche suivante`;
+      const effect = !item.effect ? 'Gagnée en battant un club aux Combats de la Reine (une par étoile pleine) ; servira auprès du Baron.'
+        : item.effect.type === 'SET_FATIGUE' ? `Fatigue → ${item.effect.value}` : `+${pct(item.effect.value)} de dégâts finaux, manche suivante`;
       return [`${item.icon} ${item.name}`, offer ? deniers(offer.price) : '—', usageText(item), effect];
     }),
   }),
@@ -333,7 +334,7 @@ export const ALMANAC_TABLES = Object.freeze({
   // Catalogue des talents (data/talents.js) : famille, domaine et effet, des ordinaires aux épiques.
   talents: () => ({
     columns: ['Talent', 'Famille', 'Domaine', 'Effet'],
-    rows: ['common', 'rare', 'epic'].flatMap((rarity) => TALENTS.filter((talent) => talent.rarity === rarity)).map((talent) => [
+    rows: ['common', 'rare', 'epic', 'exotic'].flatMap((rarity) => TALENTS.filter((talent) => talent.rarity === rarity)).map((talent) => [
       talent.name,
       TALENT_RARITIES[talent.rarity].name,
       talent.domain,

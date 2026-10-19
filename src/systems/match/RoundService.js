@@ -8,6 +8,7 @@ import { simulateRound } from '../../combat/engine/CombatManager.js';
 import { createArena } from '../../combat/Arena.js';
 import { COMBAT_RULES } from '../../data/combatRules.js';
 import { isCaptain } from '../roster/CaptainService.js';
+import { daysSinceReturn } from '../expeditions/journeys.js';
 import { expireRoundEffects, getRoundEffects } from '../items/CombatEffectService.js';
 import { getAIProfile } from '../../data/aiProfiles.js';
 import { isFighterAvailable } from '../talents/StudyService.js';
@@ -131,7 +132,7 @@ export function resolveCombatRound(session, match, lineup, rng = Math.random) {
   // Saison de l'année : efficacité des classes et talents saisonniers actifs (ClimateService).
   const season = getCurrentSeason(session).id;
   const talentsOf = (fighter) => ({
-    talentEffects: canHaveTalents(session, fighter) ? combatEffectsOf(fighter, { season }) : [],
+    talentEffects: canHaveTalents(session, fighter) ? combatEffectsOf(fighter, { season, daysSinceReturn: daysSinceReturn(session, fighter) }) : [],
     season,
     decisive,
     lastStandUsed: match.talentUses?.[fighter.id]?.lastStand === true,

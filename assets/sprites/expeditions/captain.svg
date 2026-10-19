@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="40" height="64">
+  <!-- Les Expéditions : le Capitaine (armure, tabard rouge et or, cape, panache, épée) -->
+  <g stroke="#1f160d" stroke-width="0.8" stroke-linejoin="round">
+    <!-- cape -->
+    <path d="M11 25 Q20 21 29 25 L34 61 Q20 64 6 61Z" fill="#5a1520"/>
+    <!-- jambes en armure -->
+    <path d="M14.5 47 L14 61 L18.6 61 L19 47Z" fill="#a9b0b6"/>
+    <path d="M21 47 L21.4 61 L26 61 L25.5 47Z" fill="#a9b0b6"/>
+    <path d="M13.2 60.5 h6 v2.4 h-6.6Z M20.8 60.5 h6.2 l0.4 2.4 h-6.6Z" fill="#6f777e"/>
+    <circle cx="16.6" cy="52.5" r="1.3" fill="#d2d8dc"/>
+    <circle cx="23.4" cy="52.5" r="1.3" fill="#d2d8dc"/>
+    <!-- tabard -->
+    <path d="M13 26 Q20 23 27 26 L28 49 Q20 51 12 49Z" fill="#9e1f2c"/>
+    <path d="M18.6 28 h2.8 v8 h5.2 v2.8 h-5.2 v9.6 h-2.8 v-9.6 h-5.2 v-2.8 h5.2Z" fill="#e0b43a"/>
+    <rect x="12.4" y="40.6" width="15.2" height="2.4" fill="#3a2414"/>
+    <rect x="18.8" y="40.2" width="2.6" height="3.2" rx="0.4" fill="#e0b43a"/>
+    <!-- épaulières -->
+    <path d="M9.5 25 Q13 21.5 16 25.5 L14.5 30 Q11 29 9.5 25Z" fill="#c3c9ce"/>
+    <path d="M30.5 25 Q27 21.5 24 25.5 L25.5 30 Q29 29 30.5 25Z" fill="#c3c9ce"/>
+    <!-- bras -->
+    <path d="M10.5 28 L8.5 41 L11.8 42 L14 30Z" fill="#a9b0b6"/>
+    <path d="M29.5 28 L31.5 41 L28.2 42 L26 30Z" fill="#a9b0b6"/>
+    <circle cx="10.2" cy="42.3" r="2.1" fill="#6f777e"/>
+    <circle cx="29.8" cy="42.3" r="2.1" fill="#6f777e"/>
+    <!-- épée, pointe au sol -->
+    <path d="M32.6 42 L33.4 42 L33.6 60 L33 61.6 L32.4 60Z" fill="#dfe4e8"/>
+    <path d="M30 41.3 h6.2 v1.4 h-6.2Z" fill="#e0b43a"/>
+    <path d="M32.4 36.5 h1.2 v4.8 h-1.2Z" fill="#5a3418"/>
+    <circle cx="33" cy="36" r="1.1" fill="#e0b43a"/>
+    <!-- tête : visage, barbe -->
+    <circle cx="20" cy="17" r="5.6" fill="#e2b48e"/>
+    <path d="M15.4 18.5 Q16 24 20 24.4 Q24 24 24.6 18.5 Q22.5 21 20 21 Q17.5 21 15.4 18.5Z" fill="#6b4226"/>
+    <path d="M17 17.2 h2 M21 17.2 h2" stroke="#1f160d" stroke-width="1"/>
+    <!-- casque (bassinet ouvert) et panache -->
+    <path d="M13.6 16 Q13.4 7.5 20 6.6 Q26.6 7.5 26.4 16 L24.8 16 Q24.6 11 20 10.6 Q15.4 11 15.2 16Z" fill="#c3c9ce"/>
+    <path d="M13.6 16 L13 21 L15.4 21.5 L15.2 16Z M26.4 16 L27 21 L24.6 21.5 L24.8 16Z" fill="#a9b0b6"/>
+    <path d="M20 6.8 Q19 1.5 24 0.8 Q27.5 1.2 27 4 Q23.5 2.8 22 6.6Z" fill="#c8202f"/>
+    <path d="M21.5 6.4 Q22 3 25.5 2.4" fill="none" stroke="#f4d36b" stroke-width="0.9"/>
+  </g>
+</svg>

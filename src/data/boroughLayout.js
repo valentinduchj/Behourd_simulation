@@ -3,7 +3,9 @@
 //
 // v0.54.0 : même taille que le Centre (17 × 14 cases), caméra au même cadrage ; un campement
 // de tentes remplace les maisons. Organisation (cases) :
-//   rues : grande rue (y 6–7, du chemin du Centre à l'est) et rue du marché (x 8–9), en croix
+//   rue : grande rue (y 6–7), du chemin du Centre (nord) à celui des Expéditions (sud).
+//   v0.96 : plus de carrefour — la rue du marché (x 8–9) est rendue à l'herbe, entre le
+//   Boulanger et le Sénéchal comme entre le Menuisier et le Bûcheron.
 //   nord-ouest : atelier du Menuisier ; nord-est : scierie du Bûcheron
 //   sud-est : pavillon du Sénéchal ; sud-ouest : fournil du Boulanger
 //   carrefour : étals du marché, puits
@@ -22,7 +24,6 @@ export const BOROUGH_LAYOUT = Object.freeze({
   grass: ['#93c46e', '#8aba66'],
   paths: [
     { x: 0, y: 6, w: 17, h: 2 },
-    { x: 8, y: 0, w: 2, h: 14 },
   ],
   pathColor: ['#c9b48c', '#c0ab82'],
 
@@ -113,6 +114,13 @@ export const BOROUGH_LAYOUT = Object.freeze({
     { type: 'stall', x: 10, y: 8, color: '#3e7d3a', stripe: '#e0b43a' },
     { type: 'hay', x: 1, y: 5 },
     { type: 'cart', x: 15, y: 5 },
+    // v0.96 : l'ancienne rue du marché, rendue à l'herbe (buissons, fleurs, touffes).
+    { type: 'bush', x: 8, y: 2 },
+    { type: 'flowers', x: 9, y: 3, layer: 'ground', blocking: false },
+    { type: 'tuft', x: 8, y: 4, layer: 'ground', blocking: false },
+    { type: 'flowers', x: 8, y: 10, layer: 'ground', blocking: false },
+    { type: 'bush', x: 9, y: 11 },
+    { type: 'tuft', x: 8, y: 12, layer: 'ground', blocking: false },
   ],
 
   // Ceinture de décor (arbres, haies) sur les cases libres de la bordure.
@@ -135,8 +143,8 @@ export const BOROUGH_LAYOUT = Object.freeze({
     // Grande rue et rue du marché.
     { spriteId: 'spectator_03', path: [{ x: 0.8, y: 6.4 }, { x: 7.4, y: 6.4 }, { x: 7.5, y: 7.6 }, { x: 2.5, y: 7.6 }], speed: 0.55, pauses: [2.5, 1, 3, 1.5], phase: 0 },
     { spriteId: 'spectator_04', path: [{ x: 12.0, y: 7.5 }, { x: 10.3, y: 7.5 }, { x: 10.3, y: 6.3 }, { x: 12.0, y: 6.3 }], speed: 0.4, pauses: [1.5, 3, 1, 2], phase: 4 },
-    { spriteId: 'spectator_08', path: [{ x: 8.5, y: 0.8 }, { x: 8.5, y: 5.5 }, { x: 9.4, y: 5.6 }, { x: 9.4, y: 1 }], speed: 0.45, pauses: [3, 2, 1, 2], phase: 7 },
-    { spriteId: 'spectator_11', path: [{ x: 9.5, y: 13.2 }, { x: 9.5, y: 8.6 }, { x: 8.4, y: 8.6 }, { x: 8.4, y: 12.8 }], speed: 0.5, pauses: [1, 2.5, 2, 1], phase: 2 },
+    { spriteId: 'spectator_08', path: [{ x: 9.0, y: 6.4 }, { x: 15.6, y: 6.4 }, { x: 15.6, y: 7.5 }, { x: 9.2, y: 7.5 }], speed: 0.45, pauses: [3, 2, 1, 2], phase: 7 },
+    { spriteId: 'spectator_11', path: [{ x: 4.5, y: 7.6 }, { x: 8.6, y: 7.6 }, { x: 8.6, y: 6.5 }, { x: 4.6, y: 6.5 }], speed: 0.5, pauses: [1, 2.5, 2, 1], phase: 2 },
     // Le long des ateliers.
     { spriteId: 'spectator_05', path: [{ x: 2.3, y: 5.5 }, { x: 6.5, y: 5.5 }], speed: 0.35, pauses: [3, 4], phase: 1 },
     { spriteId: 'spectator_09', path: [{ x: 1.5, y: 8.4 }, { x: 6.4, y: 8.4 }], speed: 0.4, pauses: [2, 3], phase: 5 },

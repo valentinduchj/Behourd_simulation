@@ -1,7 +1,7 @@
 import { CENTRE_MOVEMENT } from '../data/centreVisuals.js';
 import { FIGHTER_ANIMATIONS, resolveFighterAnimation } from './animation/fighterAnimations.js';
 import { createRng, hashString } from '../utils/random.js';
-import { isStudying } from '../systems/talents/StudyService.js';
+import { isAway } from '../systems/talents/StudyService.js';
 
 // Mise en scène des combattants du Centre : Activité → contrôleur → animation.
 //
@@ -14,7 +14,7 @@ import { isStudying } from '../systems/talents/StudyService.js';
 
 const ARRIVAL = 0.04;
 // (Une étude au Scriptorium retire le combattant du camp : elle compte dans l'état observé.)
-const snapshot = (session) => session.playerFighters.map((f) => `${f.id}:${f.activityId ?? ''}:${isStudying(session, f) ? 'study' : ''}`).join('|');
+const snapshot = (session) => session.playerFighters.map((f) => `${f.id}:${f.activityId ?? ''}:${isAway(session, f) ? 'study' : ''}`).join('|');
 
 export class CentreVisualController {
   /**

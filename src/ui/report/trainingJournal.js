@@ -64,7 +64,7 @@ export function buildTrainingJournal(simulation, { nameOf, sideLabel = (side) =>
       dealt.set(event.unitId, (dealt.get(event.unitId) ?? 0) + event.damage);
       const lines = [];
       lines.push(`Action : ${actionOf(attacker?.classId, m.positionIds ?? [])}.`);
-      lines.push(m.untouchable ? 'Résultat : sans effet — la cible est intouchable (talent).' : 'Résultat : coup porté.');
+      lines.push(m.untouchable ? 'Résultat : sans effet — la cible est intouchable (talent).' : d.dodged ? `Résultat : esquivé (talent ${TALENT_NAMES.get(d.dodgeTalentId) ?? ''}).` : 'Résultat : coup porté.');
       const defenseStats = (d.defenseStats ?? []).map(short);
       lines.push(`Attaque (${short(d.attackStat)}) : ${num(d.attack)} · Défense (½ ${defenseStats[0] ?? 'HAS'} + ½ ${defenseStats[1] ?? ''}) : ${num(d.defense)}.`);
       const included = [...(m.situation ?? []), ...(attacker?.isCaptain ? ['captain'] : [])].map((id) => labels[id]?.long ?? id);
@@ -82,11 +82,13 @@ export function buildTrainingJournal(simulation, { nameOf, sideLabel = (side) =>
       lines.push(parts.length ? `Bonus final : ${parts.join(' · ')} → ${times(d.finalMultiplier ?? 1)}.` : 'Bonus final : aucun (×1).');
       lines.push(`Dégâts finaux : ${num(d.raw ?? event.damage, 2)} → ${event.damage} PV (arrondi, ${COMBAT_RULES.minDamage} au moins) · ${name(event.targetId)} : ${event.hpAfter} PV restants.`);
       add({
-        tick: event.tick, time, kind: 'attack', side: sideOf(event.unitId), tone: m.untouchable ? 'muted' : d.highlight ? 'highlight' : 'hit',
+        tick: event.tick, time, kind: 'attack', side: sideOf(event.unitId), tone: m.untouchable || d.dodged ? 'muted' : d.highlight ? 'highlight' : 'hit',
         title: `${name(event.unitId)} attaque ${name(event.targetId)} — ${event.damage} PV`, lines, target: target?.id ?? null,
       });
     } else if (event.type === 'stun') {
       add({ tick: event.tick, time, kind: 'stun', side: sideOf(event.byId), tone: 'warning', title: `${name(event.unitId)} est renversé par ${name(event.byId)}`, lines: ['Il perd son prochain tour.'] });
+    } else if (event.type === 'heal') {
+      add({ tick: event.tick, time, kind: 'lastStand', side: sideOf(event.unitId), tone: 'warning', title: `${name(event.byId)} soigne ${name(event.unitId)} (+${event.amount} PV)`, lines: [`Talent : ${TALENT_NAMES.get(event.talentId) ?? event.talentId}.`] });
     } else if (event.type === 'lastStand') {
       add({ tick: event.tick, time, kind: 'lastStand', side: sideOf(event.unitId), tone: 'warning', title: `${name(event.unitId)} survit à 1 PV`, lines: [`Talent : ${TALENT_NAMES.get(event.talentId) ?? event.talentId}.`] });
     } else if (event.type === 'ko') {

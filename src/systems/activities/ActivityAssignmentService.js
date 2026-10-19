@@ -3,7 +3,7 @@ import { COMBAT_RULES } from '../../data/combatRules.js';
 import { SPECIALTY_IDS } from '../../data/specialties.js';
 import { getStatDefinition } from '../../data/stats.js';
 import { calculateFighterLevel } from '../fighters/ratings.js';
-import { isStudying } from '../talents/StudyService.js';
+import { isAway } from '../talents/StudyService.js';
 import {
   CENTRE_CLOSED_REASON, assignActivity, getAssignedFighters, getEffectiveActivity, getFreeSlots, isCentreClosed, quickAssign, getActivityClosure,
 } from './ActivityService.js';
@@ -114,7 +114,7 @@ export function planActivityAssignment(session, activityId, config = getActivity
   const sign = sortDirection === SORT_DIRECTIONS.ASC ? 1 : -1;
   const free = getFreeSlots(session, activity);
   return session.playerFighters
-    .filter((fighter) => fighter.activityId !== activityId && (!targetClass || fighter.specialtyId === targetClass) && !isStudying(session, fighter))
+    .filter((fighter) => fighter.activityId !== activityId && (!targetClass || fighter.specialtyId === targetClass) && !isAway(session, fighter))
     .sort((a, b) => sign * (sortValue(criterion, a, activity) - sortValue(criterion, b, activity)) || a.name.localeCompare(b.name, 'fr'))
     .slice(0, Number.isFinite(free) ? free : undefined);
 }

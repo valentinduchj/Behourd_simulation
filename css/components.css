@@ -307,7 +307,7 @@ td .elite-badge { margin-right: 0.3rem; }
   background-repeat: no-repeat;
   animation: talent-shine 3.6s ease-in-out infinite;
 }
-:root[data-vfx="full"] .talent-badge[data-rarity="epic"] { animation: talent-pulse 2.4s ease-in-out infinite; }
+:root[data-vfx="full"] .talent-badge[data-rarity="epic"], :root[data-vfx="full"] .talent-badge[data-rarity="exotic"] { animation: talent-pulse 2.4s ease-in-out infinite; }
 @keyframes talent-shine {
   0%, 55% { background-position: 130% 0; }
   100% { background-position: -130% 0; }

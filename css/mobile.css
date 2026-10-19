@@ -1,0 +1,1134 @@
+/* ==========================================================================
+   Interface mobile (v0.83) — téléphone en paysage (application Android, ou ?mobile=1)
+   Tout est sous html.is-mobile : la version de bureau n'est pas touchée.
+   Maquettes retenues : carte plein écran + dock flottant (domaine), liste et fiche (Compagnie),
+   lice plein écran + main de cartes (combat).
+   ========================================================================== */
+
+html.is-mobile {
+  /* Marges latérales symétriques (v0.86) : l'encoche n'est que d'un côté, mais le contenu reste
+     centré quel que soit le sens du téléphone. */
+  --sl: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --sr: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --sb: env(safe-area-inset-bottom, 0px);
+  --m-cream: rgba(251, 246, 234, 0.95);
+  --m-dark: rgba(43, 33, 23, 0.92);
+  --m-shadow: 0 6px 16px rgba(30, 18, 6, 0.3);
+  -webkit-tap-highlight-color: transparent;
+}
+/* Les écrans mobiles gèrent eux-mêmes l'encoche (--sl / --sr) : sans cela, la marge du body
+   (base.css, Android) s'ajoutait à la leur et décalait tout vers la droite (v0.86). */
+html.is-android.is-mobile body { padding-left: 0; padding-right: 0; }
+html.is-mobile,
+html.is-mobile body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+/* La page défile dans #app (les écrans à carte, eux, ne défilent pas). */
+html.is-mobile #app { height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+html.is-mobile body { font-size: 15px; }
+html.is-mobile .screen { padding-left: calc(12px + var(--sl)); padding-right: calc(12px + var(--sr)); }
+
+/* Cibles tactiles : 44 px au moins. */
+html.is-mobile .btn { min-height: 44px; }
+html.is-mobile .btn-sm { min-height: 40px; }
+html.is-mobile .select,
+html.is-mobile .input { min-height: 44px; }
+
+/* Fenêtres : presque tout l'écran, contenu défilant. */
+html.is-mobile .modal-backdrop { padding: 6px calc(6px + var(--sr)) 6px calc(6px + var(--sl)); }
+html.is-mobile .modal { max-height: calc(100dvh - 12px); padding: 0.9rem 1rem 0.8rem; }
+html.is-mobile .modal-wide { width: min(100%, 60rem); }
+html.is-mobile .modal-title { font-size: 1.15rem; }
+html.is-mobile .modal-actions { position: sticky; bottom: -0.8rem; padding: 0.5rem 0 0.2rem; background: var(--surface-raised); }
+
+/* Notifications : en haut, au centre (le bas est pris par le dock et l'action du jour). */
+html.is-mobile #toast-root { top: 58px; bottom: auto; right: calc(10px + var(--sr)); left: auto; transform: none; align-items: flex-end; gap: 6px; max-width: 46vw; }
+html.is-mobile #toast-root .toast { max-width: 100%; padding: 6px 12px; font-size: 14px; }
+/* Succès : compacts (nom seulement), deux au plus à l'écran. */
+html.is-mobile .toast.toast-achievement { min-width: 0; padding: 5px 12px 5px 6px; gap: 8px; }
+html.is-mobile .achievement-toast-medal { width: 2.2rem; height: 2.2rem; }
+html.is-mobile .achievement-toast-desc { display: none; }
+html.is-mobile .achievement-toast-name { font-size: 0.95rem; }
+html.is-mobile .achievement-toast-kicker { font-size: 0.62rem; }
+html.is-mobile #toast-root > .toast:nth-last-child(n+3) { display: none; }
+
+/* ---------- Écrans de la phase de gestion ---------- */
+html.is-mobile .hub.is-mobile-hub { max-width: none; margin: 0; padding: 0; min-height: 100%; }
+/* Écrans de lecture (Compagnie, Ligue) : la page défile entre le bandeau et le dock. */
+html.is-mobile .is-mobile-hub .hub-content { padding: 62px calc(12px + var(--sr)) 116px calc(12px + var(--sl)); }
+html.is-mobile .is-mobile-hub .hub-page { padding: 0.8rem 0.9rem 1rem; }
+html.is-mobile .is-mobile-hub .hub-page-header h1 { font-size: 1.35rem; }
+
+/* Bandeau du haut */
+html.is-mobile .m-hud {
+  position: fixed; z-index: 30; display: flex; align-items: center; gap: 8px;
+  border: 0; border-radius: 16px; background: var(--m-cream); color: #2a2016; box-shadow: var(--m-shadow);
+  font: inherit; font-size: 14px; cursor: pointer;
+}
+html.is-mobile .m-hud-team { top: 8px; left: calc(10px + var(--sl)); height: 48px; padding: 4px 12px 4px 6px; max-width: 34vw; text-align: left; }
+html.is-mobile .m-hud-team .emblem { flex: none; }
+html.is-mobile .m-hud-team-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+html.is-mobile .m-hud-team-text strong { font-family: var(--font-display); font-size: 13px; color: #8f2a22; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-hud-team-text span { font-size: 13px; color: #5c4a33; white-space: nowrap; }
+html.is-mobile .m-hud-event {
+  top: 12px; left: 50%; transform: translateX(-50%); max-width: 34vw; height: 40px; padding: 0 14px; border-radius: 999px;
+  background: var(--m-dark); color: #fbf6ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 40px;
+}
+html.is-mobile .m-hud-event.is-urgent { background: rgba(143, 42, 34, 0.94); font-weight: 600; }
+html.is-mobile .m-hud-right { position: fixed; z-index: 30; top: 8px; right: calc(10px + var(--sr)); display: flex; gap: 6px; }
+html.is-mobile .m-hud-right .m-hud { position: static; }
+html.is-mobile .m-hud-deniers { height: 44px; padding: 0 14px; border-radius: 999px; font-weight: 600; cursor: default; }
+html.is-mobile .m-hud-deniers .hub-deniers { font: inherit; color: inherit; }
+html.is-mobile .m-round { width: 44px; height: 44px; justify-content: center; border-radius: 50%; padding: 0; }
+html.is-mobile .m-icon { display: inline-flex; }
+
+/* Les lieux du domaine, à gauche */
+html.is-mobile .m-places { position: fixed; z-index: 30; left: calc(10px + var(--sl)); top: 64px; display: flex; flex-direction: column; gap: 6px; }
+html.is-mobile .m-place {
+  display: flex; align-items: center; gap: 6px; height: 42px; padding: 0 12px 0 8px; border: 0; border-radius: 12px;
+  background: var(--m-cream); color: #2a2016; box-shadow: var(--m-shadow); font: inherit; font-size: 14px; cursor: pointer;
+}
+html.is-mobile .m-place.is-active { background: #e2bd66; font-weight: 600; }
+html.is-mobile .m-place-icon { font-size: 16px; }
+
+/* Dock flottant */
+html.is-mobile .m-dock {
+  position: fixed; z-index: 40; left: 50%; bottom: calc(8px + var(--sb)); transform: translateX(-50%);
+  display: flex; gap: 4px; padding: 5px; border-radius: 20px; background: var(--m-dark); box-shadow: 0 8px 22px rgba(30, 18, 6, 0.35);
+}
+html.is-mobile .m-dock-item {
+  width: 74px; height: 52px; border: 0; border-radius: 15px; background: transparent; color: #fbf6ea;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit; font-size: 12px; cursor: pointer;
+}
+html.is-mobile .m-dock-item.is-active { background: #e2bd66; color: #2a2016; font-weight: 600; }
+
+/* Action du jour */
+html.is-mobile .m-advance {
+  position: fixed; z-index: 40; right: calc(12px + var(--sr)); bottom: calc(10px + var(--sb));
+  width: 96px; height: 96px; padding: 6px 4px; border: 4px solid #fbf6ea; border-radius: 50%;
+  background: #27508d; color: #ffffff; font-family: var(--font-display); font-weight: 700; font-size: 11px; letter-spacing: 0; line-height: 1.15;
+  white-space: normal; overflow-wrap: normal; word-break: keep-all; hyphens: none;
+  box-shadow: 0 8px 22px rgba(30, 18, 6, 0.4); cursor: pointer;
+}
+html.is-mobile .m-advance.is-fight { background: #a8322d; animation: m-pulse 1.4s ease-in-out infinite; }
+html.is-mobile .m-advance.is-queen { background: #7a3f9a; animation: m-pulse 1.4s ease-in-out infinite; }
+html.is-mobile .m-advance.is-cup { background: #b07d1a; }
+@keyframes m-pulse { 50% { box-shadow: 0 0 0 8px rgba(226, 189, 102, 0.45), 0 8px 22px rgba(30, 18, 6, 0.4); } }
+
+/* ---------- Écrans à carte : la scène en plein écran ---------- */
+html.is-mobile .is-mobile-hub .hub-content:has(.m-map-page) { padding: 0; }
+html.is-mobile .m-map-page { padding: 0; background: none; border: 0; box-shadow: none; }
+html.is-mobile .m-map-page > .centre-stage,
+html.is-mobile .m-map-page > .training-stage {
+  position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100dvh; max-width: none; margin: 0; border: 0; border-radius: 0;
+}
+html.is-mobile .m-map-page > .centre-stage canvas,
+html.is-mobile .m-map-page > .training-stage canvas { width: 100%; height: 100%; max-height: none; }
+
+/* Le volet : fermé, un bouton en bas à gauche ; ouvert, il remonte sur la carte. */
+html.is-mobile .m-sheet { position: fixed; z-index: 45; }
+html.is-mobile .m-sheet[data-state="closed"] { left: calc(10px + var(--sl)); bottom: calc(10px + var(--sb)); }
+html.is-mobile .m-sheet[data-state="closed"] .m-sheet-content,
+html.is-mobile .m-sheet[data-state="closed"] .m-sheet-close { display: none; }
+html.is-mobile .m-sheet-toggle {
+  height: 44px; max-width: 190px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--m-cream); color: #2a2016;
+  box-shadow: var(--m-shadow); font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+html.is-mobile .m-sheet[data-state="closed"] .m-sheet-toggle::after { content: " ▴"; }
+html.is-mobile .m-sheet[data-state="open"] {
+  left: calc(8px + var(--sl)); right: calc(8px + var(--sr)); bottom: 0; height: min(66dvh, calc(100dvh - 64px));
+  display: flex; flex-direction: column; border-radius: 18px 18px 0 0; background: #fbf6ea; border: 1px solid #a88a58; border-bottom: 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+}
+html.is-mobile .m-sheet[data-state="open"] .m-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 6px 6px; border-bottom: 1px solid #d3bf96; }
+html.is-mobile .m-sheet[data-state="open"] .m-sheet-toggle { max-width: none; box-shadow: none; background: transparent; font-family: var(--font-display); color: #8f2a22; }
+html.is-mobile .m-sheet-close { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #f1e8d4; color: #2a2016; display: grid; place-items: center; cursor: pointer; }
+html.is-mobile .m-sheet-content { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 12px 16px; -webkit-overflow-scrolling: touch; }
+html.is-mobile .m-sheet-content .hub-page-header { margin-bottom: 0.5rem; }
+html.is-mobile .m-sheet-content .hub-page-header h1 { display: none; }
+html.is-mobile .m-sheet-content .centre-hint { display: none; }
+html.is-mobile .m-sheet-content .zone-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+html.is-mobile .m-sheet-content table { display: block; max-width: 100%; overflow-x: auto; }
+html.is-mobile .m-sheet-content .assign-table td,
+html.is-mobile .m-sheet-content .assign-table th { white-space: nowrap; }
+
+/* Taverne : les recrues en cartes, côte à côte. */
+html.is-mobile .tavern-recruit-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+html.is-mobile .tavern-recruit-list > li { flex: none; }
+html.is-mobile .tavern-recruit-item {
+  width: 178px; min-height: 150px; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: start; gap: 4px 8px; padding: 8px 10px;
+}
+html.is-mobile .tavern-recruit-item .recruit-cost { grid-column: 2; grid-row: 1; justify-self: end; font-size: 13px; }
+html.is-mobile .tavern-recruit-item .tavern-recruit-who { grid-column: 1 / -1; grid-row: 2; }
+/* Les recrues d'abord, le tavernier ensuite ; état et bourse en une ligne. */
+html.is-mobile .tavern-panels { display: flex; flex-direction: column-reverse; gap: 10px; margin-top: 4px; }
+html.is-mobile .tavern-keeper-card { display: flex; gap: 10px; align-items: flex-start; }
+html.is-mobile .tavern-recruit-who { display: flex; flex-direction: column; gap: 3px; }
+.tavern-recruit-potential { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--text-muted); }
+.pfc-skills { display: none; }
+html.is-mobile .pfc-skills { display: grid; grid-template-columns: repeat(4, auto); gap: 0 8px; font-size: 12px; line-height: 1.15; }
+html.is-mobile .pfc-skill { display: flex; flex-direction: column; align-items: center; }
+html.is-mobile .pfc-skill-label { color: #5c4a33; }
+html.is-mobile .pfc-skill-value { font-weight: 600; }
+html.is-mobile .pfc-skill.is-key .pfc-skill-value { color: #9a6a10; font-weight: 800; }
+html.is-mobile .pfc-skill.is-key .pfc-skill-label { color: #9a6a10; font-weight: 700; }
+
+/* ---------- La Compagnie : liste et fiche ---------- */
+html.is-mobile .m-team-page { padding: 0.5rem 0.6rem 0.6rem; }
+html.is-mobile .m-team-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+html.is-mobile .m-team-head h1 { margin: 0; font-size: 1.2rem; }
+html.is-mobile .m-team-head .roster-size { margin: 0; color: #5c4a33; }
+html.is-mobile .m-chips { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+html.is-mobile .m-chip { height: 38px; padding: 0 12px; border: 1px solid #a88a58; border-radius: 999px; background: #fdf9ef; color: #2a2016; font: inherit; font-size: 14px; cursor: pointer; }
+html.is-mobile .m-chip.is-active { background: #2a2016; border-color: #2a2016; color: #fbf6ea; }
+html.is-mobile .m-team-split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 10px; align-items: start; }
+html.is-mobile .m-team-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; }
+html.is-mobile .m-team-row {
+  width: 100%; min-height: 50px; display: flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid #e2d4b6; border-radius: 10px;
+  background: #fffdf7; color: #2a2016; text-align: left; font: inherit; cursor: pointer;
+}
+html.is-mobile .m-team-row.is-active { border: 2px solid #b07d1a; background: #fff3d6; }
+html.is-mobile .m-team-dot { width: 10px; height: 10px; flex: none; border-radius: 50%; background: var(--spec-color, #a88a58); }
+html.is-mobile .m-team-who { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+html.is-mobile .m-team-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-team-sub { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #5c4a33; }
+html.is-mobile .m-team-fatigue { font-weight: 700; font-size: 14px; }
+html.is-mobile .m-team-fatigue.is-low { color: #2f7a35; }
+html.is-mobile .m-team-fatigue.is-mid { color: #9a5a12; }
+html.is-mobile .m-team-fatigue.is-high { color: #a8322d; }
+html.is-mobile .m-team-sheet { min-width: 0; padding: 10px 12px; border: 1px solid #d3bf96; border-radius: 14px; background: #fffdf7; }
+html.is-mobile .m-team-sheet .fighter-name-line { margin: 0 0 6px; font-size: 1.15rem; }
+html.is-mobile .m-team-sheet .fighter-sheet-grid { grid-template-columns: minmax(0, 1fr); }
+html.is-mobile .m-team-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
+/* ---------- La Ligue, l'Almanach : écrans de lecture ---------- */
+html.is-mobile .league-overview { grid-template-columns: minmax(0, 1fr); }
+html.is-mobile .is-mobile-hub table { font-size: 14px; }
+
+/* ---------- Combat : lice plein écran, main de cartes ---------- */
+html.is-mobile .screen-match { max-width: none; padding-top: 6px; padding-bottom: 12px; }
+/* En-tête du combat : une seule ligne (équipes, score, lieu), comme pendant le placement sur PC. */
+html.is-mobile .match-header { margin-bottom: 8px; padding: 4px 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; text-align: center; }
+html.is-mobile .match-header .eyebrow { margin: 0; font-size: 0.72rem; }
+html.is-mobile .match-header .match-steps { display: none; }
+html.is-mobile .match-header .match-teams { margin: 0; gap: 0.6rem; }
+html.is-mobile .match-header .match-team { flex-direction: row; gap: 0.45rem; font-size: 0.95rem; }
+html.is-mobile .match-header .match-teams > .match-team:first-child { justify-content: flex-end; }
+html.is-mobile .match-header .match-team-rank,
+html.is-mobile .match-header .match-team .star-rating,
+html.is-mobile .match-header .match-score-label { display: none; }
+html.is-mobile .match-header .match-score { flex-direction: row; gap: 0.6rem; }
+html.is-mobile .match-header .match-score-value { font-size: 1.4rem; }
+html.is-mobile .match-header .match-venue { margin: 0; font-size: 0.8rem; }
+html.is-mobile .match-header .match-team svg { width: 30px; height: 36px; }
+html.is-mobile .pick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html.is-mobile .pick-card .fighter-name { font-size: 1rem; }
+html.is-mobile .match-actions { position: sticky; bottom: 0; z-index: 5; padding: 8px 0 4px; background: linear-gradient(180deg, rgba(251, 246, 234, 0) 0, #fbf6ea 30%); flex-wrap: wrap; }
+
+/* Placement : la lice occupe l'écran ; nos cartes en main, en bas ; la fiche du combattant à droite. */
+html.is-mobile .screen-match:has(.placement-screen) .match-header { display: none; }
+html.is-mobile .placement-screen { position: fixed; inset: 0; z-index: 10; padding: 0; border: 0; border-radius: 0; background: #d8c49c; gap: 0; }
+html.is-mobile .placement-screen .placement-head { display: none; }
+html.is-mobile .placement-screen .placement-layout { display: block; }
+html.is-mobile .placement-screen .arena-wrap { position: fixed; inset: 0; border: 0; border-radius: 0; }
+html.is-mobile .placement-screen .match-canvas { width: 100vw; height: 100dvh; max-height: none; }
+html.is-mobile .placement-side.is-enemy { display: none; }
+html.is-mobile .placement-side.is-own {
+  position: fixed; z-index: 12; left: calc(8px + var(--sl)); right: 190px; bottom: -6px;
+  display: block; background: none;
+}
+html.is-mobile .placement-side.is-own .placement-side-title { display: none; }
+html.is-mobile .placement-side.is-own .placement-list { display: flex; align-items: flex-end; gap: 8px; overflow-x: auto; padding: 14px 4px 0; }
+html.is-mobile .placement-side.is-own .placement-list > li { flex: none; }
+html.is-mobile .placement-side.is-own .placement-card {
+  width: 130px; min-height: 132px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 6px 8px 10px;
+  border: 1px solid #a88a58; border-radius: 12px 12px 6px 6px; background: #fbf6ea; box-shadow: 0 6px 16px rgba(30, 18, 6, 0.4); text-align: left;
+}
+html.is-mobile .placement-side.is-own .placement-card .fighter-sprite { align-self: center; }
+html.is-mobile .placement-side.is-own .placement-card.is-active { min-height: 150px; border: 3px solid #e2bd66; transform: translateY(-10px); }
+html.is-mobile .placement-side.is-own .placement-card.is-locked { opacity: 0.6; min-height: 112px; }
+html.is-mobile .placement-card .pfc-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+html.is-mobile .placement-card .pfc-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .placement-card .pfc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: 12px; }
+html.is-mobile .placement-card .pfc-foot { display: flex; flex-direction: column; gap: 1px; font-size: 12px; }
+html.is-mobile .placement-actionbar { position: fixed; z-index: 12; inset: 0; pointer-events: none; }
+html.is-mobile .placement-actionbar > * { pointer-events: auto; }
+html.is-mobile .placement-status {
+  position: fixed; top: 8px; left: 50%; transform: translateX(-50%); width: max-content; max-width: 40vw; margin: 0; padding: 6px 14px; border-radius: 12px;
+  background: var(--m-dark); color: #fbf6ea; font-size: 14px; text-align: center; line-height: 1.25;
+}
+html.is-mobile .placement-status.is-ready { background: rgba(47, 122, 53, 0.94); }
+html.is-mobile .placement-actions { position: fixed; right: calc(10px + var(--sr)); bottom: calc(10px + var(--sb)); display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 172px; padding: 0; background: none; }
+html.is-mobile .placement-actions .btn { min-height: 44px; box-shadow: var(--m-shadow); }
+html.is-mobile .placement-actions .btn-fight { min-height: 58px; }
+html.is-mobile .placement-detail {
+  position: fixed; z-index: 13; left: calc(10px + var(--sl)); top: 10px; width: 236px; max-height: calc(100dvh - 180px); overflow-y: auto;
+  padding: 8px 10px; border: 2px solid #e2bd66; border-radius: 14px; background: rgba(251, 246, 234, 0.97); box-shadow: 0 8px 22px rgba(30, 18, 6, 0.35);
+  display: flex; flex-direction: column; gap: 5px; font-size: 14px;
+}
+.placement-detail { display: none; }
+html.is-mobile .placement-detail { display: flex; }
+html.is-mobile .placement-detail[hidden] { display: none; }
+html.is-mobile .pd-head { display: flex; align-items: center; gap: 8px; }
+html.is-mobile .pd-identity { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html.is-mobile .pd-name { font-family: var(--font-display); font-size: 14px; }
+html.is-mobile .pd-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-size: 12px; }
+html.is-mobile .pd-skills { display: flex; flex-direction: column; gap: 3px; }
+html.is-mobile .pd-skill { display: grid; grid-template-columns: 82px minmax(0, 1fr) 24px; align-items: center; gap: 6px; }
+html.is-mobile .pd-bar { height: 7px; border-radius: 4px; background: #e8dcc4; overflow: hidden; }
+html.is-mobile .pd-bar > span { display: block; height: 100%; background: #8f2a22; }
+html.is-mobile .pd-skill.is-key { font-weight: 700; }
+html.is-mobile .pd-skill.is-key .pd-bar > span { background: #b07d1a; }
+html.is-mobile .pd-value { text-align: right; }
+html.is-mobile .pd-fatigue { margin: 0; font-weight: 600; }
+html.is-mobile .pd-fatigue.is-low { color: #2f7a35; }
+html.is-mobile .pd-fatigue.is-mid { color: #9a5a12; }
+html.is-mobile .pd-fatigue.is-high { color: #a8322d; }
+html.is-mobile .pd-role { margin: 0; font-size: 13px; color: #5c4a33; line-height: 1.25; }
+
+/* La manche en cours : la mêlée en plein écran, les commandes par-dessus. */
+html.is-mobile .screen-match:has(.arena-wrap-battle) .match-header { display: none; }
+html.is-mobile .match-body:has(.arena-wrap-battle) > :not(.arena-wrap-battle):not(.match-actions):not(.battle-status) { display: none; }
+html.is-mobile .match-body .arena-wrap-battle { position: fixed; inset: 0; z-index: 10; border: 0; border-radius: 0; }
+html.is-mobile .match-body .arena-wrap-battle .match-canvas { width: 100vw; height: 100dvh; max-height: none; }
+html.is-mobile .match-body:has(.arena-wrap-battle) .battle-status {
+  position: fixed; z-index: 12; top: 8px; left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 14px; border-radius: 12px;
+  background: var(--m-dark); color: #fbf6ea; font-size: 14px; white-space: nowrap;
+}
+html.is-mobile .match-body:has(.arena-wrap-battle) > .match-actions {
+  position: fixed; z-index: 12; left: calc(10px + var(--sl)); right: calc(10px + var(--sr)); bottom: calc(10px + var(--sb));
+  display: flex; justify-content: flex-end; gap: 6px; padding: 0; background: none;
+}
+html.is-mobile .match-body:has(.arena-wrap-battle) > .match-actions .btn { box-shadow: var(--m-shadow); }
+
+/* Résultats : panneaux lisibles, défilants. */
+html.is-mobile .match-final .final-title { font-size: 2rem; }
+html.is-mobile .final-columns { grid-template-columns: minmax(0, 1fr); }
+
+/* ---------- Écrans hors partie ---------- */
+html.is-mobile .main-menu { padding-top: 0.5rem; }
+html.is-mobile .language-picker { top: calc(8px); right: calc(10px + var(--sr)); }
+
+/* Tutoriel : bulle plus compacte. */
+html.is-mobile .tutorial-bubble { width: min(30rem, calc(100vw - 24px)); max-height: calc(100dvh - 20px); overflow-y: auto; padding: 0.5rem 0.8rem 0.5rem 0.4rem; font-size: 0.93rem; line-height: 1.35; }
+html.is-mobile .tutorial-portrait { width: 92px; margin: 0 0.3rem 0 0; }
+html.is-mobile .tutorial-list { font-size: 0.88rem; gap: 0.2rem; }
+
+/* ==========================================================================
+   v0.84 — l'entrée en jeu, le carnet de bord, la Coupe de France
+   ========================================================================== */
+
+/* Écran principal : titre et emblème à gauche, menu à droite, sans défiler (« Continuer »). */
+html.is-mobile .m-main-menu {
+  min-height: 100dvh; padding: 0 calc(24px + var(--sr)) 0 calc(24px + var(--sl)); display: grid; grid-template-columns: minmax(0, 1fr) 290px;
+  align-items: center; gap: 2rem; flex-direction: row;
+  background: radial-gradient(ellipse at 30% 50%, #3b2412 0%, #1a120a 70%);
+}
+html.is-mobile .m-menu-brand { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+html.is-mobile .m-menu-brand .game-title { margin: 6px 0 0; font-size: 3rem; }
+html.is-mobile .m-menu-brand .game-subtitle { margin: 0; }
+html.is-mobile .m-menu-brand .main-menu-version { margin: 14px 0 0; font-size: 0.85rem; color: var(--text-faint); }
+html.is-mobile .m-menu-nav { display: flex; flex-direction: column; gap: 0.55rem; width: 100%; }
+html.is-mobile .m-menu-nav .btn-menu { min-height: 50px; }
+html.is-mobile .m-menu-nav .btn-primary { min-height: 58px; font-size: 1.1rem; }
+html.is-mobile .m-continue-summary { margin: -0.3rem 0 0.2rem; text-align: center; font-size: 0.88rem; color: var(--text-muted); }
+
+/* Étapes de la création (Terre, Blason, Capitaine). */
+html.is-mobile .m-steps {
+  position: fixed; z-index: 20; left: calc(12px + var(--sl)); bottom: calc(10px + var(--sb)); margin: 0; padding: 4px; list-style: none;
+  display: flex; gap: 4px; border-radius: 14px; background: rgba(26, 18, 10, 0.92); font-size: 14px;
+}
+html.is-mobile .m-step { padding: 6px 12px; border-radius: 10px; color: #c9b896; }
+html.is-mobile .m-step.is-current { background: #e2bd66; color: #1c1109; font-weight: 600; }
+html.is-mobile .m-step.is-done { color: #9cc39a; }
+
+/* Championnat et Terre : la carte en plein écran, le panneau du lieu à droite. */
+html.is-mobile .screen-new-game { min-height: 100dvh; padding: 0; }
+html.is-mobile .screen-new-game .screen-header {
+  position: fixed; z-index: 20; left: calc(12px + var(--sl)); top: 10px; margin: 0; padding: 6px 14px; border-radius: 12px; background: rgba(26, 18, 10, 0.9);
+}
+html.is-mobile .screen-new-game .screen-header h1 { margin: 0; font-size: 1.05rem; }
+html.is-mobile .screen-new-game .screen-header .eyebrow { margin: 0; font-size: 0.7rem; }
+html.is-mobile .screen-new-game .screen-subtitle { display: none; }
+html.is-mobile .new-game-layout { display: block; }
+html.is-mobile .new-game-layout .map-frame { position: fixed; inset: 0; z-index: 0; border: 0; border-radius: 0; max-width: none; aspect-ratio: auto; }
+html.is-mobile .new-game-layout .map-frame { background: #7fb0d4; }
+html.is-mobile .new-game-layout .map-frame .land-map,
+html.is-mobile .new-game-layout .map-frame .europe-map { width: calc(100vw - 310px); height: 100dvh; max-height: none; }
+html.is-mobile .new-game-layout .league-panel {
+  position: fixed; z-index: 15; right: calc(10px + var(--sr)); top: 10px; bottom: 10px; width: 290px; overflow-y: auto; padding: 10px 12px;
+}
+html.is-mobile .new-game-layout .league-panel .section-title { font-size: 1rem; margin: 0.2rem 0; }
+html.is-mobile .new-game-layout .location-option,
+html.is-mobile .new-game-layout .land-option { min-height: 44px; }
+html.is-mobile .screen-new-game .screen-actions { position: fixed; z-index: 20; right: calc(320px + var(--sr)); bottom: calc(10px + var(--sb)); margin: 0; }
+
+/* Votre compagnie, votre capitaine : l'aperçu en grand à gauche, les choix à droite (défilants). */
+html.is-mobile .screen-new-team { min-height: 100dvh; padding: 0; }
+html.is-mobile .screen-new-team .screen-header { display: none; }
+html.is-mobile .new-team-layout {
+  position: fixed; inset: 0; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 0; align-items: stretch;
+}
+html.is-mobile .new-team-layout > .emblem-preview {
+  order: -1; position: static; margin: 0; border: 0; border-radius: 0; box-shadow: none; padding: 16px 12px 70px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: radial-gradient(ellipse at 50% 45%, #3b2412 0%, #1a120a 75%);
+}
+html.is-mobile .new-team-layout > .new-team-form {
+  overflow-y: auto; margin: 0; border: 0; border-radius: 0; box-shadow: none; padding: 12px 16px 16px; background: #22180f;
+}
+html.is-mobile .new-team-form .form-field { margin-bottom: 0.7rem; }
+html.is-mobile .new-team-form .form-actions { position: sticky; bottom: -16px; padding: 8px 0; background: #22180f; }
+html.is-mobile .palette button,
+html.is-mobile .color-slots button,
+html.is-mobile .pattern-list button,
+html.is-mobile .captain-specialties button,
+html.is-mobile .captain-sprites button { min-height: 44px; }
+html.is-mobile .pattern-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+html.is-mobile .captain-specialties { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+
+/* Carnet de bord : le jour et le titre à gauche, le récit à droite. */
+html.is-mobile .modal-logbook { width: min(100%, 820px); }
+html.is-mobile .modal-logbook .logbook { grid-template-columns: 180px minmax(0, 1fr); align-items: start; padding: 0.8rem 1rem; gap: 0.6rem 1rem; }
+html.is-mobile .modal-logbook .logbook > * { grid-column: 2; }
+html.is-mobile .modal-logbook .logbook > .logbook-header {
+  grid-column: 1; grid-row: 1 / span 6; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem;
+  position: sticky; top: 0;
+}
+html.is-mobile .modal-logbook .logbook-headline { font-size: 1.15rem; }
+html.is-mobile .modal-logbook .logbook-tiles { --columns: 2 !important; }
+
+/* Coupe de France : Gabarnac en fond, l'en-tête en bandeau, le prochain combat et la poule à droite. */
+html.is-mobile .screen-cup { padding: 0; min-height: 100dvh; }
+html.is-mobile .cup-header {
+  position: fixed; z-index: 20; left: calc(10px + var(--sl)); right: calc(10px + var(--sr)); top: 8px; margin: 0; padding: 4px 10px;
+  flex-wrap: nowrap; gap: 0.6rem; border-radius: 14px; overflow-x: auto;
+}
+html.is-mobile .cup-header-title h1 { font-size: 1.05rem; }
+html.is-mobile .cup-header-title .cup-trophy { font-size: 1.3rem; }
+html.is-mobile .cup-header-title .cup-step { margin: 0; font-size: 0.85rem; }
+html.is-mobile .cup-header-team { display: none; }
+html.is-mobile .cup-header-title { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+html.is-mobile .cup-header-title > div { min-width: 0; }
+html.is-mobile .cup-header-title .eyebrow { display: none; }
+html.is-mobile .cup-header-title h1 { overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .cup-header-actions .btn { min-height: 38px; padding: 0 10px; font-size: 0.8rem; }
+html.is-mobile .cup-header-actions { flex-wrap: nowrap; }
+html.is-mobile .cup-header-actions .btn { white-space: nowrap; }
+html.is-mobile .cup-body { display: block; }
+html.is-mobile .cup-body .cup-map .centre-stage { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100dvh; border: 0; border-radius: 0; margin: 0; }
+html.is-mobile .cup-body .cup-map .centre-stage canvas { width: 100%; height: 100%; max-height: none; }
+html.is-mobile .cup-body .cup-map .centre-hint { display: none; }
+html.is-mobile .cup-body .cup-side {
+  position: fixed; z-index: 15; right: calc(10px + var(--sr)); top: 70px; bottom: 10px; width: 330px; overflow-y: auto; align-content: start;
+}
+html.is-mobile .cup-draw,
+html.is-mobile .cup-welcome { margin-top: 72px; }
+
+/* ==========================================================================
+   v0.85 — écran de démarrage (bassinet, végétation, « BZW »)
+   ========================================================================== */
+.splash {
+  position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: #1a120a; transition: opacity 0.5s ease;
+}
+.splash.is-leaving { opacity: 0; }
+.splash-art { width: min(96vh, 82vw); height: auto; max-height: 76vh; }
+.splash-helm { opacity: 0; animation: splash-rise 0.7s ease-out 0.1s forwards; }
+.splash-blade { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); animation: splash-grow 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) forwards; }
+.splash-vine { stroke-dasharray: 220; stroke-dashoffset: 220; animation: splash-draw 1.3s ease-out 0.8s forwards; }
+.splash-leaves ellipse { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: splash-pop 0.4s ease-out 1.5s forwards; }
+.splash-flower { opacity: 0; animation: splash-fade 0.3s ease-out forwards; }
+.splash-bloom { transform-box: fill-box; transform-origin: 50% 50%; transform: scale(0); animation: splash-bloom 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) forwards; }
+.splash-word { display: flex; gap: 0.35em; font-family: var(--font-display, 'Cinzel', Georgia, serif); font-weight: 700; font-size: clamp(2rem, 9vh, 3.4rem); letter-spacing: 0.12em; color: #e2bd66; text-shadow: 0 3px 0 #3a2410; }
+.splash-word span { opacity: 0; transform: translateY(10px); animation: splash-letter 0.45s ease-out forwards; }
+.splash-word span:nth-child(1) { animation-delay: 1.9s; }
+.splash-word span:nth-child(2) { animation-delay: 2.1s; }
+.splash-word span:nth-child(3) { animation-delay: 2.3s; }
+@keyframes splash-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes splash-grow { to { transform: scaleY(1); } }
+@keyframes splash-draw { to { stroke-dashoffset: 0; } }
+@keyframes splash-pop { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+@keyframes splash-fade { to { opacity: 1; } }
+@keyframes splash-bloom { to { transform: scale(1); } }
+@keyframes splash-letter { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .splash *, .splash-word span { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+}
+
+/* ==========================================================================
+   v0.86 — Combat sur téléphone : effectif engagé, combattants de la manche, résultat de la
+   manche, fin du combat. Plein écran sombre : bandeau, cartes à gauche, actions à droite.
+   ========================================================================== */
+html.is-mobile .screen-match:has(.m-match) .match-header { display: none; }
+html.is-mobile .m-match {
+  position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; margin: 0;
+  padding: 0 calc(10px + var(--sr)) calc(8px + var(--sb)) calc(10px + var(--sl));
+  border: 0; border-radius: 0; background: radial-gradient(ellipse at 30% 0%, #3b2a18, #1a120a 70%); color: #f3ead7;
+}
+html.is-mobile .mm-top { flex: none; display: flex; align-items: center; gap: 10px; height: 50px; }
+html.is-mobile .mm-back {
+  flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid rgba(243, 234, 215, 0.35);
+  border-radius: 50%; background: rgba(243, 234, 215, 0.08); color: #f3ead7; cursor: pointer;
+}
+html.is-mobile .mm-top-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.15; }
+html.is-mobile .mm-top-text strong { font-family: var(--font-display); font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .mm-top-text span { font-size: 0.78rem; opacity: 0.75; }
+html.is-mobile .mm-top-score { display: flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; background: rgba(0, 0, 0, 0.3); }
+html.is-mobile .mm-top-score b { font-family: var(--font-display); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+html.is-mobile .mm-pill {
+  flex: none; min-width: 58px; padding: 5px 12px; border-radius: 99px; background: #e2bd66; color: #2a2016;
+  font-weight: 700; text-align: center; font-variant-numeric: tabular-nums;
+}
+html.is-mobile .mm-pill.is-full { background: #6aa84f; color: #ffffff; }
+html.is-mobile .mm-split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 10px; }
+html.is-mobile .mm-grid {
+  min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+  align-content: start; gap: 8px; padding: 2px 2px 12px; -webkit-overflow-scrolling: touch;
+}
+html.is-mobile .mm-card {
+  position: relative; display: flex; flex-direction: column; min-width: 0; padding: 0; overflow: hidden; text-align: left;
+  border: 2px solid transparent; border-radius: 10px; background: #fbf6ea; color: #2a2016; font: inherit; cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+html.is-mobile .mm-card.is-selected { border-color: #e2bd66; box-shadow: 0 0 0 2px #e2bd66, 0 3px 8px rgba(0, 0, 0, 0.35); }
+html.is-mobile .mm-card.is-disabled { opacity: 0.55; }
+html.is-mobile .mm-card.is-ko { opacity: 0.45; filter: grayscale(0.8); cursor: not-allowed; }
+html.is-mobile .mm-card-band {
+  display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 3px 26px 3px 7px;
+  background: var(--spec-color, #6b5a44); color: #ffffff; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+html.is-mobile .mm-card-band > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.is-mobile .mm-card-body { display: flex; align-items: center; gap: 6px; padding: 4px 6px 0; min-height: 50px; }
+html.is-mobile .mm-card-body > :last-child { min-width: 0; font-size: 0.68rem; }
+html.is-mobile .mm-card-name { padding: 2px 7px 0; font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .mm-card-fatigue { margin: 3px 7px 6px; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .mm-check {
+  position: absolute; top: 2px; right: 3px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25); color: #ffffff; font-size: 0.72rem; font-weight: 800;
+}
+html.is-mobile .mm-card.is-selected .mm-check { background: #e2bd66; color: #2a2016; }
+html.is-mobile .mm-card.is-ko .mm-check { width: auto; padding: 0 5px; border-radius: 6px; background: #a8322d; }
+html.is-mobile .mm-aside { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 6px; }
+html.is-mobile .mm-opponent { padding: 9px 10px; border-radius: 10px; background: rgba(243, 234, 215, 0.08); border: 1px solid rgba(243, 234, 215, 0.18); }
+html.is-mobile .mm-opponent-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+html.is-mobile .mm-opponent-head div { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+html.is-mobile .mm-opponent-head strong { font-family: var(--font-display); }
+html.is-mobile .mm-opponent-head span { font-size: 0.75rem; opacity: 0.75; }
+html.is-mobile .mm-behavior { margin: 4px 0 0; font-size: 0.75rem; opacity: 0.85; line-height: 1.3; }
+html.is-mobile .mm-hint { margin: 0; font-size: 0.76rem; opacity: 0.75; line-height: 1.3; }
+html.is-mobile .mm-decisive { margin: 0; padding: 5px 8px; border-radius: 8px; background: #a8322d; color: #ffffff; font-weight: 700; text-align: center; }
+html.is-mobile .m-match .btn { min-height: 42px; margin: 0; }
+html.is-mobile .mm-action { width: 100%; background: rgba(243, 234, 215, 0.12); color: #f3ead7; border-color: rgba(243, 234, 215, 0.35); }
+html.is-mobile .mm-go { width: 100%; min-height: 48px; margin-top: auto; font-size: 1rem; }
+html.is-mobile .m-match .form-error { margin: 0; color: #ff9b8f; }
+
+/* Résultat d'une manche */
+html.is-mobile .mm-result { justify-content: center; align-items: center; padding-top: 8px; }
+html.is-mobile .mm-result-card {
+  display: flex; flex-direction: column; gap: 8px; width: min(780px, 100%); max-height: 100%; min-height: 0;
+  padding: 12px 16px; border-radius: 14px; background: #fbf6ea; color: #2a2016; border-top: 6px solid #6aa84f;
+}
+html.is-mobile .mm-result.is-loss .mm-result-card { border-top-color: #a8322d; }
+html.is-mobile .mm-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+html.is-mobile .mm-result-label { margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+html.is-mobile .mm-result-title { margin: 0; font-size: 1.45rem; line-height: 1.1; }
+html.is-mobile .mm-result.is-win .mm-result-title { color: #3e7d3a; }
+html.is-mobile .mm-result.is-loss .mm-result-title { color: #a8322d; }
+html.is-mobile .mm-result-sub { margin: 0; font-size: 0.8rem; opacity: 0.75; }
+html.is-mobile .mm-result-score { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html.is-mobile .mm-best { margin: 0; font-size: 0.85rem; }
+html.is-mobile .mm-result .mm-decisive { align-self: flex-start; }
+html.is-mobile .mm-table-wrap { flex: 1; min-height: 0; overflow: auto; }
+html.is-mobile .mm-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+html.is-mobile .mm-table th { position: sticky; top: 0; background: #fbf6ea; text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+html.is-mobile .mm-table th, html.is-mobile .mm-table td { padding: 3px 6px; border-bottom: 1px solid rgba(42, 32, 22, 0.12); }
+html.is-mobile .mm-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html.is-mobile .mm-table tr.is-ko { opacity: 0.6; }
+html.is-mobile .mm-who { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+html.is-mobile .mm-result-actions { display: flex; justify-content: flex-end; }
+html.is-mobile .mm-result-actions .mm-go { width: auto; margin: 0; padding-inline: 22px; }
+
+/* Fin du combat */
+html.is-mobile .mm-final { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+html.is-mobile .mm-final-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 0; text-align: center; }
+html.is-mobile .mm-final-title { margin: 0; font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; }
+html.is-mobile .mm-final.is-win .mm-final-title { color: #e2bd66; text-shadow: 0 0 18px rgba(226, 189, 102, 0.45); }
+html.is-mobile .mm-final.is-loss .mm-final-title { color: #ff9b8f; }
+html.is-mobile .mm-final-teams { display: flex; align-items: center; gap: 14px; }
+html.is-mobile .mm-final-score { font-family: var(--font-display); font-size: 2rem; font-variant-numeric: tabular-nums; }
+html.is-mobile .mm-final-points { margin: 0; font-size: 0.9rem; }
+html.is-mobile .mm-rounds { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 2px 0; padding: 0; list-style: none; }
+html.is-mobile .mm-rounds li { padding: 3px 9px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; background: #6b2622; }
+html.is-mobile .mm-rounds li.is-win { background: #3e7d3a; }
+html.is-mobile .mm-final-hero .mm-go { width: min(300px, 100%); margin-top: 6px; }
+html.is-mobile .mm-final-side {
+  min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; margin: 10px 0 0;
+  border-radius: 12px; background: #fbf6ea; color: #2a2016;
+}
+html.is-mobile .mm-final-side .sheet-section-title { margin: 0 0 4px; font-size: 0.85rem; }
+html.is-mobile .mm-final-side .season-over-note { margin: 0; font-size: 0.8rem; }
+html.is-mobile .mm-final-side details > summary { cursor: pointer; font-weight: 700; font-size: 0.85rem; padding: 4px 0; }
+html.is-mobile .mm-final-side .matchday-results { margin: 4px 0 0; font-size: 0.8rem; }
+html.is-mobile .mm-soreness .sheet-section-title { display: none; }
+html.is-mobile .mm-soreness .assign-table { font-size: 0.78rem; }
+html.is-mobile .mm-card .pfc-skills { display: grid; grid-template-columns: repeat(2, auto); gap: 1px 8px; margin: 0; }
+html.is-mobile .mm-card .pfc-skill { display: flex; flex-direction: row; align-items: baseline; gap: 3px; font-size: 0.7rem; line-height: 1.25; }
+html.is-mobile .mm-go { white-space: nowrap; font-size: 0.95rem; }
+/* WebView Android : les rangées de cartes ne se tassent pas pour tenir dans la hauteur. */
+html.is-mobile .mm-grid { grid-auto-rows: max-content; }
+html.is-mobile .mm-card { min-height: max-content; }
+
+/* ---------- v0.88 : bulle d'info des talents (toucher une étiquette) ---------- */
+html.is-mobile .talent-badge { cursor: pointer; }
+html.is-mobile .talent-tip {
+  position: fixed; z-index: 1000; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 9px 12px 10px;
+  border-radius: 10px; border-top: 4px solid var(--talent-color, #6b5a44); background: #2b2117; color: #f3ead7;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45); font-size: 0.82rem; line-height: 1.35; pointer-events: none;
+  animation: talent-tip-in 0.14s ease-out;
+}
+html.is-mobile .talent-tip::after {
+  content: ''; position: absolute; left: var(--tip-arrow, 50%); bottom: -7px; width: 12px; height: 12px; margin-left: -6px;
+  background: #2b2117; transform: rotate(45deg);
+}
+html.is-mobile .talent-tip.is-below::after { top: -7px; bottom: auto; background: var(--talent-color, #6b5a44); }
+html.is-mobile .talent-tip-name { display: block; font-family: var(--font-display); font-size: 0.95rem; }
+html.is-mobile .talent-tip-kind { display: block; margin-top: 1px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; }
+html.is-mobile .talent-tip-text { margin: 5px 0 0; }
+@keyframes talent-tip-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* ---------- v0.90 : menu en volet latéral (maquette A) ---------- */
+html.is-mobile .modal-backdrop:has(> .m-drawer-modal) { place-items: stretch end; padding: 0; background: rgba(26, 18, 10, 0.5); }
+html.is-mobile .modal.m-drawer-modal {
+  width: calc(318px + var(--sr)); max-width: 100vw; height: 100dvh; max-height: none; margin: 0; padding: 12px calc(14px + var(--sr)) calc(10px + var(--sb)) 16px;
+  border: 0; border-radius: 0; box-shadow: -10px 0 30px rgba(0, 0, 0, 0.35); background: #fbf6ea; overflow-y: auto;
+  animation: m-drawer-in 0.18s ease-out;
+}
+html.is-mobile .m-drawer-modal .modal-body { margin: 0; min-height: 100%; display: flex; }
+html.is-mobile .m-drawer-modal .modal-actions { display: none; }
+@keyframes m-drawer-in { from { transform: translateX(40px); opacity: 0; } }
+html.is-mobile .m-drawer { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+html.is-mobile .m-drawer-head { display: flex; align-items: center; gap: 10px; }
+html.is-mobile .m-drawer-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+html.is-mobile .m-drawer-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--heading); }
+html.is-mobile .m-drawer-save { font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
+html.is-mobile .m-drawer-save::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: #3e7d3a; }
+html.is-mobile .m-drawer-save.is-dirty { color: #a8322d; }
+html.is-mobile .m-drawer-save.is-dirty::before { background: #c98a1b; }
+html.is-mobile .m-drawer-close { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: #f1e8d4; color: #2a2016; cursor: pointer; }
+html.is-mobile .m-drawer-save-btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; margin: 0; font-size: 1rem; }
+html.is-mobile .m-drawer-list { display: flex; flex-direction: column; }
+html.is-mobile .m-drawer-item {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 6px; border: 0; border-bottom: 1px solid #ece2cc;
+  background: transparent; color: #2a2016; font: inherit; font-size: 1rem; text-align: left; cursor: pointer;
+}
+html.is-mobile .m-drawer-item > .m-drawer-glyph:first-child { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: #f1e8d4; color: #8a6418; }
+html.is-mobile .m-drawer-item > .m-drawer-glyph:last-child { color: #a88a58; }
+html.is-mobile .m-drawer-label { flex: 1; }
+html.is-mobile .m-drawer-side { font-size: 0.85rem; color: #5c4a33; font-variant-numeric: tabular-nums; }
+html.is-mobile .m-drawer-exits { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+html.is-mobile .m-drawer-exit { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 0; }
+html.is-mobile .m-drawer-exit.is-danger { border-color: #a8322d; color: #a8322d; }
+html.is-mobile .m-drawer-version { margin: 2px 0 0; text-align: center; font-size: 0.78rem; color: var(--text-faint); }
+html.is-mobile .m-drawer-glyph { display: inline-grid; place-items: center; }
+
+/* ==========================================================================
+   v0.90 — Coupe de France sur téléphone : bandeau, tirage en blasons, Gabarnac plein écran,
+   dock de la Coupe, tableau en volet, arbre final au pouce.
+   ========================================================================== */
+html.is-mobile .screen-cup.is-mobile-cup { background: radial-gradient(ellipse at 30% 0%, #2c3e66, #141c30 75%); }
+html.is-mobile .m-cup-hud {
+  position: fixed; z-index: 30; top: 8px; left: calc(10px + var(--sl)); right: calc(10px + var(--sr));
+  display: flex; align-items: center; gap: 8px; pointer-events: none;
+}
+html.is-mobile .m-cup-hud > * { pointer-events: auto; }
+html.is-mobile .m-cup-hud .m-hud { position: static; }
+html.is-mobile .m-cup-chip { height: 48px; padding: 4px 14px 4px 10px; cursor: default; min-width: 0; }
+html.is-mobile .m-cup-trophy { color: #b07d1a; }
+html.is-mobile .m-cup-chip-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+html.is-mobile .m-cup-chip-text strong { font-family: var(--font-display); font-size: 14px; color: #27508d; white-space: nowrap; }
+html.is-mobile .m-cup-chip-text span { font-size: 13px; color: #5c4a33; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-cup-status {
+  margin: 0 auto; max-width: 36vw; padding: 9px 14px; border-radius: 999px; background: rgba(43, 33, 23, 0.92); color: #fbf6ea;
+  font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: var(--m-shadow);
+}
+html.is-mobile .m-cup-status.is-active { background: rgba(47, 122, 53, 0.94); }
+html.is-mobile .m-cup-status.is-champion { background: #b07d1a; }
+html.is-mobile .m-cup-status-spacer { flex: 1; }
+html.is-mobile .m-cup-count { height: 44px; padding: 0 14px; border-radius: 999px; cursor: default; }
+html.is-mobile .m-cup-count strong { font-variant-numeric: tabular-nums; }
+html.is-mobile .m-cup-eyebrow { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #8a6418; }
+
+/* Tirage au sort */
+html.is-mobile .m-cup-draw {
+  position: fixed; inset: 64px calc(10px + var(--sr)) calc(10px + var(--sb)) calc(10px + var(--sl));
+  display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 10px;
+}
+html.is-mobile .m-cup-reveal {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; padding: 12px 14px; border-radius: 16px;
+  background: #fbf6ea; color: #2a2016; text-align: center; overflow-y: auto;
+}
+html.is-mobile .m-cup-reveal-name { font-family: var(--font-display); font-size: 1.1rem; color: #8f2a22; }
+html.is-mobile .m-cup-reveal-slot, html.is-mobile .m-cup-reveal-hint { margin: 0; font-size: 0.9rem; }
+html.is-mobile .m-cup-progress { width: 100%; height: 8px; border-radius: 999px; background: #ece2cc; overflow: hidden; flex: none; }
+html.is-mobile .m-cup-progress span { display: block; height: 100%; background: #b07d1a; }
+html.is-mobile .m-cup-draw-one { width: 100%; min-height: 50px; margin: auto 0 0; }
+html.is-mobile .m-cup-draw-all { width: 100%; min-height: 44px; margin: 0; }
+html.is-mobile .m-cup-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 8px; min-height: 0; }
+html.is-mobile .m-cup-group {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; min-height: 0; padding: 7px 10px;
+  border: 2px solid transparent; border-radius: 12px; background: rgba(251, 246, 234, 0.94); color: #2a2016; font: inherit; text-align: left; cursor: pointer;
+}
+html.is-mobile .m-cup-group.is-new { background: #fff3d6; border-color: #e2bd66; }
+html.is-mobile .m-cup-group.is-player { box-shadow: inset 0 0 0 2px #27508d; }
+html.is-mobile .m-cup-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+html.is-mobile .m-cup-group-head strong { font-family: var(--font-display); font-size: 14px; color: #27508d; }
+html.is-mobile .m-cup-group-head span { font-size: 13px; color: #5c4a33; }
+html.is-mobile .m-cup-group-shields { display: flex; gap: 4px; flex-wrap: wrap; }
+html.is-mobile .m-cup-shield { display: inline-grid; place-items: center; width: 22px; height: 26px; }
+html.is-mobile .m-cup-shield.is-empty { border: 1.5px dashed #b9a77f; border-radius: 3px 3px 11px 11px; width: 19px; height: 23px; }
+html.is-mobile .m-cup-shield.is-new { filter: drop-shadow(0 0 3px #e2bd66); }
+html.is-mobile .m-cup-group-modal { width: min(420px, 100%); }
+html.is-mobile .m-cup-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+html.is-mobile .m-cup-slot { display: flex; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px solid #ece2cc; }
+html.is-mobile .m-cup-slot.is-player { background: #fff3d6; font-weight: 700; }
+html.is-mobile .m-cup-slot-id { width: 26px; font-weight: 600; color: #5c4a33; }
+html.is-mobile .m-cup-slot-name { flex: 1; min-width: 0; }
+html.is-mobile .m-cup-slot-div { font-size: 0.8rem; color: #5c4a33; white-space: nowrap; }
+
+/* Château de Gabarnac : la carte s'arrête au-dessus du dock (le tableau de la Coupe reste visible). */
+html.is-mobile .m-cup-gabarnac .cup-map .centre-stage {
+  position: fixed; top: 0; left: 0; right: 0; bottom: calc(72px + var(--sb)); z-index: 0; width: auto; height: auto; margin: 0; border: 0; border-radius: 0;
+}
+html.is-mobile .m-cup-gabarnac .cup-map .centre-stage canvas { width: 100%; height: 100%; max-height: none; }
+html.is-mobile .m-cup-gabarnac .centre-hint { display: none; }
+html.is-mobile .m-cup-next {
+  position: fixed; z-index: 20; left: calc(10px + var(--sl)); top: 66px; width: 232px; max-height: calc(100dvh - 150px); overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 12px 12px; box-sizing: border-box;
+  border: 2px solid #e2bd66; border-radius: 16px; background: #fbf6ea; color: #2a2016; box-shadow: 0 10px 26px rgba(30, 18, 6, 0.35); text-align: center;
+}
+html.is-mobile .m-cup-next .m-cup-eyebrow { align-self: stretch; text-align: left; }
+html.is-mobile .m-cup-next-step { margin: 0; font-size: 0.85rem; color: #5c4a33; }
+html.is-mobile .m-cup-versus { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; color: #8f2a22; }
+html.is-mobile .m-cup-next-name { font-size: 0.95rem; }
+html.is-mobile .m-cup-next-stars { font-size: 0.85rem; color: #5c4a33; }
+html.is-mobile .m-cup-next .muted { margin: 0; font-size: 0.85rem; }
+html.is-mobile .m-cup-next .btn { width: 100%; min-height: 44px; margin: 4px 0 0; }
+html.is-mobile .m-cup-fight { animation: m-pulse 1.4s ease-in-out infinite; }
+
+/* Tableau de la Coupe : volet, rubriques à gauche */
+html.is-mobile .modal-backdrop:has(> .m-board-modal) { place-items: stretch; padding: 10px calc(10px + var(--sr)) 0 calc(10px + var(--sl)); }
+html.is-mobile .modal.m-board-modal {
+  width: 100%; max-width: none; height: calc(100dvh - 10px); max-height: none; padding: 0; border-radius: 18px 18px 0 0; overflow: hidden;
+}
+html.is-mobile .m-board-modal .modal-body { margin: 0; height: 100%; }
+html.is-mobile .m-board-modal .modal-actions { display: none; }
+html.is-mobile .m-board { display: grid; grid-template-columns: 168px minmax(0, 1fr); height: 100%; }
+html.is-mobile .m-board-rail { display: flex; flex-direction: column; gap: 4px; padding: 10px; background: #f1e8d4; overflow-y: auto; }
+html.is-mobile .m-board-rail-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px 4px; }
+html.is-mobile .m-board-rail-head strong { font-family: var(--font-display); color: #8f2a22; }
+html.is-mobile .m-board-close { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #2a2016; cursor: pointer; }
+html.is-mobile .m-board-tab { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: #2a2016; font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+html.is-mobile .m-board-tab.is-active { background: #27508d; color: #ffffff; font-weight: 700; }
+html.is-mobile .m-board-content { min-width: 0; padding: 12px 16px 16px; overflow: auto; }
+html.is-mobile .m-board-group-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+html.is-mobile .m-board-group-tab {
+  flex: 1; min-height: 44px; border: 1px solid #d9c9a6; border-radius: 10px; background: #fdf9ef; color: #2a2016;
+  font-family: var(--font-display); font-weight: 700; font-size: 15px; cursor: pointer;
+}
+html.is-mobile .m-board-group-tab.is-player { border-color: #27508d; }
+html.is-mobile .m-board-group-tab.is-active { background: #e2bd66; border-color: #b07d1a; }
+html.is-mobile .m-board-groups .cup-standings { width: 100%; font-size: 0.95rem; }
+html.is-mobile .m-board-groups .cup-standings td { padding-top: 5px; padding-bottom: 5px; }
+html.is-mobile .m-board-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 0; font-size: 0.8rem; color: #5c4a33; }
+html.is-mobile .m-board-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+html.is-mobile .m-board-legend .is-in::before { background: #2f7a35; }
+html.is-mobile .m-board-legend .is-maybe::before { background: #c98a1b; }
+
+/* Arbre final */
+html.is-mobile .m-bracket { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+html.is-mobile .m-bracket-rounds { display: flex; gap: 4px; flex-wrap: wrap; }
+html.is-mobile .m-bracket-round {
+  min-height: 44px; padding: 0 14px; border: 1px solid #d9c9a6; border-radius: 999px; background: #fdf9ef; color: #2a2016;
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+html.is-mobile .m-bracket-round.is-current { border-color: #a8322d; }
+html.is-mobile .m-bracket-round.is-active { background: #e2bd66; border-color: #b07d1a; }
+html.is-mobile .m-bracket-scroll { overflow: auto; padding-bottom: 6px; }
+html.is-mobile .m-bracket-heads { position: relative; height: 20px; }
+html.is-mobile .m-bracket-head { position: absolute; top: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #8a6418; }
+html.is-mobile .m-bracket-board { position: relative; }
+html.is-mobile .m-bracket-lines { position: absolute; inset: 0; overflow: visible; }
+html.is-mobile .m-bracket-lines .is-plain { fill: none; stroke: #c9b78f; stroke-width: 2; }
+html.is-mobile .m-bracket-lines .is-gold { fill: none; stroke: #d19a1f; stroke-width: 3; }
+html.is-mobile .m-bracket-card {
+  position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 3px 10px;
+  border: 2px solid #e7dcc2; border-radius: 10px; background: #fffdf7;
+}
+html.is-mobile .m-bracket-card.is-player { border-color: #e2bd66; background: #fff3d6; }
+html.is-mobile .m-bracket-team { display: flex; align-items: center; gap: 6px; font-size: 14px; min-width: 0; }
+html.is-mobile .m-bracket-team.is-winner { font-weight: 700; }
+html.is-mobile .m-bracket-blank { width: 14px; height: 16px; border-radius: 2px 2px 7px 7px; background: #d9cdb0; flex: none; }
+html.is-mobile .m-bracket-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-bracket-score { font-variant-numeric: tabular-nums; }
+html.is-mobile .m-bracket-note { margin: 0; font-size: 0.8rem; color: #5c4a33; }
+
+/* Vainqueur et Coupe fermée : sous le bandeau */
+html.is-mobile .is-mobile-cup .cup-winner,
+html.is-mobile .is-mobile-cup .cup-welcome { margin: 66px calc(10px + var(--sr)) 12px calc(10px + var(--sl)); }
+/* Sous la carte, le même ciel que le château (pas de bande sombre derrière le dock). */
+html.is-mobile .screen-cup.is-mobile-cup:has(.m-cup-gabarnac) { background: linear-gradient(#aac9e2, #e3ecef); }
+/* 4e de la poule : peut-être repêché (avant la fin des poules). */
+html.is-mobile .m-board-groups .cup-standings tbody tr:nth-child(4):not(.is-qualified):not(.is-out) td:first-child { box-shadow: inset 3px 0 0 #c98a1b; }
+
+/* ---------- v0.91 : zoom des cartes (pincer, glisser) ---------- */
+html.is-mobile canvas.is-zoomable { touch-action: none; }
+html.is-mobile .m-zoom-reset {
+  position: fixed; z-index: 35; right: calc(30px + var(--sr)); bottom: calc(118px + var(--sb)); width: 48px; height: 48px; padding: 0;
+  display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--m-cream); color: #2a2016; box-shadow: var(--m-shadow); cursor: pointer;
+}
+html.is-mobile .m-zoom-reset[hidden] { display: none; }
+
+/* ==========================================================================
+   v0.92 — Centre : « Lieux » et « Affectations » séparés ; événement à droite ; deniers dorés ;
+   Compagnie : ce que montre la liste (fatigue, mises à terre, potentiel).
+   ========================================================================== */
+html.is-mobile .m-sheet-toggles { display: flex; gap: 6px; min-width: 0; }
+html.is-mobile .m-sheet-toggle { display: inline-flex; align-items: center; gap: 6px; }
+html.is-mobile .m-sheet.has-parts[data-state="closed"] .m-sheet-toggles { flex-direction: column; align-items: flex-start; }
+html.is-mobile .m-sheet.has-parts[data-state="closed"] .m-sheet-toggle::after { content: none; }
+html.is-mobile .m-sheet.has-parts .m-sheet-toggle .m-icon { color: #8a6418; }
+html.is-mobile .m-sheet.has-parts[data-state="open"] .m-sheet-toggle {
+  height: 40px; padding: 0 14px; border: 1px solid #d3bf96; border-radius: 999px; background: #fdf9ef; color: #2a2016;
+  font-family: inherit; font-size: 14px;
+}
+html.is-mobile .m-sheet.has-parts[data-state="open"] .m-sheet-toggle.is-current { background: #8f2a22; border-color: #8f2a22; color: #ffffff; }
+html.is-mobile .m-sheet.has-parts[data-state="open"] .m-sheet-toggle.is-current .m-icon { color: #ffffff; }
+html.is-mobile .m-sheet.has-parts[data-part="places"] [data-sheet-part="assignments"],
+html.is-mobile .m-sheet.has-parts[data-part="assignments"] [data-sheet-part="places"] { display: none; }
+html.is-mobile .m-sheet.has-parts .m-sheet-content .hub-page-header { display: none; }
+
+/* Prochain événement : à droite, à côté des deniers (le centre de la carte reste dégagé). */
+html.is-mobile .m-hud-right .m-hud-event { position: static; transform: none; max-width: 30vw; height: 44px; line-height: 44px; }
+/* Deniers : contour doré. */
+html.is-mobile .m-hud-deniers { border: 2px solid #e2bd66; box-shadow: 0 0 0 1px rgba(138, 100, 24, 0.35), var(--m-shadow); }
+
+/* Compagnie : bouton d'affichage de la liste */
+html.is-mobile .m-metric { position: relative; }
+html.is-mobile .m-metric-button {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid #d3bf96; border-radius: 50%;
+  background: #fdf9ef; color: #8a6418; cursor: pointer;
+}
+html.is-mobile .m-metric-button[aria-expanded="true"] { background: #e2bd66; color: #2a2016; }
+html.is-mobile .m-metric-menu {
+  position: absolute; z-index: 50; top: 46px; left: 0; min-width: 190px; padding: 5px; border-radius: 12px;
+  background: #2b2117; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; gap: 2px;
+}
+html.is-mobile .m-metric-menu[hidden] { display: none; }
+html.is-mobile .m-metric-option {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 9px;
+  background: transparent; color: #f3ead7; font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+}
+html.is-mobile .m-metric-option .m-metric-icon { color: #e2bd66; }
+html.is-mobile .m-metric-option.is-active { background: rgba(226, 189, 102, 0.18); font-weight: 700; }
+html.is-mobile .m-metric-icon { display: inline-flex; }
+html.is-mobile .m-team-metric { flex: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 14px; }
+html.is-mobile .m-team-takedowns { color: #8f2a22; }
+html.is-mobile .m-team-potential .potential-flames { font-size: 11px; letter-spacing: -1px; }
+html.is-mobile .m-sheet.has-parts .m-sheet-content > h2[data-sheet-part] { display: none; }
+
+/* ==========================================================================
+   v0.93 — glisser pour fermer (poignée), fiche rapide (appui long), actions au pouce
+   ========================================================================== */
+html.is-mobile .m-grip { display: none; }
+html.is-mobile .m-sheet[data-state="open"] > .m-grip,
+html.is-mobile .m-board > .m-grip {
+  display: block; position: absolute; z-index: 2; top: 5px; left: 50%; width: 46px; height: 5px; margin-left: -23px;
+  border-radius: 999px; background: rgba(90, 70, 40, 0.35);
+}
+html.is-mobile .m-sheet[data-state="open"] { position: fixed; }
+html.is-mobile .m-sheet[data-state="open"] .m-sheet-head { padding-top: 12px; }
+html.is-mobile .m-board { position: relative; }
+html.is-mobile .m-board-rail { padding-top: 16px; }
+html.is-mobile .is-swipeable { will-change: transform; }
+
+/* Fiche rapide */
+html.is-mobile .m-quick-card {
+  position: fixed; z-index: 1100; width: 260px; overflow: hidden; border-radius: 14px; background: #fbf6ea; color: #2a2016;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); border: 2px solid var(--spec-color, #a88a58); animation: talent-tip-in 0.14s ease-out;
+}
+html.is-mobile .m-quick-band {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 10px;
+  background: var(--spec-color, #6b5a44); color: #ffffff; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+}
+html.is-mobile .m-quick-body { display: flex; gap: 10px; padding: 8px 10px 4px; align-items: center; }
+html.is-mobile .m-quick-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html.is-mobile .m-quick-name { font-family: var(--font-display); font-size: 15px; line-height: 1.15; overflow-wrap: anywhere; }
+html.is-mobile .m-quick-line { font-size: 13px; color: #5c4a33; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+html.is-mobile .m-quick-fatigue.is-low { color: #2f7a35; }
+html.is-mobile .m-quick-fatigue.is-mid { color: #9a5a12; }
+html.is-mobile .m-quick-fatigue.is-high { color: #a8322d; }
+html.is-mobile .m-quick-card .pfc-skills { padding: 2px 10px 6px; }
+html.is-mobile .m-quick-talents { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 10px 8px; }
+html.is-mobile .m-quick-talents:empty { display: none; }
+html.is-mobile [data-fighter-id], html.is-mobile [data-candidate] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* Actions du combat au pouce : le bouton principal reste en bas, même si la colonne défile. */
+html.is-mobile .mm-aside .mm-go { position: sticky; bottom: 0; box-shadow: 0 -8px 14px rgba(26, 18, 10, 0.6); }
+
+/* ==========================================================================
+   v0.94 — Bureau d'étude sur téléphone : combattants à gauche, résumé à droite (toujours visible),
+   le choix du talent à remplacer en tête du résumé.
+   ========================================================================== */
+html.is-mobile .study-modal { width: min(100%, 900px); }
+html.is-mobile .study-modal .study-selection {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: 10px;
+}
+html.is-mobile .study-modal .study-odds-block,
+html.is-mobile .study-modal .study-selection > p { display: none; }
+html.is-mobile .study-modal .study-candidates,
+html.is-mobile .study-modal .study-summary { max-height: calc(100dvh - 150px); overflow-y: auto; }
+html.is-mobile .study-modal .study-summary {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #fffdf7; border: 1px solid #d3bf96;
+}
+html.is-mobile .study-modal .study-summary > * { order: 3; }
+html.is-mobile .study-modal .study-summary > .study-summary-title { order: 1; }
+html.is-mobile .study-modal .study-summary > .study-slot-picker { order: 2; }
+html.is-mobile .study-slot-picker { margin: 0; padding: 8px 10px; border: 2px solid #e2bd66; border-radius: 12px; background: #fff3d6; display: flex; flex-direction: column; gap: 6px; }
+html.is-mobile .study-slot-picker legend { padding: 0 4px; font-weight: 700; color: #8a6418; }
+html.is-mobile .study-slot-picker.is-pending { animation: m-study-pulse 1.4s ease-in-out infinite; }
+html.is-mobile .study-slot { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border-radius: 10px; background: #fffdf7; border: 1px solid #e7dcc2; cursor: pointer; }
+html.is-mobile .study-slot.is-selected { border-color: #8f2a22; box-shadow: inset 0 0 0 1px #8f2a22; }
+html.is-mobile .study-slot input { width: 20px; height: 20px; margin: 0; accent-color: #8f2a22; }
+@keyframes m-study-pulse { 50% { box-shadow: 0 0 0 4px rgba(226, 189, 102, 0.55); } }
+html.is-mobile .study-modal .study-summary { overflow-x: hidden; min-width: 0; }
+html.is-mobile .study-modal .study-summary .odds-list { flex-wrap: wrap; }
+
+/* ==========================================================================
+   v0.95 — Affectations par lieu (colonnes) avec la fiche du combattant choisi
+   ========================================================================== */
+html.is-mobile .m-assign { display: flex; flex-direction: column; gap: 8px; }
+html.is-mobile .m-assign-strip {
+  position: sticky; top: -8px; z-index: 3; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 10px; margin-top: -2px;
+  border: 2px solid #e2bd66; border-radius: 12px; background: #fff3d6; box-shadow: 0 4px 10px rgba(60, 40, 10, 0.15);
+}
+html.is-mobile .m-assign-strip.is-empty { justify-content: center; border-style: dashed; background: #fffdf7; color: #5c4a33; font-size: 14px; box-shadow: none; }
+html.is-mobile .m-assign-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+html.is-mobile .m-assign-who strong { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-assign-who span { font-size: 13px; color: #5c4a33; }
+html.is-mobile .m-assign-stats { display: flex; gap: 10px; margin-left: auto; }
+html.is-mobile .m-assign-stat, html.is-mobile .m-assign-fatigue { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+html.is-mobile .m-assign-stat small, html.is-mobile .m-assign-fatigue small { font-size: 11px; color: #5c4a33; letter-spacing: 0.04em; }
+html.is-mobile .m-assign-stat b, html.is-mobile .m-assign-fatigue b { font-size: 16px; font-variant-numeric: tabular-nums; }
+html.is-mobile .m-assign-stat.is-key small, html.is-mobile .m-assign-stat.is-key b { color: #9a6a10; }
+html.is-mobile .m-assign-stat.is-maxed b { color: #a8322d; }
+html.is-mobile .m-assign-fatigue { flex-direction: row; gap: 4px; align-items: baseline; padding-left: 10px; border-left: 1px solid #e2bd66; font-size: 12px; }
+html.is-mobile .m-assign-fatigue.is-low b { color: #2f7a35; }
+html.is-mobile .m-assign-fatigue.is-mid b { color: #9a5a12; }
+html.is-mobile .m-assign-fatigue.is-high b { color: #a8322d; }
+html.is-mobile .m-assign-cancel { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #f1e8d4; color: #2a2016; cursor: pointer; }
+html.is-mobile .m-assign-closed { margin: 0; padding: 6px 10px; border-radius: 10px; background: #a8322d; color: #ffffff; font-weight: 600; text-align: center; }
+
+html.is-mobile .m-assign-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(118px, 1fr); gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+html.is-mobile .m-assign-col {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 6px; border: 2px solid #e7dcc2; border-radius: 12px; background: #fffdf7;
+}
+html.is-mobile .m-assign-col.is-target { border-style: dashed; border-color: #e2bd66; background: #fff3d6; cursor: pointer; }
+html.is-mobile .m-assign-col.is-dimmed { opacity: 0.5; }
+html.is-mobile .m-assign-col.is-closed { background: #efe9dc; }
+html.is-mobile .m-assign-head { display: flex; align-items: center; gap: 4px; min-width: 0; }
+html.is-mobile .m-assign-head strong { min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-assign-icon { font-size: 16px; }
+html.is-mobile .m-assign-meta { margin: 0; display: flex; justify-content: space-between; gap: 4px; font-size: 12px; color: #5c4a33; }
+html.is-mobile .m-assign-meta b { font-variant-numeric: tabular-nums; color: #2a2016; }
+html.is-mobile .m-assign-note { margin: 0; font-size: 11px; font-weight: 700; color: #8f2a22; }
+html.is-mobile .m-assign-note.is-useless { color: #a8322d; }
+html.is-mobile .m-assign-chips { display: flex; flex-direction: column; gap: 4px; }
+html.is-mobile .m-assign-chip {
+  display: flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 6px 0 4px; border: 1px solid #e7dcc2; border-left: 4px solid var(--spec-color, #a88a58);
+  border-radius: 8px; background: #fffdf7; color: #2a2016; font: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer;
+}
+html.is-mobile .m-assign-chip.is-selected { background: #8f2a22; border-color: #8f2a22; color: #ffffff; }
+html.is-mobile .m-assign-chip.is-studying { opacity: 0.7; }
+html.is-mobile .m-assign-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .m-assign-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #3e7d3a; }
+html.is-mobile .m-assign-dot.is-mid { background: #c98a1b; }
+html.is-mobile .m-assign-dot.is-high { background: #a8322d; }
+/* Affectations : le tableau des lieux d'abord, les configurations ensuite. */
+html.is-mobile .m-sheet.has-parts[data-state="open"] .m-sheet-content { display: flex; flex-direction: column; }
+html.is-mobile .m-sheet.has-parts .m-sheet-content > .assignment-presets { order: 2; margin-top: 10px; }
+/* Affectations : le volet monte presque en haut (fiche + colonnes visibles ensemble). */
+html.is-mobile .m-sheet.has-parts[data-state="open"][data-part="assignments"] { height: calc(100dvh - 58px - var(--sb)); }
+html.is-mobile .m-sheet.has-parts .m-sheet-content > * { flex-shrink: 0; }
+html.is-mobile .m-sheet-content .centre-roster:has(.m-assign) { overflow: visible; }
+html.is-mobile .m-assign-board { grid-template-columns: minmax(150px, 1.35fr); }
+
+/* Classement (v0.95) : votre compagnie épinglée à gauche, lignes compactes à droite. */
+html.is-mobile .is-mobile-hub .hub-page.m-league {
+  display: grid; grid-template-columns: 220px minmax(0, 1fr); padding: 0; overflow: hidden;
+  height: calc(100dvh - 62px - 78px - var(--sb)); border-radius: 16px;
+}
+html.is-mobile .m-league-aside { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: #f1e8d4; overflow-y: auto; }
+html.is-mobile .m-league-aside h1 { margin: 0; font-size: 1.1rem; color: #8f2a22; }
+html.is-mobile .m-league-season { margin: 0; font-size: 0.82rem; color: #5c4a33; }
+html.is-mobile .m-league-tabs { display: flex; gap: 4px; }
+html.is-mobile .m-league-tab {
+  flex: 1; min-height: 40px; padding: 0 4px; border: 1px solid #d3bf96; border-radius: 10px; background: #fdf9ef; color: #2a2016;
+  font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+html.is-mobile .m-league-tab.is-own { border-color: #27508d; }
+html.is-mobile .m-league-tab.is-active { background: #e2bd66; border-color: #b07d1a; font-weight: 700; }
+html.is-mobile .m-league-me { padding: 8px 10px; border: 2px solid #e2bd66; border-radius: 12px; background: #fffdf7; }
+html.is-mobile .m-league-me p { margin: 0; }
+html.is-mobile .m-league-me-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #8a6418; }
+html.is-mobile .m-league-me-pos strong { font-family: var(--font-display); font-size: 1.5rem; }
+html.is-mobile .m-league-me .is-up { color: #2f7a35; font-size: 0.85rem; }
+html.is-mobile .m-league-me .is-down { color: #a8322d; font-size: 0.85rem; }
+html.is-mobile .m-league-me .is-safe { color: #5c4a33; font-size: 0.85rem; }
+html.is-mobile .m-league-focus { min-height: 40px; margin: 0; }
+html.is-mobile .m-league-note { margin: 0; font-size: 0.85rem; color: #5c4a33; }
+html.is-mobile .m-league-list { display: flex; flex-direction: column; min-width: 0; overflow-y: auto; background: #fbf6ea; }
+html.is-mobile .m-league-row {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px 34px 34px 46px; gap: 4px; align-items: center; min-height: 40px; padding: 0 12px;
+  border: 0; border-bottom: 1px solid #efe5cf; background: transparent; color: #2a2016; font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+}
+html.is-mobile .m-league-row.is-head { position: sticky; top: 0; z-index: 1; min-height: 30px; background: #fbf6ea; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5c4a33; cursor: default; }
+html.is-mobile .m-league-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+html.is-mobile .m-league-row.zone-up { box-shadow: inset 4px 0 0 #2f7a35; }
+html.is-mobile .m-league-row.zone-down { box-shadow: inset 4px 0 0 #a8322d; }
+html.is-mobile .m-league-row.is-player { background: #fff3d6; font-weight: 700; }
+html.is-mobile .m-league-club { display: flex; align-items: center; gap: 6px; min-width: 0; }
+html.is-mobile .m-league-club > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .is-mobile-hub .hub-content:has(.m-league) { padding-bottom: 0; overflow: hidden; }
+/* Les dernières lignes remontent au-dessus du bouton rond. */
+html.is-mobile .m-league-list { padding-bottom: 96px; }
+html.is-mobile .m-league-focus { white-space: nowrap; font-size: 0.85rem; }
+/* v0.96 : six lieux (Les Expéditions) — colonne un peu plus serrée, au-dessus des boutons du volet. */
+html.is-mobile .m-places { top: 60px; gap: 4px; }
+html.is-mobile .m-place { height: 36px; font-size: 13.5px; }
+/* v0.98 — Expéditions : sur téléphone, les trois cartes plus petites ; la fenêtre défile. */
+html.is-mobile .xp-modal { width: min(100%, 880px); }
+html.is-mobile .xp-cards { gap: 0.6rem; }
+html.is-mobile .xp-frame { aspect-ratio: auto; height: 168px; }
+html.is-mobile .xp-head .artisan-portrait { display: none; }
+html.is-mobile .xp-line { display: none; }
+html.is-mobile .xp-title strong { font-size: 0.92rem; }
+
+/* v1.2 — Expédition singulière sur téléphone (maquette A) : la lice du Sentier en plein écran ; par-dessus,
+   la barre (retour, lieu, frise, abandon), l'adversaire en haut à droite, les trois combattants en bas à
+   gauche, « Combattre » en bas à droite ; propositions et victoire dans un volet qui monte du bas. */
+html.is-mobile .screen-singular {
+  position: fixed; inset: 0; max-width: none; height: 100dvh; padding: 0; display: block; overflow: hidden;
+  background: #9fbfd2;
+}
+html.is-mobile .sx-body { position: absolute; inset: 0; display: block; }
+html.is-mobile .sx-stage { position: absolute; inset: 0; display: block; }
+html.is-mobile .sx-canvas-wrap { position: absolute; inset: 0; border: 0; border-radius: 0; }
+html.is-mobile .sx-canvas { width: 100%; height: 100%; min-height: 0; }
+
+/* Barre du haut : retour · lieu · frise · abandon. */
+html.is-mobile .sx-header {
+  position: absolute; z-index: 6; top: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 0 calc(10px + var(--sr, 0px)) 0 calc(10px + var(--sl, 0px));
+  background: linear-gradient(rgba(246, 236, 212, 0.96), rgba(234, 217, 179, 0.94)); border-bottom: 2px solid #c9a24a;
+}
+html.is-mobile .sx-header > div:first-child { min-width: 0; }
+html.is-mobile .sx-title { font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 30vw; }
+html.is-mobile .sx-subtitle { display: none; }
+html.is-mobile .sx-header-actions { gap: 6px; }
+html.is-mobile .sx-header-actions .btn { min-height: 32px; padding: 2px 10px; font-size: 0.78rem; }
+html.is-mobile .sx-back { order: -1; }
+html.is-mobile .sx-timeline {
+  position: absolute; z-index: 7; top: 6px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; grid-template-columns: none;
+}
+html.is-mobile .sx-node {
+  width: 26px; height: 26px; padding: 0; border-radius: 50%; border-width: 2px; justify-content: center; background: #f6ecd4;
+}
+html.is-mobile .sx-node-class, html.is-mobile .sx-node-stars, html.is-mobile .sx-node-talent, html.is-mobile .sx-node-ko { display: none; }
+html.is-mobile .sx-node-number { font-size: 0.72rem; }
+html.is-mobile .sx-node.is-done { background: #3f7d3a; border-color: #3f7d3a; opacity: 1; }
+html.is-mobile .sx-node.is-done .sx-node-number { color: #fff; font-size: 0; }
+html.is-mobile .sx-node.is-done .sx-node-number::after { content: "✓"; font-size: 0.8rem; color: #fff; }
+html.is-mobile .sx-node.is-current { background: #7a1f2b; border-color: #7a1f2b; box-shadow: 0 0 0 3px rgba(122, 31, 43, 0.3); }
+html.is-mobile .sx-node.is-current .sx-node-number { color: #fff; }
+html.is-mobile .sx-node.is-boss { border-color: #c9a24a; border-width: 3px; border-style: solid; }
+
+/* Message du moment (statut, dernier combat) : une pastille sous la barre. */
+html.is-mobile .sx-status {
+  position: absolute; z-index: 5; top: 52px; left: 50%; transform: translateX(-50%); max-width: 56vw; margin: 0; padding: 3px 12px; border-radius: 999px;
+  background: rgba(27, 22, 18, 0.62); color: #fbf3df; font-size: 0.78rem; font-weight: 600; text-align: center; min-height: 0; pointer-events: none;
+}
+html.is-mobile .sx-status:empty { display: none; }
+html.is-mobile .sx-side { position: absolute; inset: 0; display: block; overflow: visible; height: auto; pointer-events: none; z-index: 4; }
+html.is-mobile .sx-side > * { pointer-events: auto; }
+html.is-mobile .sx-last {
+  position: absolute; top: 80px; left: 50%; transform: translateX(-50%); max-width: 52vw; padding: 4px 12px; font-size: 0.78rem; border-radius: 999px; text-align: center;
+  box-shadow: 0 2px 8px rgba(40, 25, 10, 0.25);
+}
+
+/* L'adversaire, en haut à droite (un appui : sa fiche complète). */
+html.is-mobile .sx-opponent {
+  position: absolute; top: 52px; right: calc(10px + var(--sr, 0px)); width: min(250px, 30vw); padding: 6px 9px; cursor: pointer;
+  background: rgba(250, 243, 226, 0.96); box-shadow: 0 3px 10px rgba(40, 25, 10, 0.25);
+}
+html.is-mobile .sx-opponent .sx-section-title { font-size: 0.72rem; letter-spacing: 0.06em; margin: 0 0 2px; color: #6e5538; text-transform: uppercase; }
+html.is-mobile .sx-opponent .sx-fighter-row { gap: 6px; }
+html.is-mobile .sx-opponent .sx-fighter-row > :first-child { width: 34px !important; height: 34px !important; }
+html.is-mobile .sx-opponent .sx-fighter-who strong { font-size: 0.9rem; }
+html.is-mobile .sx-opponent .sx-tags { font-size: 0.72rem; gap: 3px; }
+html.is-mobile .sx-opponent .sx-fatigue-bar { width: 44px; }
+
+/* Les trois combattants, en bas à gauche ; « Combattre », en bas à droite. */
+html.is-mobile .sx-squad { position: static; padding: 0; border: 0; background: none; }
+html.is-mobile .sx-squad .sx-section-title { display: none; }
+html.is-mobile .sx-squad-list {
+  position: absolute; left: calc(10px + var(--sl, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: calc(min(240px, 28vw) + 22px + var(--sr, 0px));
+  margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+}
+html.is-mobile .sx-member {
+  min-height: 58px; padding: 4px 6px; gap: 5px; background: rgba(250, 243, 226, 0.96); box-shadow: 0 3px 10px rgba(40, 25, 10, 0.25);
+  flex-wrap: wrap; align-content: center;
+}
+html.is-mobile .sx-member > :first-child { width: 30px !important; height: 30px !important; }
+html.is-mobile .sx-member .sx-fighter-who { flex: 1; min-width: 0; }
+html.is-mobile .sx-member .sx-fighter-who strong { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.is-mobile .sx-member .sx-tags { font-size: 0.66rem; gap: 2px; }
+html.is-mobile .sx-member .sx-tags .class-tag, html.is-mobile .sx-member .sx-tags .specialty-tag { display: none; }
+html.is-mobile .sx-member .sx-fatigue { flex-basis: 100%; flex-direction: row; align-items: center; gap: 4px; }
+html.is-mobile .sx-member .sx-fatigue-bar { flex: 1; width: auto; }
+html.is-mobile .sx-member .sx-boon-icon { font-size: 0.8rem; }
+html.is-mobile .sx-fight, html.is-mobile .sx-controls {
+  position: absolute; right: calc(10px + var(--sr, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(240px, 28vw); z-index: 5;
+}
+html.is-mobile .sx-fight { min-height: 58px; font-size: 1rem; line-height: 1.15; white-space: normal; box-shadow: 0 4px 12px rgba(90, 18, 11, 0.35); }
+html.is-mobile .sx-controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+html.is-mobile .sx-controls:empty { display: none; }
+html.is-mobile .sx-controls .btn { min-height: 40px; background: rgba(250, 243, 226, 0.96); }
+html.is-mobile .sx-controls .sx-next, html.is-mobile .sx-controls .sx-skip { flex-basis: 100%; min-height: 48px; }
+html.is-mobile .sx-controls .sx-next { background: linear-gradient(#2f6b4f, #1f4a36); color: #fff; }
+
+/* Entre deux combats, et à la victoire : un volet qui monte du bas, la lice assombrie derrière. */
+html.is-mobile .sx-choice, html.is-mobile .sx-victory {
+  position: absolute; left: calc(3% + var(--sl, 0px)); right: calc(3% + var(--sr, 0px)); bottom: 0; max-height: calc(100dvh - 54px); overflow-y: auto;
+  padding: 8px 14px calc(12px + env(safe-area-inset-bottom, 0px)); border-radius: 18px 18px 0 0; border: 0; border-top: 3px solid #c9a24a;
+  background: #f3e7cc; box-shadow: 0 -6px 18px rgba(27, 22, 18, 0.35); z-index: 6;
+  animation: sx-sheet-up 0.22s ease-out;
+}
+html.is-mobile .sx-choice::before, html.is-mobile .sx-victory::before {
+  content: ""; display: block; width: 64px; height: 5px; margin: 0 auto 6px; border-radius: 3px; background: #c9a24a;
+}
+html.is-mobile .sx-side:has(.sx-choice, .sx-victory)::before {
+  content: ""; position: absolute; inset: 0; background: rgba(27, 22, 18, 0.45); pointer-events: auto; z-index: 5;
+}
+html.is-mobile .sx-choice .sx-section-title, html.is-mobile .sx-victory .sx-section-title { font-size: 1rem; }
+html.is-mobile .sx-options { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html.is-mobile .sx-option-main { flex-direction: column; text-align: center; justify-content: center; padding: 8px 6px; }
+html.is-mobile .sx-option-icon { font-size: 1.7rem; }
+html.is-mobile .sx-option-desc { flex-basis: auto; font-size: 0.78rem; }
+html.is-mobile .sx-targets .btn { min-height: 36px; }
+html.is-mobile .sx-claims { gap: 6px; }
+html.is-mobile .sx-claim-who .btn, html.is-mobile .sx-slots .btn { min-height: 36px; }
+html.is-mobile .sx-claim-button { width: 100%; min-height: 48px; }
+@keyframes sx-sheet-up { from { transform: translateY(40%); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { html.is-mobile .sx-choice, html.is-mobile .sx-victory { animation: none; } }
+html.is-mobile .sx-outcome { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); margin: 0; width: min(560px, 90vw); }
+
+html.is-mobile .screen-singular:has(.sx-choice, .sx-victory) .sx-status, html.is-mobile .screen-singular:has(.sx-choice, .sx-victory) .sx-last { display: none; }

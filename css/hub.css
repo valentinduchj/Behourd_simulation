@@ -338,6 +338,9 @@
 .queen-option-reward { display: flex; flex-direction: column; align-items: center; margin: 0.3rem 0; }
 .queen-option-reward span { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 .queen-option-reward strong { font-size: 1.25rem; color: #a85a12; }
+/* Ferveurs de la Reine (v0.97) : petits billets roses promis en cas de victoire. */
+.queen-option-reward .queen-option-ferveurs { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; font-size: 1rem; color: #b0405e; }
+.queen-ferveur-icon { display: inline-block; vertical-align: -3px; }
 .queen-option .btn-queen { width: 100%; margin-top: auto; }
 .match-team-rank { font-family: var(--font-body, inherit); font-size: 0.9rem; color: var(--text-muted); }
 .match-final.is-queen .queen-reward { color: #a85a12; }
@@ -1491,3 +1494,168 @@ button.placement-card:not(:disabled):hover { border-color: #c99a2e; }
 .soreness-block .fatigue-gain { color: #b25f08; }
 .soreness-block tr.is-exhausted td { background: rgba(150, 37, 25, 0.08); }
 .soreness-refuge { margin: 0.5rem 0 0; font-weight: 600; color: #7d1d12; }
+
+/* ==========================================================================
+   v0.98 — Expéditions du Baron : cartes illustrées (cadre doré, scène peinte, nature,
+   coût en Ferveurs, lieu), pérégrinations en cours, choix du combattant.
+   ========================================================================== */
+.xp-modal { width: min(60rem, 100%); }
+.xp-board { display: grid; gap: 0.8rem; }
+.xp-head { display: flex; align-items: center; gap: 0.8rem; }
+.xp-quote { margin: 0; font-style: italic; }
+.xp-purse { margin: 0.2rem 0 0; display: flex; align-items: center; gap: 0.25rem; color: var(--text-muted); font-size: 0.92rem; }
+.xp-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.xp-card { display: flex; flex-direction: column; align-items: stretch; gap: 0.35rem; min-width: 0; }
+.xp-frame {
+  position: relative; display: block; width: 100%; aspect-ratio: 200 / 260; padding: 0; overflow: hidden; cursor: pointer;
+  border: 3px solid #c9a24a; border-radius: 14px; background: #1c1610;
+  box-shadow: 0 0 0 1px #6b4e1c, inset 0 0 0 3px #1c1610, inset 0 0 0 4px #e7c773, 0 10px 22px rgba(30, 18, 6, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.xp-frame::before, .xp-frame::after {
+  content: ''; position: absolute; z-index: 2; width: 26px; height: 26px; border: 3px solid #e7c773; pointer-events: none;
+}
+.xp-frame::before { top: 6px; left: 6px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+.xp-frame::after { right: 6px; bottom: 6px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+.xp-card.is-open .xp-frame:hover { transform: translateY(-4px); box-shadow: 0 0 0 1px #6b4e1c, inset 0 0 0 3px #1c1610, inset 0 0 0 4px #f4d98a, 0 16px 28px rgba(30, 18, 6, 0.45); }
+.xp-frame:disabled { cursor: default; }
+.xp-art { position: absolute; inset: 0; }
+.xp-art-svg { display: block; width: 100%; height: 100%; }
+.xp-badge {
+  position: absolute; z-index: 3; top: 10px; left: 50%; transform: translateX(-50%); padding: 3px 10px; border-radius: 999px;
+  background: var(--xp-kind); color: #fffaf0; border: 1px solid #e7c773; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+}
+.xp-cost {
+  position: absolute; z-index: 3; top: 36px; right: 12px; display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px 2px 4px;
+  border-radius: 999px; background: rgba(251, 217, 226, 0.95); color: #7a1f3a; border: 1px solid #c46a86; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.xp-title {
+  position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 22px 10px 12px; background: linear-gradient(transparent, rgba(20, 14, 8, 0.85) 45%); color: #fbf3df; text-align: center;
+}
+.xp-title strong { font-family: var(--font-display); font-size: 1.02rem; line-height: 1.15; }
+.xp-title small { font-size: 0.78rem; opacity: 0.85; }
+.xp-stamp {
+  position: absolute; z-index: 4; top: 44%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: 4px 14px;
+  border: 3px solid #e7c773; border-radius: 6px; color: #fbf3df; background: rgba(122, 31, 43, 0.85); font-family: var(--font-display); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.xp-card.is-locked .xp-frame, .xp-card.is-soon .xp-frame { filter: grayscale(0.85) brightness(0.8); }
+.xp-card.is-poor .xp-frame { filter: saturate(0.6); }
+.xp-line { margin: 0; font-size: 0.85rem; font-style: italic; color: var(--text-muted); text-align: center; }
+.xp-gain { margin: 0; display: flex; justify-content: center; gap: 0.8rem; font-weight: 700; }
+.xp-gain-main { color: #a8322d; }
+.xp-gain-days { color: #2f6b4f; }
+.xp-gain.is-soon { font-weight: 400; font-style: italic; color: var(--text-muted); }
+/* v0.99 : récompense connue sur la carte (deniers, talent, recrue) ; talents du combattant. */
+.xp-gain { align-items: center; flex-wrap: wrap; }
+.xp-gain-main.is-deniers { color: #8a6114; }
+.xp-gain-main.is-recruit { color: #6b3f12; }
+.xp-gain-main.is-recruit small { font-weight: 600; color: var(--text-muted); }
+.xp-gain-main.is-talent { display: inline-flex; }
+.xp-fighter-talents { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 2px; }
+.xp-slot-host:not(:empty) { margin-top: 0.6rem; }
+.xp-picker-modal:has(.xp-slot-picker) .xp-fighters { max-height: 32vh; }
+.recruit-cost.is-gift { color: #2f6b4f; }
+.xp-cost.is-discounted { background: rgba(214, 240, 218, 0.95); color: #1f5f2c; border-color: #4f9a5c; }
+.xp-fighter-pot small.xp-fighter-days { color: #2f6b4f; }
+.xp-note { margin: 0; text-align: center; font-size: 0.8rem; color: #8f2a22; }
+.xp-journeys { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; }
+.xp-fighters { list-style: none; margin: 0.4rem 0 0; padding: 0; display: grid; gap: 0.3rem; max-height: 55vh; overflow-y: auto; }
+.xp-fighter {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 48px; padding: 0.3rem 0.6rem; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface-raised); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.xp-fighter[aria-pressed="true"] { border-color: #a8322d; box-shadow: inset 0 0 0 2px #a8322d; }
+.xp-fighter:disabled { opacity: 0.55; cursor: default; }
+.xp-fighter-who { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.xp-fighter-who span { font-size: 0.85rem; color: var(--text-muted); }
+.xp-fighter-pot { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.xp-fighter-pot small { font-size: 0.75rem; color: #8f2a22; }
+
+/* Téléphone : les trois cartes côte à côte, plus petites ; la fenêtre défile. */
+
+/* ==========================================================================
+   v1.1 — Expéditions singulières : frise des dix combats, lice du Sentier, choix du combattant,
+   propositions entre deux combats, victoire ; cartes du Baron (10 combats, adversaires).
+   ========================================================================== */
+.screen-singular { max-width: 1320px; display: grid; gap: 0.6rem; }
+.sx-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.sx-title { margin: 0; font-family: var(--font-display); color: #7a1f2b; font-size: 1.6rem; }
+.sx-subtitle { margin: 0.1rem 0 0; color: var(--text-muted); }
+.sx-header-actions { display: flex; gap: 0.5rem; }
+.sx-timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 0.35rem; }
+.sx-node {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0.3rem 0.2rem;
+  border: 2px solid var(--border); border-radius: 10px; background: var(--surface-raised); font-variant-numeric: tabular-nums; min-width: 0;
+}
+.sx-node-number { font-weight: 800; font-family: var(--font-display); }
+.sx-node-stars { font-size: 0.78rem; color: #8a6114; white-space: nowrap; }
+.sx-node-ko { position: absolute; top: 2px; right: 4px; font-size: 0.7rem; color: #a8322d; }
+.sx-node-talent { position: absolute; top: 2px; left: 5px; font-size: 0.75rem; color: #2f8a3e; }
+.sx-node.is-done { background: #e3efd9; border-color: #4f8a3c; opacity: 0.85; }
+.sx-node.is-done .sx-node-number::after { content: " ✓"; color: #2f6b2c; }
+.sx-node.is-current { border-color: #7a1f2b; box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.25); background: #fff4e3; }
+.sx-node.is-boss { border-style: double; border-width: 4px; }
+.sx-body { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 0.8rem; align-items: start; }
+.sx-stage { display: grid; gap: 0.4rem; }
+.sx-canvas-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: linear-gradient(180deg, #9fbfd2 0%, #cfe0e6 100%); }
+.sx-canvas { display: block; width: 100%; height: min(60vh, 540px); cursor: default; }
+.sx-status { margin: 0; font-weight: 600; min-height: 1.4em; }
+.sx-controls { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.sx-side { display: grid; gap: 0.7rem; align-content: start; }
+.sx-section-title { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: 1.1rem; color: #5a2a14; }
+.sx-opponent, .sx-squad, .sx-choice, .sx-victory, .sx-outcome { padding: 0.7rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-raised); }
+.sx-outcome { max-width: 640px; margin: 2rem auto; display: grid; gap: 0.6rem; justify-items: start; }
+.sx-opponent.is-boss { border: 2px solid #b8862b; background: #fff6df; }
+.sx-fighter-row { display: flex; align-items: center; gap: 0.6rem; }
+.sx-fighter-who { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sx-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.85rem; }
+.sx-fatigue { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.sx-fatigue-bar { display: block; width: 64px; height: 7px; border-radius: 4px; background: #e6dcc6; overflow: hidden; }
+.sx-fatigue-bar > span { display: block; height: 100%; background: #6fa8d6; }
+.sx-fatigue.is-warm .sx-fatigue-bar > span { background: #d9b24a; }
+.sx-fatigue.is-tired .sx-fatigue-bar > span { background: #e0a23a; }
+.sx-fatigue.is-spent .sx-fatigue-bar > span { background: #c0392b; }
+.sx-squad-list { list-style: none; margin: 0 0 0.6rem; padding: 0; display: grid; gap: 0.35rem; }
+.sx-member {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 54px; padding: 0.35rem 0.6rem; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.sx-member[aria-pressed="true"] { border-color: #a8322d; box-shadow: inset 0 0 0 2px #a8322d; }
+.sx-member:disabled { opacity: 0.55; cursor: default; }
+.sx-member.is-ko { filter: grayscale(0.9); }
+.sx-ko { color: #a8322d; font-weight: 800; }
+.sx-boons { display: flex; flex-wrap: wrap; gap: 2px; }
+.sx-boon-icon { font-size: 0.95rem; }
+.sx-fight { width: 100%; }
+.sx-last { margin: 0; padding: 0.5rem 0.7rem; border-radius: 10px; font-weight: 600; }
+.sx-last.is-won { background: #e3efd9; color: #2b5a22; }
+.sx-last.is-lost { background: #f6dede; color: #7a1f1f; }
+.sx-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.sx-option { display: flex; flex-direction: column; gap: 0.3rem; border-radius: 12px; border: 2px solid #c9a24a; background: #fffaf0; overflow: hidden; }
+.sx-option.is-reward { border-color: #2f6b4f; background: #f1f8f1; }
+.sx-option.is-rare { box-shadow: 0 0 0 2px #e7c773, 0 6px 14px rgba(120, 80, 10, 0.25); }
+.sx-option.is-open { outline: 3px solid #7a1f2b; }
+.sx-option-main { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.6rem 0.4rem; border: 0; background: none; color: inherit; font: inherit; text-align: center; cursor: pointer; }
+.sx-option-main:hover { background: rgba(201, 162, 74, 0.12); }
+.sx-option-kind { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.sx-option-icon { font-size: 1.8rem; }
+.sx-option-desc { font-size: 0.85rem; color: var(--text-muted); }
+.sx-targets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; padding: 0 0.5rem 0.5rem; }
+.sx-kept { margin: 0.5rem 0 0; }
+.sx-claims { list-style: none; margin: 0.4rem 0 0.6rem; padding: 0; display: grid; gap: 0.5rem; }
+.sx-claim { padding: 0.45rem 0.55rem; border: 1px dashed var(--border); border-radius: 10px; display: grid; gap: 0.3rem; }
+.sx-claim-who, .sx-slots { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.sx-claim .btn[aria-pressed="true"], .sx-slots .btn[aria-pressed="true"] { background: #7a1f2b; color: #fff; border-color: #5a1620; }
+.sx-summary { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; }
+.xp-gain-days.is-fights { color: #7a1f2b; }
+.xp-opponents-button { align-self: center; }
+.xp-run-banner { margin: 0; padding: 0.5rem 0.7rem; border-radius: 10px; background: #fff1e0; border: 1px solid #c98a3a; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.xp-fighter-pot small.xp-fighter-fat { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.xp-opponents { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.xp-opponent { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--border); border-radius: 10px; }
+.xp-opponent.is-boss { border: 2px solid #b8862b; background: #fff6df; }
+.xp-opponent-number { width: 1.6rem; text-align: center; font-weight: 800; font-family: var(--font-display); }
+.xp-opponent-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.85rem; }
+.xp-opponent-talents { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: flex-end; }
+.calendar-bar .btn-singular { background: linear-gradient(#8e2a3a, #6a1a26); border-color: #4a0f18; }

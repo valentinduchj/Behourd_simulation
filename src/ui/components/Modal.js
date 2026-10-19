@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { isMobileLayout, focusField } from '../mobile/mobileLayout.js';
 
 const openModals = [];
 
@@ -21,6 +22,7 @@ export function openModal({ title, body, actions = [], dismissible = true, onClo
 
   const handle = {
     element: dialog,
+    dismissible,
     close(result) {
       if (closed) return;
       closed = true;
@@ -60,13 +62,32 @@ export function openModal({ title, body, actions = [], dismissible = true, onClo
 
   document.getElementById('modal-root').append(backdrop);
   openModals.push(handle);
-  const focusTarget = dialog.querySelector('input, select, .btn-primary, button');
-  focusTarget?.focus();
+  // Téléphone (v0.88) : jamais un champ de saisie d'office (le clavier s'ouvrirait), un bouton.
+  const mobile = isMobileLayout();
+  const focusTarget = dialog.querySelector(mobile ? '.btn-primary, button' : 'input, select, .btn-primary, button');
+  if (mobile) {
+    // Téléphone (v0.94) : la fenêtre s'ouvre en haut (carnet de fin de saison…), même si son
+    // bouton principal est tout en bas.
+    focusTarget?.focus({ preventScroll: true });
+    dialog.scrollTop = 0;
+  } else focusTarget?.focus();
   return handle;
 }
 
 export function closeAllModals() {
   for (const handle of [...openModals]) handle.close(undefined);
+}
+
+/**
+ * Bouton retour d'Android (v0.82) : la fenêtre du dessus, comme Échap. Renvoie 'closed', 'blocked'
+ * (fenêtre qui exige un choix) ou null (aucune fenêtre ouverte).
+ */
+export function dismissTopModal() {
+  const top = openModals.at(-1);
+  if (!top) return null;
+  if (!top.dismissible) return 'blocked';
+  top.close(undefined);
+  return 'closed';
 }
 
 export function alertModal(title, message) {
@@ -148,6 +169,6 @@ export function promptModal({
       ],
       onClose: (value) => resolve(value ?? null),
     });
-    input.focus();
+    focusField(input);
   });
 }

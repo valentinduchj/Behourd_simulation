@@ -164,7 +164,9 @@ export class IsoRenderer extends IsoView {
     // Météo de la saison (flocons, feuilles, pétales, poussière) sur tout le décor.
     if (this.season && this.scenery) {
       const area = { x: 0, y: 0, w: this.scenery.width, h: this.scenery.height };
-      drawParticles(this, seasonWeatherParticles(this.season, time, area, getVfxLevel().count), 'over', (x, y) => this.toScreen(x, y));
+      // Décor à météo propre (Le Sentier : pluie d'automne, neige d'hiver, sinon rien).
+      const weather = this.decoration.weather ? this.decoration.weather[this.season] ?? null : undefined;
+      drawParticles(this, seasonWeatherParticles(this.season, time, area, getVfxLevel().count, weather), 'over', (x, y) => this.toScreen(x, y));
     }
     if (shaking) this.ctx.restore();
   }
@@ -507,7 +509,7 @@ export class IsoRenderer extends IsoView {
       }
       placed.push(box);
       ctx.globalAlpha = Math.max(0, 1 - effect.age);
-      const color = effect.kind === 'ko' ? '#f0c419' : effect.kind === 'advantage' ? '#ff6b3d' : '#ffffff';
+      const color = effect.kind === 'ko' ? '#f0c419' : effect.kind === 'advantage' ? '#ff6b3d' : effect.kind === 'dodge' ? '#b8f5c4' : effect.kind === 'heal' ? '#5fe07a' : '#ffffff';
       drawLabel(ctx, effect.text, box.x, box.y, size, { color });
       ctx.globalAlpha = 1;
     }

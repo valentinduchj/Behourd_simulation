@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { getSingularRun } from '../../systems/expeditions/SingularRunService.js';
 import { CALENDAR_CONFIG, QUEEN_COMBAT, getEventType } from '../../data/calendar.js';
 import { getEventTitle } from '../../systems/calendar/scheduler.js';
 import { isOffSeason } from '../../systems/league/SeasonService.js';
@@ -180,7 +181,10 @@ export function CalendarBar(session, { onAdvance, onFight, onGoToCup }) {
       SeasonBadge(today),
     ),
     main,
-    combatToday
+    // Expédition singulière en cours (v1.1) : le temps est arrêté, le bouton y ramène.
+    getSingularRun(session)
+      ? h('button', { type: 'button', class: 'btn btn-fight btn-singular', onclick: onAdvance, title: 'Les jours ne passent pas pendant une expédition singulière.' }, '⚜ EXPÉDITION EN COURS')
+      : combatToday
       ? h('button', { type: 'button', class: `btn btn-fight ${championshipToday ? '' : 'btn-queen'}`.trim(), onclick: onFight },
         championshipToday ? '⚔ COMBATTRE' : '♛ COMBAT DE LA REINE')
       : h('button', { type: 'button', class: 'btn btn-primary btn-advance', onclick: onAdvance }, 'Passer la journée ▸'),

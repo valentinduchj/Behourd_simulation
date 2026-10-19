@@ -54,8 +54,14 @@ export const TRAINING_SPRITES = Object.freeze([
   Object.freeze({ id: 'training_marshal_signal', name: 'Marshal (signal)', heightScale: 1.08, files: Object.freeze({ front: 'assets/sprites/training/marshal_signal.svg', back: 'assets/sprites/training/marshal_signal.svg' }) }),
 ]);
 
+/** Les Expéditions (v0.96) : le Baron, plus grand que les civils pour qu'on le repère. */
+export const EXPEDITION_SPRITES = Object.freeze([
+  Object.freeze({ id: 'expedition_captain', name: 'Le Baron', heightScale: 1.25, files: Object.freeze({ front: 'assets/sprites/expeditions/captain.svg', back: 'assets/sprites/expeditions/captain.svg' }) }),
+]);
+
 export function getSpectatorSprite(id) {
   if (id === QUEEN_SPRITE.id) return QUEEN_SPRITE;
   return SPECTATOR_SPRITES.find((sprite) => sprite.id === id) ?? ARTISAN_SPRITES.find((sprite) => sprite.id === id)
-    ?? SCRIPTORIUM_SPRITES.find((sprite) => sprite.id === id) ?? TRAINING_SPRITES.find((sprite) => sprite.id === id) ?? null;
+    ?? SCRIPTORIUM_SPRITES.find((sprite) => sprite.id === id) ?? TRAINING_SPRITES.find((sprite) => sprite.id === id)
+    ?? EXPEDITION_SPRITES.find((sprite) => sprite.id === id) ?? null;
 }

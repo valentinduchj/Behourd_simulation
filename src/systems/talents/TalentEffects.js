@@ -9,7 +9,9 @@ import { getTalent } from './TalentService.js';
  * Un effet est-il actif ? Un effet saisonnier (`season` : 'summer' | 'autumn' | 'winter' |
  * 'spring', data/talents.js) ne vaut que pendant sa saison ; sans saison connue, il est ignoré.
  */
-export function isEffectActive(effect, { season = null } = {}) {
+export function isEffectActive(effect, { season = null, daysSinceReturn = null } = {}) {
+  // Retour du pèlerin (v1.0) : seulement pendant les N jours qui suivent un retour d'expédition.
+  if (effect.afterJourney && !(daysSinceReturn !== null && daysSinceReturn >= 0 && daysSinceReturn <= effect.afterJourney)) return false;
   return !effect.season || effect.season === season;
 }
 
@@ -121,6 +123,31 @@ export function queenRewardBonus(participants) {
   return participants.reduce((sum, fighter) => sum + sumEffect(fighter, 'queenReward'), 0);
 }
 
+/** Dévot : Ferveurs en plus pour un Combat de la Reine gagné (non cumulable : la meilleure). */
+export function queenFerveurBonus(participants) {
+  return participants.reduce((best, fighter) => Math.max(best, sumEffect(fighter, 'queenFerveur')), 0);
+}
+
+/** Marcheur : jours d'expédition en moins pour ce combattant. */
+export function expeditionDaysCut(fighter) {
+  return sumEffect(fighter, 'expeditionDays');
+}
+
+/** Éclaireur : Ferveurs en moins sur le coût des expéditions (compagnie, non cumulable). */
+export function expeditionDiscount(session) {
+  return (session.playerFighters ?? []).reduce((best, fighter) => Math.max(best, sumEffect(fighter, 'expeditionDiscount')), 0);
+}
+
+/** Voyageur aguerri : points de compétence au retour d'expédition. */
+export function expeditionTraining(fighter) {
+  return sumEffect(fighter, 'expeditionTraining');
+}
+
+/** Compagnon du Baron : seconde récompense d'expédition ? */
+export function hasExpeditionBonusReward(fighter) {
+  return effectsOf(fighter, 'expeditionBonusReward').length > 0;
+}
+
 /** Réduction du prix des recrues (compagnie, non cumulable : la meilleure). */
 export function recruitDiscount(session) {
   const values = companyEffects(session, 'recruitDiscount').map(({ effect }) => effect.value);
@@ -164,7 +191,7 @@ export function skillCapSteps(fighter) {
  * Effets de combat d'un combattant, copiés dans son unité de manche. Avec la saison du combat
  * (`{ season }`), les effets saisonniers actifs y sont ; le moteur ne voit que des effets valides.
  */
-const COMBAT_TYPES = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'seasonImmune'];
+const COMBAT_TYPES = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance'];
 export function combatEffectsOf(fighter, context = {}) {
   return COMBAT_TYPES.flatMap((type) => effectsOf(fighter, type, context));
 }

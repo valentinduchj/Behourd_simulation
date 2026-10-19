@@ -61,6 +61,29 @@ function RecordTable(record) {
  * onChange() est appelé après chaque modification (renommage, affectation).
  */
 export function openFighterSheet(session, fighter, { onChange } = {}) {
+  const sheet = buildFighterSheet(session, fighter, { onChange });
+  const handle = openModal({
+    title: fighter.name,
+    body: sheet.body,
+    className: 'modal-wide',
+    actions: [
+      {
+        label: 'Congédier', variant: 'danger', disabled: !sheet.dismissal.ok, title: sheet.dismissal.reason,
+        onClick: async (modal) => { if (await sheet.dismiss()) modal.close(); },
+      },
+      { label: 'Fermer', variant: 'primary' },
+    ],
+  });
+  handle.element.querySelector('.modal-title').replaceWith(sheet.title);
+  return handle;
+}
+
+/**
+ * Contenu de la fiche, sans fenêtre (v0.83 : aussi affiché à côté de la liste, en mobile).
+ * Renvoie { title, body, dismissal, dismiss() } ; dismiss() demande confirmation puis congédie
+ * le combattant (true s'il est parti).
+ */
+export function buildFighterSheet(session, fighter, { onChange } = {}) {
   const team = session.playerTeam;
   const { specialty } = fighter;
 
@@ -180,42 +203,31 @@ export function openFighterSheet(session, fighter, { onChange } = {}) {
   );
 
   const dismissal = canDismiss(session, fighter.id);
-  const handle = openModal({
-    title: fighter.name,
-    body,
-    className: 'modal-wide',
-    actions: [
-      {
-        label: 'Congédier', variant: 'danger', disabled: !dismissal.ok, title: dismissal.reason,
-        onClick: async (sheet) => {
-          const confirmed = await confirmModal({
-            title: 'Congédier ce combattant ?',
-            message: h(
-              'div',
-              { class: 'dismiss-confirm' },
-              h('p', { class: 'dismiss-name' }, h('strong', {}, FighterName(fighter, { session }))),
-              h('p', {}, 'Cette action retirera définitivement ce combattant de votre équipe.'),
-              isCaptain(session, fighter)
-                ? h('p', { class: 'warning-text' }, 'C’est votre capitaine : le plus ancien membre de la compagnie deviendra capitaine.')
-                : null,
-            ),
-            confirmLabel: 'Congédier',
-            danger: true,
-          });
-          if (!confirmed) return;
-          const result = dismiss(session, fighter.id);
-          if (!result.ok) {
-            showToast(result.reason, 'error');
-            return;
-          }
-          sheet.close();
-          showToast(`${fighter.name} a quitté ${team.name}.${result.newCaptain ? ` ${result.newCaptain.name} devient capitaine.` : ''}`, 'success');
-          onChange?.();
-        },
-      },
-      { label: 'Fermer', variant: 'primary' },
-    ],
-  });
-  handle.element.querySelector('.modal-title').replaceWith(title);
-  return handle;
+  const dismissFighter = async () => {
+    if (!dismissal.ok) return false;
+    const confirmed = await confirmModal({
+      title: 'Congédier ce combattant ?',
+      message: h(
+        'div',
+        { class: 'dismiss-confirm' },
+        h('p', { class: 'dismiss-name' }, h('strong', {}, FighterName(fighter, { session }))),
+        h('p', {}, 'Cette action retirera définitivement ce combattant de votre équipe.'),
+        isCaptain(session, fighter)
+          ? h('p', { class: 'warning-text' }, 'C’est votre capitaine : le plus ancien membre de la compagnie deviendra capitaine.')
+          : null,
+      ),
+      confirmLabel: 'Congédier',
+      danger: true,
+    });
+    if (!confirmed) return false;
+    const result = dismiss(session, fighter.id);
+    if (!result.ok) {
+      showToast(result.reason, 'error');
+      return false;
+    }
+    showToast(`${fighter.name} a quitté ${team.name}.${result.newCaptain ? ` ${result.newCaptain.name} devient capitaine.` : ''}`, 'success');
+    onChange?.();
+    return true;
+  };
+  return { title, body, dismissal, dismiss: dismissFighter };
 }

@@ -29,6 +29,8 @@ export const LOCATIONS = Object.freeze({
   SCRIPTORIUM: Object.freeze({ id: 'SCRIPTORIUM', name: 'Le Scriptorium', screen: SCREENS.SCRIPTORIUM, available: true }),
   // Ma Lice d'entraînement (v0.71) : au bout du chemin sud-ouest, entre la Forêt et la Rivière.
   TRAINING: Object.freeze({ id: 'TRAINING', name: 'Ma Lice d’entraînement', screen: SCREENS.TRAINING, available: true }),
+  // Les Expéditions (v0.96) : au bout de la grande rue du Bourg, côté sud (le Baron).
+  EXPEDITIONS: Object.freeze({ id: 'EXPEDITIONS', name: 'Les Expéditions', screen: SCREENS.EXPEDITIONS, available: true }),
 });
 
 export const LOCATION_EXITS = Object.freeze([
@@ -75,6 +77,17 @@ export const LOCATION_EXITS = Object.freeze([
   Object.freeze({
     id: 'bourg_path_north_west', source: 'BOURG', destination: 'CENTRE', interactionType: 'path',
     position: Object.freeze({ x: 0, y: 6, w: 1, h: 2 }), marker: Object.freeze({ x: 0.35, y: 6.3 }), enabled: true, transition: 'fade', arrival: 'centre_exit_south_east', direction: '↖',
+  }),
+  // v0.96 : en bas du Bourg, entre le Bûcheron et le Sénéchal, la grande rue mène aux Expéditions.
+  Object.freeze({
+    id: 'bourg_path_south_east', source: 'BOURG', destination: 'EXPEDITIONS', interactionType: 'path',
+    position: Object.freeze({ x: 16, y: 6, w: 1, h: 2 }), marker: Object.freeze({ x: 16.65, y: 6.3 }), enabled: true, transition: 'fade', arrival: 'expeditions_path_north_west', direction: '↘',
+  }),
+
+  // --- Les Expéditions : le chemin du nord (au-delà du marché) ramène au Bourg ---
+  Object.freeze({
+    id: 'expeditions_path_north_west', source: 'EXPEDITIONS', destination: 'BOURG', interactionType: 'path',
+    position: Object.freeze({ x: 0, y: 6, w: 1, h: 2 }), marker: Object.freeze({ x: 0.35, y: 6.3 }), enabled: true, transition: 'fade', arrival: 'bourg_path_south_east', direction: '↖',
   }),
 ]);
 

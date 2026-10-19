@@ -14,7 +14,7 @@ export function getBonusLabels(rules = COMBAT_RULES) {
   const { captain, lutteurBarrier, lutteurPin, hastierReach, hastierCrowded, runnerRear, blindSpot } = rules.bonuses;
   const signed = (value) => `${value > 0 ? '+' : '−'}${pct(Math.abs(value))}`;
   // Effets temporaires des objets (ex. Hypocras) : 'item:<id>', libellés tirés des données.
-  const itemLabels = Object.fromEntries(ITEMS.filter((item) => item.effect.type === ITEM_EFFECT_TYPES.FINAL_DAMAGE_BONUS).map((item) => [`item:${item.id}`, {
+  const itemLabels = Object.fromEntries(ITEMS.filter((item) => item.effect?.type === ITEM_EFFECT_TYPES.FINAL_DAMAGE_BONUS).map((item) => [`item:${item.id}`, {
     icon: item.icon,
     short: `${item.icon} +${pct(item.effect.value)}`,
     long: `${item.name} : +${pct(item.effect.value)} de dégâts finaux pendant cette manche`,

@@ -21,6 +21,9 @@ import { ClubStars } from '../components/Rating.js';
 import { openModal, confirmModal, alertModal, choiceModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { currentLocale } from '../../i18n/i18n.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
+import { attachMapZoom } from '../mobile/MapZoom.js';
+import { CupHud, renderDrawMobile, renderGabarnacMobile, openBoardMobile } from '../mobile/MobileCup.js';
 
 const HINT = 'Cliquez sur la Lice pour préparer votre prochain combat, ou sur le tableau de la Coupe pour voir les résultats.';
 
@@ -63,11 +66,14 @@ export class FrenchCupScreen extends BaseScreen {
     let body;
     // Seule la Coupe de l'intersaison (ouverte en fin de saison) se joue ici.
     const seasonCup = getSeasonCupState(this.session);
+    // Téléphone (v0.90) : bandeau, tirage et carte du château propres au téléphone.
+    const mobile = isMobileLayout();
     if (status === 'none' || (seasonCup !== 'inProgress' && seasonCup !== 'finished')) body = this.renderUnavailable();
-    else if (status === 'draw') body = this.renderDraw();
+    else if (status === 'draw') body = mobile ? renderDrawMobile(this) : this.renderDraw();
     else if (status === 'finished' && !this.showMap) body = this.renderWinner();
-    else body = this.renderGabarnac();
-    this.el.replaceChildren(this.renderHeader(), body);
+    else body = mobile ? renderGabarnacMobile(this, this.renderMapStage()) : this.renderGabarnac();
+    this.el.classList.toggle('is-mobile-cup', mobile);
+    this.el.replaceChildren(mobile ? CupHud(this) : this.renderHeader(), body);
     if (this.canvas && this.el.isConnected) this.startMap();
   }
 
@@ -283,16 +289,21 @@ export class FrenchCupScreen extends BaseScreen {
 
   // --- Château de Gabarnac ---
 
-  renderGabarnac() {
+  /** La carte du château (scène, canevas, aide), partagée par l'ordinateur et le téléphone. */
+  renderMapStage() {
     // Combattants d'ambiance : un par compagnie engagée (tabards aux couleurs de leur club).
     const fighters = pickAmbianceFighters(this.session, GABARNAC_LAYOUT.fighterSpots.length);
     this.scene = new GabarnacScene({ fighters });
     this.canvas = h('canvas', { class: 'centre-canvas cup-canvas', 'aria-label': 'Le Château de Gabarnac en vue isométrique' });
     this.hint = h('p', { class: 'centre-hint', role: 'status' }, HINT);
+    return h('div', { class: 'cup-map' }, h('div', { class: 'centre-stage cup-stage' }, this.canvas), this.hint);
+  }
+
+  renderGabarnac() {
     return h(
       'div',
       { class: 'cup-body' },
-      h('div', { class: 'cup-map' }, h('div', { class: 'centre-stage cup-stage' }, this.canvas), this.hint),
+      this.renderMapStage(),
       h('aside', { class: 'cup-side' }, this.renderNextCard(), this.renderSideStandings(), this.renderPath()),
     );
   }
@@ -425,6 +436,8 @@ export class FrenchCupScreen extends BaseScreen {
   startMap() {
     if (!this.canvas || this.renderer) return;
     this.renderer = new GabarnacRenderer(this.canvas, this.scene);
+    // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur le château.
+    if (isMobileLayout() && !this.mapZoom?.button.isConnected) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     const cup = this.cup;
     const pending = getPlayerPendingMatch(cup);
     this.renderer.liceReady = Boolean(pending) && !this.simulating;
@@ -455,7 +468,7 @@ export class FrenchCupScreen extends BaseScreen {
     // Animation à intervalle fixe (vignes, habitants) : fonctionne aussi hors requestAnimationFrame.
     const start = performance.now();
     const frame = () => {
-      this.renderer?.render((performance.now() - start) / 1000);
+      if (!document.hidden) this.renderer?.render((performance.now() - start) / 1000);
       this.frameTimer = setTimeout(frame, 1000 / 30);
     };
     frame();
@@ -683,6 +696,8 @@ export class FrenchCupScreen extends BaseScreen {
   // --- Tableau de la Coupe (bilan) ---
 
   openBoard(tab = 'results') {
+    // Téléphone (v0.90) : un volet, rubriques à gauche, poules en onglets, arbre final au pouce.
+    if (isMobileLayout()) return openBoardMobile(this, tab);
     const body = h('div', { class: 'cup-board' });
     const tabs = [['results', 'Résultats'], ['groups', 'Poules'], ['bracket', 'Arbre final'], ['qualified', 'Qualifiés'], ['fighters', 'Meilleurs combattants']];
     const render = (current) => {

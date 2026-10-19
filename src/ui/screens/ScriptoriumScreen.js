@@ -26,6 +26,9 @@ import { PotentialFlames } from '../components/Potential.js';
 import { TalentBadge, TalentBadges } from '../components/TalentBadge.js';
 import { spectatorUrl } from '../../render/spectators.js';
 import { currentLocale } from '../../i18n/i18n.js';
+import { createFramePacer } from '../../render/framePacing.js';
+import { attachMapZoom } from '../mobile/MapZoom.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 const HINT = 'Cliquez sur le Bureau d’étude pour envoyer un combattant révéler ses talents (deux au plus), ou sur la Professeure Flavia pour améliorer le Scriptorium. La porte ramène au Centre.';
 const days = (n) => `${n} jour${n > 1 ? 's' : ''}`;
@@ -71,6 +74,8 @@ function OddsList(odds, { className = '' } = {}) {
  */
 export class ScriptoriumScreen extends HubScreen {
   static hubLocationId = 'scriptorium';
+  // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
+  static mobileSheet = { label: 'Les études' };
 
   renderContent() {
     this.canvas = h('canvas', { class: 'centre-canvas scriptorium-canvas', 'aria-label': 'L’intérieur du Scriptorium en vue isométrique' });
@@ -91,6 +96,8 @@ export class ScriptoriumScreen extends HubScreen {
 
   mounted() {
     super.mounted();
+    // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur la carte.
+    if (isMobileLayout()) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     this.scene = new ScriptoriumScene();
     this.renderer = new ScriptoriumRenderer(this.canvas, this.scene);
     // Sortie : la porte ramène au Centre (data/locations.js).
@@ -115,10 +122,13 @@ export class ScriptoriumScreen extends HubScreen {
     this.listen(this.canvas, 'click', (event) => this.activate(this.targetAt(event.clientX, event.clientY)));
     // Le chat et la souris ne vivent que pendant l'affichage (rien ne s'accumule après le départ).
     let last = performance.now();
+    const draw = createFramePacer();
     const frame = (now) => {
-      this.scene.update((now - last) / 1000);
-      last = now;
-      this.renderer.render(now / 1000);
+      if (draw(now)) {
+        this.scene.update((now - last) / 1000);
+        last = now;
+        this.renderer.render(now / 1000);
+      }
       this.frameId = requestAnimationFrame(frame);
     };
     this.frameId = requestAnimationFrame(frame);
@@ -320,7 +330,8 @@ export class ScriptoriumScreen extends HubScreen {
         const duration = getStudyDuration(fighter);
         const talents = getFighterTalents(this.session, fighter);
         const kept = selectedSlot === null ? null : talents[selectedSlot];
-        const slotPicker = plan.mode !== 'replace' ? null : h('fieldset', { class: 'study-slot-picker' },
+        // (« is-pending » : talent à remplacer pas encore choisi — mis en avant sur téléphone.)
+        const slotPicker = plan.mode !== 'replace' ? null : h('fieldset', { class: `study-slot-picker ${selectedSlot === null ? 'is-pending' : ''}`.trim() },
           h('legend', {}, 'Talent à remplacer'),
           ...talents.map((talent, index) => h('label', { class: `study-slot ${selectedSlot === index ? 'is-selected' : ''}`.trim(), 'data-slot': String(index) },
             h('input', { type: 'radio', name: 'study-slot', value: String(index), checked: selectedSlot === index, onchange: () => { selectedSlot = index; render(); } }),
@@ -341,6 +352,8 @@ export class ScriptoriumScreen extends HubScreen {
           check.ok ? null : h('p', { class: 'recruit-reason' }, check.reason),
           check.ok && plan.mode === 'replace' && selectedSlot === null ? h('p', { class: 'recruit-reason' }, 'Choisissez le talent à remplacer.') : null,
         ].filter(Boolean));
+        // Téléphone (v0.94) : le résumé (et le choix du talent) se montre en haut dès qu'on choisit.
+        summary.scrollTop = 0;
         if (start) {
           start.textContent = studyButtonLabel(check.cost, plan.mode);
           start.disabled = !check.ok || (plan.mode === 'replace' && selectedSlot === null);

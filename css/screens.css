@@ -33,6 +33,10 @@
   color: var(--accent-strong);
   text-shadow: 0 3px 0 #3a2a14, 0 10px 30px rgba(0, 0, 0, 0.6);
 }
+.game-title-main, .game-title-tag { display: block; }
+/* « Management » (v0.89) : sous le nom, plus petit, très espacé. */
+.game-title-tag { margin-top: 0.1em; font-size: 0.36em; letter-spacing: 0.42em; padding-left: 0.42em; }
+.game-title + .game-subtitle { margin-top: 0.5rem; }
 .game-subtitle {
   margin-bottom: 2rem;
   color: var(--text-muted);

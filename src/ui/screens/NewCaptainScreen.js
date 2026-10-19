@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { MobileSteps } from '../mobile/MobileSteps.js';
 import { ofClub } from '../../utils/format.js';
 import { SCREENS } from '../../core/screenIds.js';
 import { SPECIALTIES, SPECIALTY_IDS } from '../../data/specialties.js';
@@ -16,6 +17,7 @@ import { FighterSprite } from '../components/FighterSprite.js';
 import { CaptainCrown } from '../components/CaptainCrown.js';
 import { EmblemView } from '../components/EmblemView.js';
 import { alertModal } from '../components/Modal.js';
+import { focusField } from '../mobile/mobileLayout.js';
 
 /**
  * Nouvelle partie, étape 3 : création du premier combattant, le capitaine.
@@ -91,11 +93,12 @@ export class NewCaptainScreen extends BaseScreen {
         h('p', { class: 'screen-subtitle' }, `Créez le premier combattant ${this.params.teamName ? ofClub(this.params.teamName) : 'de votre compagnie'}. Il en sera le capitaine.`),
       ),
       h('div', { class: 'new-team-layout' }, form, h('aside', { class: 'emblem-preview panel captain-preview', 'aria-label': 'Aperçu du capitaine' }, h('p', { class: 'eyebrow' }, 'Aperçu'), this.previewHost)),
+      MobileSteps(3),
     );
   }
 
   mounted() {
-    this.nameInput.focus();
+    focusField(this.nameInput);
   }
 
   refresh() {

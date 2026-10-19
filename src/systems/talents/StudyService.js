@@ -8,6 +8,7 @@ import { getActiveOdds, getDeskCount } from './ScriptoriumUpgradeService.js';
 import { canAfford, spendResource } from '../economy/wallet.js';
 import { adjustStudyDuration } from './TalentEffects.js';
 import { checkAchievements, recordTalentDiscovered } from '../achievements/AchievementService.js';
+import { isOnPeregrination, PEREGRINATION_REASON } from '../expeditions/journeys.js';
 
 // Le Scriptorium — étude des talents, sans interface.
 //
@@ -59,14 +60,29 @@ export function isStudying(session, fighterOrId) {
 }
 
 /**
+ * Absent du camp : en étude au Scriptorium, ou (v0.98) parti en pérégrination avec le Baron.
+ * Il n'a alors ni activité au Centre, ni place dans un combat.
+ */
+export function isAway(session, fighterOrId) {
+  return isStudying(session, fighterOrId) || isOnPeregrination(session, fighterOrId);
+}
+
+/**
  * Disponibilité d'un combattant pour les activités du Centre et les combats : indisponible
- * pendant une étude. (Les combattants des clubs de l'IA n'étudient jamais.)
+ * pendant une étude ou une pérégrination. (Les combattants des clubs de l'IA ne partent jamais.)
  */
 export function isFighterAvailable(session, fighterOrId) {
-  return !isStudying(session, fighterOrId);
+  return !isAway(session, fighterOrId);
 }
 
 export const STUDYING_REASON = 'En étude au Scriptorium : indisponible jusqu’à la fin de son étude.';
+
+/** Pourquoi le combattant est absent (étude ou pérégrination), ou null. */
+export function awayReason(session, fighterOrId) {
+  if (isStudying(session, fighterOrId)) return STUDYING_REASON;
+  if (isOnPeregrination(session, fighterOrId)) return PEREGRINATION_REASON;
+  return null;
+}
 
 /** Places libres au Bureau d'étude. */
 export function getFreeDesks(session) {
@@ -103,6 +119,7 @@ export function canStartStudy(session, fighterId, { slot = null, rules = STUDY_R
   const plan = getStudyPlan(session, fighter, rules);
   const { cost } = plan;
   if (isStudying(session, fighterId)) return { ok: false, reason: 'Ce combattant étudie déjà.', cost, plan };
+  if (isOnPeregrination(session, fighterId)) return { ok: false, reason: PEREGRINATION_REASON, cost, plan };
   if (getFreeDesks(session) <= 0) return { ok: false, reason: 'Le Bureau d’étude est complet : interrompez une étude ou attendez sa fin.', cost, plan };
   if (slot !== null && !plan.slots.includes(slot)) return { ok: false, reason: 'Ce talent ne peut pas être remplacé.', cost, plan };
   if (cost > 0 && !canAfford(session, 'deniers', cost)) return { ok: false, reason: `Deniers insuffisants : remplacer un talent coûte ${cost} deniers.`, cost, plan };

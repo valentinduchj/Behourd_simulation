@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { getSingularRun } from '../../systems/expeditions/SingularRunService.js';
 import { formatDateTime } from '../../utils/format.js';
 import { SCREENS } from '../../core/screenIds.js';
 import { advanceDay } from '../../systems/time/TimeSystem.js';
@@ -32,6 +33,8 @@ import { announcePendingAchievements } from '../hub/achievementNotifier.js';
 import { countUnlocked } from '../../systems/achievements/AchievementService.js';
 import { ordinal } from '../../utils/format.js';
 import { startTutorial, isTutorialActive } from '../tutorial/Tutorial.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
+import { MobileHubChrome, decorateMapPage } from '../mobile/MobileHub.js';
 
 /**
  * Base des écrans de la phase de gestion : calendrier en haut, contenu au centre,
@@ -42,6 +45,9 @@ import { startTutorial, isTutorialActive } from '../tutorial/Tutorial.js';
 export class HubScreen extends BaseScreen {
   static theme = 'hub';
   static hubLocationId = null;
+  // Interface mobile (v0.83) : écran à carte dont le reste de la page passe dans un volet,
+  // { label, open } (null : écran de lecture, la page défile entre le bandeau et le dock).
+  static mobileSheet = null;
 
   render() {
     this.session = this.services.gameState.session;
@@ -52,8 +58,14 @@ export class HubScreen extends BaseScreen {
     this.chestCountEl = h('span', { class: 'hub-nav-hint hub-chest-count' });
     this.achievementsCountEl = h('span', { class: 'hub-achievements-count' });
     this.clubLevelHost = h('div', { class: 'hub-club-level' });
-    this.contentHost = h('div', { class: 'hub-content' }, this.renderContent());
+    this.mobile = isMobileLayout();
+    this.contentHost = h('div', { class: 'hub-content' }, this.decorateContent(this.renderContent()));
 
+    if (this.mobile) {
+      this.el = h('section', { class: 'hub is-mobile-hub' }, this.contentHost, ...MobileHubChrome(this));
+      this.refreshStatus();
+      return this.el;
+    }
     this.el = h(
       'section',
       { class: 'hub' },
@@ -75,8 +87,27 @@ export class HubScreen extends BaseScreen {
 
   /** Reconstruit le contenu principal (après une modification). */
   refreshContent() {
-    this.contentHost.replaceChildren(this.renderContent());
+    const wasOpen = this.mobileSheetEl?.dataset.state === 'open';
+    const part = this.mobileSheetEl?.dataset.part;
+    this.contentHost.replaceChildren(this.decorateContent(this.renderContent()));
+    if (wasOpen) this.openMobileSheet(part);
     this.refreshStatus();
+  }
+
+  /** Interface mobile : la carte en plein écran et le reste de la page dans un volet. */
+  decorateContent(node) {
+    this.mobileSheetEl = null;
+    const config = this.constructor.mobileSheet;
+    if (this.mobile && config) this.mobileSheetEl = decorateMapPage(node, config);
+    return node;
+  }
+
+  openMobileSheet(part) {
+    this.mobileSheetEl?.setOpen(true, part);
+  }
+
+  closeMobileSheet() {
+    this.mobileSheetEl?.setOpen(false);
   }
 
   mounted() {
@@ -268,6 +299,11 @@ export class HubScreen extends BaseScreen {
   advanceDay() {
     // Saison terminée : le temps ne reprend qu'avec la nouvelle saison.
     if (isOffSeason(this.session)) return;
+    // Expédition singulière en cours (v1.1) : le temps est arrêté ; on y retourne.
+    if (getSingularRun(this.session)) {
+      this.navigate(SCREENS.SINGULAR);
+      return;
+    }
     // Un jour de combat (championnat ou Combat de la Reine) se termine par le combat, jamais en passant.
     if (getPendingMatchdayEvent(this.session) || getPendingQueenCombat(this.session)) {
       this.navigate(SCREENS.MATCH);

@@ -63,9 +63,10 @@ export function openChest(options) {
         h('p', { class: 'chest-item-name' }, item.name, h('span', { class: 'chest-item-qty' }, `×${item.quantity}`)),
         h('p', { class: 'chest-item-desc' }, item.description),
         h('p', { class: 'muted chest-item-usage' }, describeUsage(item.definition)),
-        usable.ok ? null : h('p', { class: 'chest-item-reason' }, usable.reason)),
+        usable.ok || item.definition.keepsake ? null : h('p', { class: 'chest-item-reason' }, usable.reason)),
       h('div', { class: 'chest-item-actions' },
-        h('button', {
+        // Objet à garder (Ferveurs de la Reine) : pas de bouton « Utiliser ».
+        item.definition.keepsake ? null : h('button', {
           type: 'button', class: 'btn btn-primary btn-sm', disabled: !usable.ok, title: usable.reason ?? `Donner ${item.name} à un combattant`,
           onclick: () => pickFighter(item),
         }, 'Utiliser'),

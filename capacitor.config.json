@@ -1,0 +1,15 @@
+{
+  "appId": "fr.behourd.jeu",
+  "appName": "Béhourd Management",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1a120a",
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SystemBars": {
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

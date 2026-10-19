@@ -12,3 +12,7 @@ desktop.ini
 .DS_Store
 .vscode/
 .idea/
+
+# Application Android (Capacitor) : dépendances npm et copie du jeu embarquée (npm run android:web)
+node_modules/
+/www/

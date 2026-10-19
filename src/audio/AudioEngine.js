@@ -101,6 +101,24 @@ export class AudioEngine {
     this.setAmbience(ambience, { season: this.ambienceSeason });
   }
 
+  /**
+   * Application en arrière-plan (v0.87, téléphone) : le son se tait (contexte suspendu, boucles
+   * en pause), puis reprend où il en était au retour.
+   */
+  setBackground(hidden) {
+    if (!this.ctx) return;
+    if (hidden) {
+      this.pausedLoops = [...this.loops.values()].filter((loop) => !loop.el.paused);
+      for (const loop of this.pausedLoops) loop.el.pause();
+      this.ctx.suspend().catch(() => {});
+      return;
+    }
+    if (!this.unlocked) return;
+    this.ctx.resume().catch(() => {});
+    for (const loop of this.pausedLoops ?? []) loop.el.play().catch(() => {});
+    this.pausedLoops = [];
+  }
+
   #setting(key, fallback) {
     const value = this.settings?.get(key);
     return value === undefined || value === null ? fallback : value;
@@ -247,7 +265,8 @@ export class AudioEngine {
   // --- Effets (fichiers courts) ---
 
   #buffer(file) {
-    if (this.buffers.has(file)) return this.buffers.get(file);
+    // Toujours une promesse : un fichier déjà en échec est gardé à null (v0.91 : plus de « null.then »).
+    if (this.buffers.has(file)) return Promise.resolve(this.buffers.get(file));
     const pending = fetch(file)
       .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(file))))
       .then((data) => this.ctx.decodeAudioData(data))

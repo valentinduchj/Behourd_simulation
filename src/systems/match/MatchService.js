@@ -7,7 +7,7 @@ import { getMatchFatigue, applyMatchSoreness } from '../fighters/FatigueService.
 import { recordMatch } from '../fighters/FighterRecordService.js';
 import { recordFinishedMatch, recordPlayedRound } from '../achievements/AchievementService.js';
 import { resolveRound as resolveRoundOnly, resolveCombatRound } from './RoundService.js';
-import { isFighterAvailable, STUDYING_REASON } from '../talents/StudyService.js';
+import { isFighterAvailable, awayReason } from '../talents/StudyService.js';
 
 // Déroulement d'un combat (manches gagnantes), indépendant de l'interface. Le même
 // moteur sert au combat du joueur et aux combats entre clubs de l'IA ; seule la
@@ -120,7 +120,7 @@ export function getAvailableFighters(match, fighters, session = null) {
 
 /** Le combattant peut-il être engagé dans un combat ? { ok, reason } (étude au Scriptorium). */
 export function canSelectForMatch(session, fighter) {
-  if (!isFighterAvailable(session, fighter)) return { ok: false, reason: STUDYING_REASON };
+  if (!isFighterAvailable(session, fighter)) return { ok: false, reason: awayReason(session, fighter) };
   return { ok: true, reason: null };
 }
 

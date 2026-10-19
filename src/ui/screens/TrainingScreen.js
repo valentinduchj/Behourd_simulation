@@ -27,6 +27,9 @@ import { openModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { audioDirector, buildCombatCues, playCombatCues } from '../../audio/AudioDirector.js';
 import { currentLocale } from '../../i18n/i18n.js';
+import { createFramePacer } from '../../render/framePacing.js';
+import { attachMapZoom } from '../mobile/MapZoom.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 const HINT = 'Cliquez sur le Marshal (tenue jaune rayée) pour préparer un combat d’entraînement. Le chemin de droite ramène au Centre.';
 
@@ -38,6 +41,8 @@ const HINT = 'Cliquez sur le Marshal (tenue jaune rayée) pour préparer un comb
  */
 export class TrainingScreen extends HubScreen {
   static hubLocationId = 'training';
+  // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
+  static mobileSheet = { label: 'Préparer l’entraînement' };
 
   renderContent() {
     this.arena ??= createArena();
@@ -63,6 +68,8 @@ export class TrainingScreen extends HubScreen {
 
   mounted() {
     super.mounted();
+    // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur la carte.
+    if (isMobileLayout()) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     this.renderer = new TrainingRenderer(this.canvas);
     this.renderer.exits = getVisibleExits('TRAINING');
     this.presentation = this.buildPresentation();
@@ -90,11 +97,14 @@ export class TrainingScreen extends HubScreen {
       if (this.renderer.isMarshalAt(event.clientX, event.clientY)) this.openSetup();
     });
     let last = performance.now();
+    const draw = createFramePacer();
     const frame = (now) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
-      if (this.playback) this.advanceBattle(dt);
-      this.renderer.render(this.liceScene ?? { arena: this.arena, combatants: [] }, now / 1000);
+      if (draw(now)) {
+        const dt = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        if (this.playback) this.advanceBattle(dt);
+        this.renderer.render(this.liceScene ?? { arena: this.arena, combatants: [] }, now / 1000);
+      }
       this.frameId = requestAnimationFrame(frame);
     };
     this.frameId = requestAnimationFrame(frame);

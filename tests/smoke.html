@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/screens.css">
   <link rel="stylesheet" href="../css/hub.css">
+  <link rel="stylesheet" href="../css/mobile.css">
   <style>
     #results { font-family: Consolas, monospace; background: #111; color: #ddd; padding: 1rem; }
     #app, #modal-root, #toast-root { position: absolute; left: -10000px; width: 1300px; }
@@ -554,7 +555,7 @@
       ban.stats.fatigue = 80;
       advanceDay(session, { rng: never });
       check(ban.stats.fatigue === 40, 'banquet : 100 % de réussite, récupération maximale 40 (80 → 40)');
-      check(DAY_PHASES.map((p) => p.id).join() === 'game-day,unplayed-matchday,unplayed-queen-combat,season-end,activities,climate-season,talent-income,studies,fighter-potential,events,ai-retirement,ai-recruitment,ai-progression,league,schedule,achievements', 'temps : GameDay → (journée ou Combat de la Reine non disputés) → fin de saison → activités → passage de saison de l’année → études du Scriptorium → événements → IA (retraites, recrutements, progression) → ligue');
+      check(DAY_PHASES.map((p) => p.id).join() === 'game-day,unplayed-matchday,unplayed-queen-combat,season-end,activities,climate-season,talent-income,studies,journeys,fighter-potential,events,ai-retirement,ai-recruitment,ai-progression,league,schedule,achievements', 'temps : GameDay → (journée ou Combat de la Reine non disputés) → fin de saison → activités → passage de saison de l’année → études du Scriptorium → retour des pérégrinations → événements → IA (retraites, recrutements, progression) → ligue');
 
       const scene = new CentreScene(session);
       const lp = scene.getPlacement(lice.id);
@@ -767,8 +768,8 @@
       check(JSON.stringify(navCentreExits) === JSON.stringify({ north_east: 'TAVERNE', south_east: 'BOURG', north_west: 'SCRIPTORIUM', south_west: 'TRAINING' })
         && navGetExits('TAVERNE').map((e) => `${e.interactionType}:${e.destination}`).join() === 'door:CENTRE'
         && navGetExits('SCRIPTORIUM').map((e) => `${e.interactionType}:${e.destination}`).join() === 'door:CENTRE'
-        && navGetExits('BOURG').map((e) => `${e.id}:${e.destination}`).join() === 'bourg_path_north_west:CENTRE',
-        'navigation : Centre haut-droite → Taverne, bas-droite → Bourg, haut-gauche → Scriptorium, bas-gauche → Ma Lice d’entraînement ; portes de la Taverne et du Scriptorium, chemin haut-gauche du Bourg → Centre');
+        && navGetExits('BOURG').map((e) => `${e.id}:${e.destination}`).join() === 'bourg_path_north_west:CENTRE,bourg_path_south_east:EXPEDITIONS',
+        'navigation : Centre haut-droite → Taverne, bas-droite → Bourg, haut-gauche → Scriptorium, bas-gauche → Ma Lice d’entraînement ; portes de la Taverne et du Scriptorium ; Bourg : haut-gauche → Centre, bas-droite → Expéditions');
       // Allers-retours cohérents : on revient par la sortie d'où l'on était parti.
       const navPairs = navExits.filter((e) => navState(e) === 'open');
       check(navPairs.every((e) => { const back = navExits.find((x) => x.id === e.arrival); return back && back.source === e.destination && back.destination === e.source && back.arrival === e.id; }),
@@ -796,14 +797,14 @@
       const { recruit: talRecruit, generateRecruitmentPool: talGenPool } = await import('../src/systems/tavern/TavernService.js');
       const { isCombatDay: talIsCombatDay } = await import('../src/systems/calendar/CalendarService.js');
       const fourbe = talService.getTalent('fourbe');
-      const talKnownTypes = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'squadFatigue', 'activityChance', 'activityReward', 'allyActivityChance', 'dailyDeniers', 'foresterDeniers', 'homeRewardMultiplier', 'homeWinDeniers', 'queenReward', 'recruitDiscount', 'studyDays', 'studyFactor', 'potentialFloor', 'potentialBoost', 'skillCapSteps', 'seasonImmune'];
+      const talKnownTypes = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'squadFatigue', 'activityChance', 'activityReward', 'allyActivityChance', 'dailyDeniers', 'foresterDeniers', 'homeRewardMultiplier', 'homeWinDeniers', 'queenReward', 'recruitDiscount', 'studyDays', 'studyFactor', 'potentialFloor', 'potentialBoost', 'skillCapSteps', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance', 'expeditionDays', 'expeditionDiscount', 'expeditionTraining', 'expeditionBonusReward', 'queenFerveur'];
       const talCount = (r) => talCatalog.filter((x) => x.rarity === r).length;
-      check(talCatalog.length === 58 && talCount('common') === 36 && talCount('rare') === 15 && talCount('epic') === 7 && new Set(talCatalog.map((x) => x.id)).size === 58
-        && talCatalog.every((x) => x.effects.length && x.effects.every((e) => talKnownTypes.includes(e.type)) && x.description && x.domain && x.sources.includes('tavern') && x.sources.includes('study'))
+      check(talCatalog.length === 74 && talCount('common') === 39 && talCount('rare') === 17 && talCount('epic') === 8 && talCount('exotic') === 10 && new Set(talCatalog.map((x) => x.id)).size === 74
+        && talCatalog.every((x) => x.effects.length && x.effects.every((e) => talKnownTypes.includes(e.type)) && x.description && x.domain && (x.rarity === 'exotic' ? x.sources.join() === 'expedition' : x.sources.includes('tavern') && x.sources.includes('study')))
         && fourbe?.rarity === 'common' && fourbe.effects[0].type === 'finalDamage' && fourbe.effects[0].value === 0.05
-        && Object.keys(talRarities).join() === 'common,rare,epic' && talRarities.common.color === '#9fd3f2' && talRarities.rare.color === '#ec8a2c' && talRarities.epic.color === '#141416'
+        && Object.keys(talRarities).join() === 'common,rare,epic,exotic' && talRarities.common.color === '#9fd3f2' && talRarities.rare.color === '#ec8a2c' && talRarities.epic.color === '#141416'
         && talService.getTalentStyle(fourbe).color === talRarities.common.color && talRules.maxPerFighter === 2 && talRules.tavernChance === 0.1,
-        'talents : catalogue centralisé de 58 talents (36 ordinaires, 15 rares, 7 épiques ; dont 8 saisonniers), chacun avec ses effets typés ; couleurs des familles ; 1 talent par combattant, 10 % à la Taverne');
+        'talents : catalogue centralisé de 74 talents (39 ordinaires, 17 rares, 8 épiques, 10 exotiques ; dont 8 saisonniers), chacun avec ses effets typés ; couleurs des familles ; 1 talent par combattant, 10 % à la Taverne');
       const talGame = createNewGame({ teamName: 'Les Copistes', emblem: new Emblem(), rng: createRng('talents'), locationId: 'cite-de-locronan' });
       const talAIFighter = talGame.getFightersOfTeam(talGame.leagues[0].teamIds.find((id) => id !== talGame.player.teamId))[0];
       check(talGame.playerFighters.every((f) => Array.isArray(f.talents) && f.talents.length === 0 && !talService.hasTalent(talGame, f))
@@ -1309,10 +1310,10 @@
       // La majeure n'est plus « en cours » une fois sa version ronde atteinte (0.80.0 clôt 0.8).
       const pnOngoing = Number(pnConfig.version.split('.')[1]) % 10 !== 0;
       const pnIds = new Set(pnMilestones.map((m) => m.version));
-      check(['0.40.0', '0.41.0', '0.50.0', '0.51.0', '0.60.1', '0.61.0', '0.70.0', '0.71.0', '0.100.0'].map(PNS.getMilestoneId).join() === '0.4,0.5,0.5,0.6,0.6,0.7,0.7,0.8,0.10'
+      check(['0.40.0', '0.41.0', '0.50.0', '0.51.0', '0.60.1', '0.61.0', '0.70.0', '0.71.0', '0.100.0'].map(PNS.getMilestoneId).join() === '0.4,0.5,0.5,0.6,0.6,0.7,0.7,0.8,1.0' && PNS.getMilestoneId('0.91.0') === '1.0' && PNS.getMilestoneId('1.0.2') === '1.0'
           && PNS.shortVersion('0.51.0') === '0.51' && PNS.shortVersion('0.60.1') === '0.60.1',
         'patch notes : chaque version majeure regroupe les versions qui la précèdent (0.6 = 0.51 à 0.60.x)');
-      check(pnMajor.map((m) => m.version).join() === '0.9,0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
+      check(pnMajor.map((m) => m.version).join() === '1.1,1.0,0.9,0.8,0.7,0.6,0.5,0.4' && pnSix.from === '0.51' && pnSix.to === '0.60.1' && !pnSix.inProgress
           && pnMajor[0].inProgress === pnOngoing && pnMajor[0].isCurrent && pnMajor.filter((m) => m.isCurrent).length === 1
           && pnData.every((n) => pnIds.has(PNS.getMilestoneId(n.version)))
           && pnMajor.every((m) => m.sections.length && m.sections.reduce((s, x) => s + x.items.length, 0) <= 10),
@@ -1321,7 +1322,7 @@
       const pnModal = pnOpen({ currentVersion: pnConfig.version });
       await wait(10);
       const pnArticles = [...document.querySelectorAll('.patch-notes-modal .patch-note')];
-      check(pnArticles.length === 6 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 0.9' && /En cours/.test(pnArticles[0].textContent) === pnOngoing
+      check(pnArticles.length === 8 && pnArticles[0].querySelector('.patch-note-version').textContent === 'Version 1.1' && /En cours/.test(pnArticles[0].textContent) === pnOngoing
           && /Regroupe les versions 0\.51 à 0\.60\.1/.test(pnArticles.find((a) => a.dataset.version === '0.6').textContent)
           && !pnArticles.some((a) => /^0\.\d+\.\d+$/.test(a.dataset.version)),
         'patch notes : la fenêtre n’affiche que les versions majeures, avec les versions qu’elles regroupent');
@@ -3443,7 +3444,9 @@
       const { useItem, canUseItem, getItemTargets } = await import('../src/systems/items/ConsumableService.js');
       const { getRoundEffects, getFinalDamageBonus, clearStaleEffects, hasActiveEffect } = await import('../src/systems/items/CombatEffectService.js');
       const itemFiles = await Promise.all(ITEMS.map((item) => fetch(`../${item.sprite}`).then((r) => r.ok).catch(() => false)));
-      check(ITEMS.length === 2 && ITEMS.every((i) => i.id && i.name && i.sprite && i.description && i.consumable === true && i.effect?.type) && itemFiles.every(Boolean)
+      // (v0.97 : les objets « à garder » — Ferveurs de la Reine — n'ont ni effet ni usage.)
+      const usableItems = ITEMS.filter((i) => !i.keepsake);
+      check(usableItems.length === 2 && usableItems.every((i) => i.id && i.name && i.sprite && i.description && i.consumable === true && i.effect?.type) && ITEMS.every((i) => i.id && i.name && i.sprite && i.description) && itemFiles.every(Boolean)
         && getItemDefinition('pain_meteil').effect.type === 'SET_FATIGUE' && getItemDefinition('hypocras').effect.type === 'FINAL_DAMAGE_BONUS' && getItemDefinition('hypocras').effect.value === 0.1,
         'objets : Pain au méteil (fatigue → 0) et Hypocras (+10 % de dégâts finaux) définis en données, avec image et description');
       check(hasShop('baker') && !hasShop('carpenter') && listShopOffers('baker').map((o) => `${o.itemId}:${o.price}`).join() === 'pain_meteil:50,hypocras:50' && BOROUGH_SHOPS.baker.every((o) => o.currency === 'deniers'),
@@ -3585,7 +3588,7 @@
       await wait(10);
       const shownVersions = [...(modal()?.querySelectorAll('.patch-note-version') ?? [])].map((el) => el.textContent);
       // (v0.76 : versions majeures seulement ; la version du jeu est dans celle marquée « actuelle ».)
-      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === 'Version 0.9' && shownVersions.at(-1) === 'Version 0.4'
+      check(modal()?.classList.contains('patch-notes-modal') && shownVersions[0] === 'Version 1.1' && shownVersions.at(-1) === 'Version 0.4'
         && !shownVersions.some((v) => v.includes(services.config.version))
         && modal().querySelector('.patch-note.is-current .patch-note-badge:not(.is-in-progress)')?.textContent.includes(services.config.version)
         && modal().querySelector('.patch-note.is-current .patch-note-section li'),
@@ -4244,7 +4247,7 @@
       // On s'y rend à pied : Centre, puis le chemin du sud-est (bas-droite).
       // v0.80 : deux encarts — Ma compagnie (Compagnie, Coffre, Ligue) et Le domaine (Centre, Bourg, Taverne, Ma Lice, Scriptorium).
       const navGroups = [...app.querySelectorAll('.hub-nav')].map((nav) => [...nav.querySelectorAll('.hub-nav-item .hub-nav-label')].map((el) => el.textContent).join());
-      check(navGroups.join(' | ') === 'La Compagnie,Le Coffre,La Ligue | Le Centre,Le Bourg,La Taverne,Ma Lice,Le Scriptorium', `navigation : deux encarts, Ma compagnie et Le domaine (${navGroups.join(' | ')})`);
+      check(navGroups.join(' | ') === 'La Compagnie,Le Coffre,La Ligue | Le Centre,Le Bourg,La Taverne,Ma Lice,Le Scriptorium,Les Expéditions', `navigation : deux encarts, Ma compagnie et Le domaine (${navGroups.join(' | ')})`);
       // v0.80 : chaque lieu du domaine s'ouvre d'un clic depuis la colonne, sans passer par la carte.
       const navVisits = [];
       for (const [label, id] of [['Le Bourg', 'borough'], ['La Taverne', 'tavern'], ['Ma Lice', 'training'], ['Le Scriptorium', 'scriptorium']]) {
@@ -5819,10 +5822,10 @@
         const A = await import('../src/systems/achievements/AchievementService.js');
         const { ACHIEVEMENTS: AL, ACHIEVEMENT_CATEGORIES: AC, ACHIEVEMENT_DIFFICULTIES: AD, ACHIEVEMENT_RULES: AR } = await import('../src/data/achievements.js');
         const count = (difficulty) => AL.filter((a) => a.difficulty === difficulty).length;
-        check(AL.length === 40 && AL.map((a) => a.number).join() === Array.from({ length: 40 }, (_, i) => i + 1).join() && new Set(AL.map((a) => a.id)).size === 40
-          && AL.every((a) => AC[a.category] && AD[a.difficulty] && a.name && a.description && a.icon) && count('easy') === 11 && count('medium') === 18 && count('hard') === 11 && ['sans-egratignure', 'par-derriere', 'sans-partage', 'trois-armes'].every((id) => AL.find((a) => a.id === id).difficulty === 'easy')
+        check(AL.length === 47 && AL.map((a) => a.number).join() === Array.from({ length: 47 }, (_, i) => i + 1).join() && new Set(AL.map((a) => a.id)).size === 47
+          && AL.every((a) => AC[a.category] && AD[a.difficulty] && a.name && a.description && a.icon) && count('easy') === 13 && count('medium') === 20 && count('hard') === 14 && ['sans-egratignure', 'par-derriere', 'sans-partage', 'trois-armes'].every((id) => AL.find((a) => a.id === id).difficulty === 'easy')
           && AL.find((a) => a.number === 25).name === 'La graine parmi l’élite' && AL.find((a) => a.number === 20).name === 'Un pain dans la tronche' && AL.find((a) => a.number === 37).name === 'Un œil sur le Monde',
-          'succès : 40 succès numérotés (11 faciles dont les n° 3, 6, 35, 36 — 18 moyens, 11 difficiles), catégories et difficultés valides, noms validés (n° 20, 25, 37)');
+          'succès : 47 succès numérotés (13 faciles dont les n° 3, 6, 35, 36 — 20 moyens, 14 difficiles), catégories et difficultés valides, noms validés (n° 20, 25, 37)');
 
         // Une seule fois, annoncé, sauvegardé ; ancienne sauvegarde : compteurs à 0.
         const aGame = createRandomGame({ rng: createRng('succes') });
@@ -5961,7 +5964,7 @@
         window.behourd.screens.show('centre', {});
         await wait(30);
         const achButton = app.querySelector('.hub-actions .hub-achievements');
-        check(achButton && achButton.textContent.includes(`(${A.countUnlocked(aGame).unlocked} / 40)`), `succès (interface) : bouton « 🏅 Succès (n / 40) » dans l’encart Sauvegarde / Menu principal (${achButton?.textContent.trim()})`);
+        check(achButton && achButton.textContent.includes(`(${A.countUnlocked(aGame).unlocked} / 47)`), `succès (interface) : bouton « 🏅 Succès (n / 47) » dans l’encart Sauvegarde / Menu principal (${achButton?.textContent.trim()})`);
         achButton.click();
         await wait(10);
         const achModal = document.querySelector('.achievements-modal');
@@ -5976,10 +5979,10 @@
         button('Obtenus', achModal).click();
         await wait(5);
         const onlyUnlocked = achModal.querySelectorAll('.achievement-card').length;
-        check(allCards === 40 && unlockedCards === A.countUnlocked(aGame).unlocked && onlyUnlocked === unlockedCards && achDate.includes('Jour')
+        check(allCards === 47 && unlockedCards === A.countUnlocked(aGame).unlocked && onlyUnlocked === unlockedCards && achDate.includes('Jour')
           && tabs.join() === 'Tous,Obtenus,À conquérir' && !/\bn° ?\d|Facile|Moyen|Difficile/.test(achText)
           && sectionCount === 7,
-          `succès (interface) : les 40 succès rangés par catégorie, obtenus avec leur date (« ${achDate} ») ; ni numéro, ni difficulté, ni tri par difficulté`);
+          `succès (interface) : les 47 succès rangés par catégorie, obtenus avec leur date (« ${achDate} ») ; ni numéro, ni difficulté, ni tri par difficulté`);
         check(secretCard?.classList.contains('is-secret') && secretCard.textContent.includes('Exploit secret') && !secretCard.textContent.includes('mises KO')
           && secretCard.querySelector('.achievement-medal-face').textContent === '?' && !secretCard.querySelector('.achievement-progress')
           && openCard && !openCard.classList.contains('is-secret') && openCard.textContent.includes('combats') && openCard.querySelector('.achievement-progress')
@@ -6097,11 +6100,17 @@
         const allSoundFiles = [...new Set([...ambienceFiles, ...effectFiles])];
         const present = await Promise.all(allSoundFiles.map(async (file) => (await fetch(`../${file}`, { method: 'HEAD' })).ok));
         const engineSrc = await (await fetch('../src/audio/AudioEngine.js')).text();
-        check(present.every(Boolean) && allSoundFiles.length >= 30 && Object.values(AD.AMBIENCES).every((a) => (a.layers ?? []).length || (a.oneShots ?? []).length)
-          && Object.values(AD.SOUND_EFFECTS).every((e) => e.files.length) && AD.SOUND_EFFECTS.hit.files.length >= 6
+        check(present.every(Boolean) && allSoundFiles.length >= 24 && Object.values(AD.AMBIENCES).every((a) => (a.layers ?? []).length || (a.oneShots ?? []).length)
+          && Object.values(AD.SOUND_EFFECTS).every((e) => e.files.length) && AD.SOUND_EFFECTS.hit.files.length >= 3
           && AD.AUDIO_CREDITS.length >= 3 && AD.AUDIO_CREDITS.every((c) => c.license === 'CC0' && c.author && c.source)
           && !/createOscillator|noiseBuffer/.test(engineSrc),
           `son : ambiances et effets en vrais enregistrements (${allSoundFiles.length} fichiers, tous présents, licence CC0 créditée), plus aucun son synthétisé`);
+        // v1.1.5 : nouveaux bruitages du combat (Freesound, CC0) — l'acier pour les coups et le KO, une masse pour un gros coup.
+        check(AD.SOUND_EFFECTS.hit.files.join() === 'assets/audio/sfx/hit-steel-1.mp3,assets/audio/sfx/hit-steel-2.mp3,assets/audio/sfx/hit-steel-3.mp3'
+          && AD.SOUND_EFFECTS.bigHit.files.join() === 'assets/audio/sfx/bighit-steel-1.mp3,assets/audio/sfx/bighit-pipe-1.mp3'
+          && AD.SOUND_EFFECTS.ko.files.join() === 'assets/audio/sfx/ko-fall-1.mp3'
+          && AD.AUDIO_CREDITS.filter((c) => /Freesound/.test(c.source)).length === 3,
+          'son (v1.1.5) : coups d’épées, gros coups (choc d’épées, masse sur le métal), KO (chute dans la terre), crédités (Freesound, CC0)');
         check(AD.SCREEN_AUDIO['main-menu']?.music === 'taverne' && AD.AMBIENCES.centre.winterLayers && !AD.AMBIENCES.centre.winterLayers.some((l) => /forest/.test(l.file)),
           'son : la musique principale dès l’ouverture du jeu (écran principal) ; en hiver, le camp perd ses oiseaux (vent dans les arbres)');
         // Aiguillage : un moteur factice note ce qu'on lui demande.
@@ -6312,6 +6321,1704 @@
           && new Set(draws.map((e) => e.patternId)).size > 5 && new Set(draws.map((e) => e.colors.primary)).size > 5
           && shown && shown.outerHTML.includes(MENU_EMBLEM.resolvedColors().primary),
           `écran principal : emblème tiré au hasard (partition « ${MENU_EMBLEM.patternId} », ${colors.join(', ')}) — partition et trois couleurs distinctes`);
+      }
+
+      // ---------- v0.82 : application Android — bouton retour, détection ----------
+      {
+        const BB = await import('../src/ui/navigation/backButton.js');
+        const PF = await import('../src/core/platform.js');
+        const MD = await import('../src/ui/components/Modal.js');
+        const TUb = await import('../src/ui/tutorial/Tutorial.js');
+        const screensB = window.behourd.screens;
+        const bg = createRandomGame({ rng: createRng('android-retour') });
+        services.gameState.setSession(bg);
+        bg.markDirty?.();
+        screensB.show('tavern');
+        await wait(20);
+        const fromTavern = await BB.handleBack(screensB);
+        const atCentre = screensB.currentId;
+        const fromCentre = await BB.handleBack(screensB);
+        await wait(20);
+        const saveAsked = Boolean(document.querySelector('#modal-root .modal'));
+        const closeIt = await BB.handleBack(screensB);
+        await wait(10);
+        const stillCentre = screensB.currentId === 'centre' && !document.querySelector('#modal-root .modal');
+        // Fenêtre qui exige un choix : elle reste ouverte.
+        const stuck = MD.openModal({ title: 'Choix', body: 'x', dismissible: false });
+        const blocked = await BB.handleBack(screensB);
+        const stuckOpen = stuck.element.isConnected;
+        stuck.close();
+        // Tutoriel : le bouton retour ne fait rien.
+        TUb.startTutorial();
+        await wait(20);
+        const duringTuto = await BB.handleBack(screensB);
+        const tutoStill = TUb.isTutorialActive();
+        TUb.stopTutorial();
+        // Écran hors du domaine : son bouton « Retour » ; menu principal : l'application se ferme.
+        screensB.show('new-team', {});
+        await wait(20);
+        const fromNewTeam = await BB.handleBack(screensB);
+        await wait(20);
+        const afterNewTeam = screensB.currentId;
+        screensB.show('main-menu', {});
+        await wait(20);
+        let quitCalls = 0;
+        const fromMenu = await BB.handleBack(screensB, { quit: async () => { quitCalls++; return true; } });
+        check(fromTavern === 'centre' && atCentre === 'centre' && fromCentre === 'menu' && saveAsked && closeIt === 'modal' && stillCentre
+          && blocked === 'modal-blocked' && stuckOpen && duringTuto === 'tutorial' && tutoStill
+          && fromNewTeam === 'back' && afterNewTeam === 'new-game' && fromMenu === 'quit' && quitCalls === 1,
+          `Android : bouton retour — lieu → Centre → menu (sauvegarde proposée, refermée d’un appui), fenêtre fermée, choix obligatoire gardé, tutoriel intouché, « Retour » des autres écrans, fermeture au menu (${[fromTavern, fromCentre, closeIt, blocked, duringTuto, fromNewTeam, afterNewTeam, fromMenu].join(', ')})`);
+        // Détection : navigateur ici ; application Android quand Capacitor est natif.
+        const browserEnv = PF.detectEnvironment();
+        const noNative = PF.getNativeApp() === null && BB.installBackButton(screensB) === false;
+        const savedCap = window.Capacitor;
+        let exited = 0;
+        window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins: { App: { exitApp: async () => { exited++; }, addListener: () => ({}) } } };
+        const androidEnv = PF.detectEnvironment();
+        const quitOk = await PF.quitGame();
+        const listened = BB.installBackButton(screensB);
+        if (savedCap === undefined) delete window.Capacitor; else window.Capacitor = savedCap;
+        const { GAME_CONFIG: gcA } = await import('../src/config/gameConfig.js');
+        const htmlSrc = await (await fetch('../index.html')).text();
+        check(browserEnv === 'browser' && noNative && androidEnv === 'android' && quitOk === true && exited === 1 && listened === true
+          && gcA.android.viewportWidth === null && /viewport-fit=cover/.test(htmlSrc),
+          'Android : détection de l’application (Capacitor), « Quitter le jeu » ferme l’application, bouton retour branché ; largeur réelle de l’appareil (interface mobile), viewport-fit=cover');
+      }
+
+      // ---------- v0.83 : interface mobile (téléphone en paysage) ----------
+      {
+        const ML = await import('../src/ui/mobile/mobileLayout.js');
+        const sc = window.behourd.screens;
+        const mg = createRandomGame({ rng: createRng('interface-mobile') });
+        services.gameState.setSession(mg);
+        const detected = [ML.setupMobileLayout({ environment: 'browser', search: '' }), ML.setupMobileLayout({ environment: 'android', search: '' }),
+          ML.setupMobileLayout({ environment: 'browser', search: '?mobile=1' }), ML.setupMobileLayout({ environment: 'android', search: '?mobile=0' })];
+        ML.setMobileLayout(true);
+        sc.show('centre');
+        await wait(40);
+        const places = [...app.querySelectorAll('.m-places [data-hub-item]')].map((b) => b.dataset.hubItem).join();
+        const dock = [...app.querySelectorAll('.m-dock .m-dock-item')].map((b) => b.dataset.hubItem).join();
+        const sheet = app.querySelector('.m-map-page .m-sheet');
+        const stageAlone = app.querySelector('.m-map-page > .centre-stage') && !app.querySelector('.m-map-page > .zone-grid') && sheet?.querySelector('.zone-grid') && sheet.querySelector('.m-assign');
+        const advance = app.querySelector('.mobile-advance');
+        const closedFirst = sheet?.dataset.state === 'closed';
+        sheet.querySelector('.m-sheet-toggle').click();
+        const opened = sheet.dataset.state === 'open';
+        sc.current.closeMobileSheet();
+        check(detected.join() === 'false,true,true,false' && document.documentElement.classList.contains('is-mobile') && !app.querySelector('.hub-sidebar') && !app.querySelector('.hub-body')
+          && places === 'centre,borough,tavern,training,scriptorium,expeditions' && dock === 'team,domain,chest,league' && stageAlone && closedFirst && opened && sheet.dataset.state === 'closed'
+          && advance?.dataset.action === 'advance' && /Jour suivant/.test(advance.textContent) && app.querySelector('.mobile-day')?.textContent.includes(mg.playerTeam.name),
+          `mobile : carte en plein écran, lieux à gauche, dock (Compagnie, Domaine, Coffre, Ligue), « Jour suivant », le reste de la page dans un volet (${places} | ${dock})`);
+        // Jour de combat : le bouton rond devient « Combattre ».
+        mg.calendar.currentDay = mg.calendar.events.find((e) => e.typeId === 'combat').day;
+        sc.show('borough');
+        await wait(30);
+        const fightBtn = app.querySelector('.mobile-advance');
+        check(fightBtn?.dataset.action === 'fight' && fightBtn.classList.contains('is-fight') && app.querySelector('.m-place.is-active')?.dataset.hubItem === 'borough' && app.querySelector('.m-hud-event.is-urgent'),
+          'mobile : un jour de combat, le bouton rond devient « Combattre » et le bandeau l’annonce ; le lieu actif est surligné');
+        mg.calendar.currentDay = 1;
+        // La Compagnie : liste et fiche, sans fenêtre.
+        sc.show('team');
+        await wait(30);
+        const rows = app.querySelectorAll('.m-team-list .m-team-row');
+        const second = rows[1];
+        second.click();
+        await wait(20);
+        const sheetName = app.querySelector('.m-team-sheet .fighter-name-text')?.textContent;
+        const runners = [...app.querySelectorAll('.m-chip')].find((b) => b.textContent.startsWith('Runners'));
+        runners.click();
+        await wait(20);
+        const onlyRunners = [...app.querySelectorAll('.m-team-row')].every((row) => mg.getFighter(row.dataset.fighterId)?.specialtyId === 'runner');
+        check(rows.length === mg.playerFighters.length && sheetName === mg.getFighter(second.dataset.fighterId).name && app.querySelector('.m-team-sheet .fighter-sheet-grid')
+          && !document.querySelector('#modal-root .modal') && onlyRunners,
+          'mobile : La Compagnie — liste à gauche, fiche complète à droite (sans fenêtre), filtres par classe');
+        // La Taverne : potentiel et compétences sur les cartes des recrues ; le volet est ouvert.
+        sc.show('tavern');
+        await wait(40);
+        const recruit = app.querySelector('.tavern-recruit-item');
+        const sheetsClosed = [];
+        for (const place of ['tavern', 'scriptorium', 'borough', 'centre', 'training']) {
+          sc.show(place);
+          await wait(20);
+          sheetsClosed.push(app.querySelector('.m-sheet')?.dataset.state);
+        }
+        check(sheetsClosed.every((state) => state === 'closed') && recruit?.querySelector('.tavern-recruit-potential .potential-flames')
+          && recruit.querySelectorAll('.pfc-skill').length === 4,
+          `mobile : chaque lieu s’ouvre sur sa carte, volet fermé (${sheetsClosed.join()}) ; Taverne — potentiel et compétences sur chaque carte de recrue`);
+        // Menu et calendrier.
+        app.querySelector('.mobile-menu-button').click();
+        await wait(10);
+        const menuLabels = [...document.querySelectorAll('.m-drawer [data-menu]')].map((b) => b.textContent).join();
+        document.querySelector('.m-drawer-close')?.click();
+        app.querySelector('.mobile-day').click();
+        await wait(10);
+        const calendarOpen = Boolean(document.querySelector('.m-calendar-modal .calendar-strip'));
+        button('Fermer', document.querySelector('#modal-root .modal'))?.click();
+        await wait(10);
+        check(/^Sauvegarder,Succès.*,L’Almanach,Options,Patch Notes.*,Menu principal$/.test(menuLabels) && calendarOpen && !document.querySelector('#modal-root .modal'),
+          `mobile : menu (${menuLabels}) et calendrier complet d’un toucher`);
+        // Combat : placement — cartes avec compétences, fiche du combattant à placer.
+        mg.calendar.currentDay = mg.calendar.events.find((e) => e.typeId === 'combat').day;
+        sc.show('match');
+        await wait(30);
+        button('Équipe type', app).click();
+        await wait(10);
+        button('Valider l’effectif', app).click();
+        await wait(10);
+        button('Les moins fatigués', app).click();
+        await wait(10);
+        button('Placer dans La Lice', app).click();
+        await wait(60);
+        const ms = sc.current;
+        if (!ms.isPlayerTurn) await wait(2400);
+        const ownCards = app.querySelectorAll('.placement-side.is-own .placement-card');
+        const detail = app.querySelector('.placement-detail');
+        const firstOwn = mg.getFighter(ownCards[0]?.dataset.fighterId);
+        const keySkill = ownCards[0]?.querySelector('.pfc-skill.is-key .pfc-skill-label')?.textContent;
+        const expectKey = { lutteur: 'LUT', hastier: 'HAS', runner: 'PER' }[firstOwn?.specialtyId];
+        check(ms.step === 'placement' && ownCards.length === 5 && [...ownCards].every((c) => c.querySelectorAll('.pfc-skill').length === 4) && keySkill === expectKey
+          && !detail.hidden && detail.querySelectorAll('.pd-skill').length === 4 && detail.querySelector('.pd-role') && !/\bnull\b/.test(detail.textContent)
+          && !app.querySelector('.placement-enemy .pfc-skill'),
+          `mobile : placement — main de cartes (étoiles, 4 compétences, la clé de la classe en avant : ${keySkill}), fiche du combattant à placer ; jamais les statistiques adverses`);
+        ML.setMobileLayout(false);
+        sc.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.84 : interface mobile — entrée en jeu, Ma Lice ----------
+      {
+        const ML4 = await import('../src/ui/mobile/mobileLayout.js');
+        const sc4 = window.behourd.screens;
+        const cg = createRandomGame({ rng: createRng('mobile-continuer') });
+        services.gameState.setSession(cg);
+        services.saves.save(cg);
+        ML4.setMobileLayout(true);
+        sc4.show('main-menu', {});
+        await wait(20);
+        const menuLabels = [...app.querySelectorAll('.m-menu-nav .btn-menu')].map((b) => b.textContent).join();
+        const summary = app.querySelector('.m-continue-summary')?.textContent ?? '';
+        const noShowcase = !app.querySelector('.menu-showcase');
+        services.gameState.clear();
+        button('Continuer', app).click();
+        await wait(30);
+        check(menuLabels === 'Continuer,Nouvelle partie,Charger,Options' && summary.includes(cg.playerTeam.name) && noShowcase
+          && sc4.currentId === 'centre' && services.gameState.session?.saveId === cg.saveId,
+          `mobile : écran principal — « Continuer » reprend la dernière partie au Centre (${summary})`);
+        sc4.show('new-game', {});
+        await wait(20);
+        const landsDirect = Boolean(app.querySelector('.land-map')) && !app.querySelector('.europe-map') && button('Retour au menu', app) && !button('Carte de l’Europe', app);
+        const step1 = app.querySelector('.m-steps .m-step.is-current')?.textContent;
+        sc4.show('new-team', { countryId: 'fr', leagueId: 'league_3' });
+        await wait(20);
+        const step2 = app.querySelector('.m-steps .m-step.is-current')?.textContent;
+        sc4.show('training');
+        await wait(30);
+        const liceSheet = app.querySelector('.m-sheet')?.dataset.state;
+        check(landsDirect && step1 === '1 · Terre' && step2 === '2 · Blason' && liceSheet === 'closed',
+          'mobile : nouvelle partie — directement la carte des Terres (seule la France est jouable), étapes Terre · Blason · Capitaine ; Ma Lice visible, volet fermé');
+        ML4.setMobileLayout(false);
+        sc4.show('main-menu', {});
+        await wait(20);
+        const desktopMenu = [...app.querySelectorAll('.main-menu-nav .btn-menu')].map((b) => b.textContent).join();
+        sc4.show('new-game', {});
+        await wait(20);
+        check(desktopMenu === 'Jouer,Charger,Options,Quitter le jeu' && app.querySelector('.europe-map') && !app.querySelector('.m-steps'),
+          'mobile : la version ordinateur garde son menu (Jouer, Charger, Options, Quitter) et la carte de l’Europe, sans étapes mobiles');
+        services.saves.delete(cg.saveId);
+        sc4.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v1.1 : expéditions singulières (dix duels en forêt) ----------
+      {
+        const XS1 = await import('../src/systems/expeditions/ExpeditionService.js');
+        const SR1 = await import('../src/systems/expeditions/SingularRunService.js');
+        const SD1 = await import('../src/data/singularExpedition.js');
+        const INV1 = await import('../src/systems/inventory/InventoryService.js');
+        const { ARENAS: AR1 } = await import('../src/data/arenas.js');
+        const { getLiceDecoration: gld1 } = await import('../src/data/liceDecorations.js');
+        const { seasonWeatherParticles: swp1 } = await import('../src/render/seasonLook.js');
+        const { isOnPeregrination: away1 } = await import('../src/systems/expeditions/journeys.js');
+        const { getStat: gs1, setStat: ss1 } = await import('../src/systems/fighters/stats.js');
+        const { calculateFighterLevel: lvl1, getStarRating: stars1 } = await import('../src/systems/fighters/ratings.js');
+        const { Fighter: F1 } = await import('../src/models/Fighter.js');
+        const { getResource: res1 } = await import('../src/systems/economy/wallet.js');
+        const { isUnlocked: unl1 } = await import('../src/systems/achievements/AchievementService.js');
+        const { PROP_RENDERERS: PR1 } = await import('../src/render/propRenderers.js');
+        // Données : 20 bonus, 10 récompenses ; lice du Sentier deux fois plus petite ; décor et météo.
+        const deco = gld1('lice_sentier');
+        const rain = swp1('autumn', 3, { x: 0, y: 0, w: 10, h: 8 }, 1, deco.weather.autumn);
+        const none = swp1('summer', 3, { x: 0, y: 0, w: 10, h: 8 }, 1, deco.weather.summer ?? null);
+        check(SD1.SINGULAR_BOONS.length === 20 && SD1.SINGULAR_REWARDS.length === 10 && new Set(SD1.SINGULAR_BOONS.map((b) => b.id)).size === 20
+          && AR1.sentier.width === 7 && AR1.sentier.height === 4 && AR1.lice.width === 13 && AR1.lice.height === 8
+          && deco.exclusiveTo === 'singular' && deco.weather.autumn === 'rain' && deco.weather.winter === 'snow' && !deco.weather.summer && !deco.weather.spring
+          && rain.length > 0 && rain.every((p) => p.shape === 'spark') && none.length === 0 && ['pine', 'cabin', 'animal'].every((t) => typeof PR1[t] === 'function')
+          && deco.fixed.some((p) => p.type === 'cabin') && deco.fixed.filter((p) => p.type === 'animal').length >= 3,
+          'expéditions singulières : 20 bonus, 10 récompenses de fin ; lice du Sentier 7 × 4 (La Lice : 13 × 8) en forêt — pins, cabane, bêtes ; pluie en automne, neige en hiver, rien sinon');
+        // Adversaires : étoiles par tranche, dernier combat (talents), talents de combat seulement.
+        const bandsOk = [0, 1, 2].map((b) => {
+          const def = SD1.SINGULAR_RULES.bands[b];
+          const opp = SR1.generateSingularOpponents(b, createRng(`adv-${b}`));
+          const real = opp.map((o) => stars1(lvl1(F1.fromJSON(o.fighter))));
+          const boss = opp[9];
+          return opp.length === 10 && opp.every((o, i) => real[i] === o.stars && o.stars >= def.minStars && o.stars <= def.bossStars)
+            && boss.boss && boss.stars === def.bossStars && boss.talents.length === def.bossTalents
+            && opp.slice(0, 5).every((o) => !o.talents.length)
+            && opp.flatMap((o) => o.talents).every((id) => SR1.opponentTalentPool('common').concat(SR1.opponentTalentPool('rare'), SR1.opponentTalentPool('epic')).some((t) => t.id === id));
+        });
+        check(bandsOk.every(Boolean),
+          'adversaires : 2 à 3,5 étoiles (dernier 3,5 et un talent), 2,5 à 4 (dernier 4, un talent), 4 à 5 (dernier 5, deux talents) ; talents de combat, à partir du 6e combat');
+        // Départ : trois combattants exactement, ni épuisé ni en étude ; Ferveurs dépensées ; jours arrêtés.
+        const g1 = createRandomGame({ rng: createRng('singuliere-v11') });
+        services.gameState.setSession(g1);
+        INV1.addItem(g1, 'ferveur_reine', 60);
+        const s1 = XS1.ensureSeasonOffers(g1);
+        const offer1 = s1.offers[0];
+        offer1.kind = 'singular';
+        offer1.opponents = SR1.generateSingularOpponents(0, createRng('adv-test'));
+        offer1.reward = { type: 'talent', rarity: 'rare', talentId: 'bourreau' };
+        const [a1, b1, c1, d1] = g1.playerFighters;
+        ss1(d1, 'fatigue', 100);
+        const tooFew = XS1.startExpedition(g1, offer1.id, [a1.id, b1.id]);
+        const exhausted = !SR1.canJoinSingular(g1, d1).ok && !XS1.startExpedition(g1, offer1.id, [a1.id, b1.id, d1.id]).ok;
+        const before1 = INV1.getItemQuantity(g1, 'ferveur_reine');
+        const go1 = XS1.startExpedition(g1, offer1.id, [a1.id, b1.id, c1.id]);
+        const run1 = SR1.getSingularRun(g1);
+        check(!tooFew.ok && exhausted && go1.ok && run1?.fighterIds.length === 3 && INV1.getItemQuantity(g1, 'ferveur_reine') === before1 - XS1.getOfferCost(g1, offer1)
+          && away1(g1, a1) && !away1(g1, d1) && !XS1.canChooseOffer(g1, s1.offers[1].id).ok && run1.opponents.length === 10,
+          'départ : trois combattants exactement (un épuisé à 100 refusé), Ferveurs dépensées ; ils sont en expédition ; une seule expédition à la fois');
+        // Combattre : un perdant est KO, un autre reprend le même combat contre l'adversaire fatigué.
+        const weak = (f) => { ['polearm', 'wrestling', 'percussion', 'endurance'].forEach((k) => ss1(f, k, 3)); };
+        const strong = (o) => { Object.assign(o.fighter.stats, { polearm: 95, wrestling: 95, percussion: 95, endurance: 95 }); };
+        weak(a1);
+        run1.opponents.forEach(strong);
+        const lost1 = SR1.fightNext(g1, a1.id, { rng: createRng('perdu') });
+        const afterLoss = SR1.getSingularRun(g1);
+        const koOk = !lost1.won && afterLoss.ko.includes(a1.id) && afterLoss.stage === 0 && afterLoss.opponentFatigue === Math.round(lost1.simulation.final.find((u) => u.side === 'B').fatigue)
+          && !SR1.canFightNext(g1, a1.id).ok && gs1(a1, 'fatigue') === Math.round(lost1.simulation.final.find((u) => u.side === 'A').fatigue);
+        // Abandon possible à tout moment : perdue, Ferveurs comprises.
+        const ferveursBefore = INV1.getItemQuantity(g1, 'ferveur_reine');
+        SR1.abandonRun(g1);
+        check(koOk && !SR1.getSingularRun(g1) && g1.expeditions.lastRun.outcome === 'abandoned' && INV1.getItemQuantity(g1, 'ferveur_reine') === ferveursBefore && !away1(g1, a1),
+          `défaite : ${a1.name} KO jusqu’à la fin, même combat à reprendre, l’adversaire garde sa fatigue (${afterLoss.opponentFatigue}) ; abandon : expédition perdue, sans remboursement`);
+        // Trois KO : expédition perdue.
+        const g2 = createRandomGame({ rng: createRng('singuliere-perdue') });
+        services.gameState.setSession(g2);
+        INV1.addItem(g2, 'ferveur_reine', 60);
+        const s2 = XS1.ensureSeasonOffers(g2);
+        s2.offers[0].kind = 'singular';
+        s2.offers[0].opponents = SR1.generateSingularOpponents(0, createRng('adv-perdue'));
+        const team2 = g2.playerFighters.slice(0, 3);
+        XS1.startExpedition(g2, s2.offers[0].id, team2.map((f) => f.id));
+        SR1.getSingularRun(g2).opponents.forEach(strong);
+        team2.forEach(weak);
+        team2.forEach((f, i) => SR1.fightNext(g2, f.id, { rng: createRng(`p${i}`) }));
+        check(!SR1.getSingularRun(g2) && g2.expeditions.lastRun.outcome === 'lost',
+          'les trois combattants KO : l’expédition est perdue (Ferveurs comprises)');
+        // Victoire : dix combats, une proposition gardée entre chaque, bonus appliqués.
+        const g3 = createRandomGame({ rng: createRng('singuliere-gagnee') });
+        services.gameState.setSession(g3);
+        INV1.addItem(g3, 'ferveur_reine', 60);
+        const s3 = XS1.ensureSeasonOffers(g3);
+        const o3 = s3.offers[0];
+        o3.kind = 'singular';
+        o3.opponents = SR1.generateSingularOpponents(0, createRng('adv-gagnee'));
+        o3.reward = { type: 'talent', rarity: 'rare', talentId: 'bourreau' };
+        const team3 = g3.playerFighters.slice(0, 3);
+        team3.forEach((f) => Object.assign(f.stats, { polearm: 95, wrestling: 95, percussion: 95, endurance: 95, fatigue: 0 }));
+        team3[0].talents = ['fourbe', 'fidele'];
+        XS1.startExpedition(g3, o3.id, team3.map((f) => f.id));
+        const r3 = SR1.getSingularRun(g3);
+        r3.opponents.forEach((o) => { Object.assign(o.fighter.stats, { polearm: 4, wrestling: 4, percussion: 4, endurance: 4 }); });
+        let choices = 0; let mixOk = true; let hypocrasOk = null; let smokeOk = null;
+        for (let i = 0; i < 40; i++) {
+          const run = g3.expeditions.run;
+          if (!run || run.phase === 'victory') break;
+          if (run.phase === 'choice') {
+            choices++;
+            const kinds = run.options.map((o) => o.kind).sort().join();
+            if (run.options.length !== 3 || kinds !== 'boon,boon,reward') mixOk = false;
+            if (choices === 1) {
+              run.options[0] = { kind: 'boon', id: 'gourde-d-hypocras' };
+              SR1.chooseOption(g3, 0, team3[1].id);
+              hypocrasOk = SR1.boonsOf(run, team3[1].id).some((b) => b.id === 'gourde-d-hypocras' && b.fightsLeft === 1);
+            } else if (choices === 2) {
+              run.options[0] = { kind: 'boon', id: 'fumee-des-pins' };
+              SR1.chooseOption(g3, 0);
+              smokeOk = SR1.currentOpponent(run).fatigue === 25;
+            } else if (choices === 3) {
+              run.options[2] = { kind: 'reward', id: 'grosse-bourse' };
+              SR1.chooseOption(g3, 2);
+            } else {
+              const t = SR1.optionTargets(g3, run, run.options[0]);
+              SR1.chooseOption(g3, 0, t[0] ?? null);
+            }
+            continue;
+          }
+          const who = SR1.fightersAbleToFight(g3);
+          const pickId = choices === 1 && who.includes(team3[1].id) ? team3[1].id : who[0];
+          SR1.fightNext(g3, pickId, { rng: createRng(`g${i}`) });
+          if (choices === 1 && pickId === team3[1].id) hypocrasOk = hypocrasOk && !SR1.boonsOf(g3.expeditions.run, team3[1].id).some((b) => b.id === 'gourde-d-hypocras');
+        }
+        const run3 = g3.expeditions.run;
+        const claims3 = SR1.getVictoryClaims(g3, run3);
+        const purse3 = res1(g3, 'deniers');
+        const noSlot = XS1.claimSingularVictory(g3, { card: { fighterId: team3[0].id } });
+        const assignments = Object.fromEntries(claims3.map((c, i) => [c.key, { fighterId: c.kind === 'talent' && c.key === 'card' ? team3[0].id : c.eligible.find((id) => id !== team3[0].id) ?? c.eligible[0], slot: 1 }]));
+        const won3 = XS1.claimSingularVictory(g3, assignments);
+        check(run3?.phase === 'victory' && choices === 9 && mixOk && hypocrasOk && smokeOk && !noSlot.ok
+          && won3.ok && team3[0].talents.join() === 'fourbe,bourreau' && res1(g3, 'deniers') >= purse3 + 1000 && !g3.expeditions.run && g3.expeditions.lastRun.outcome === 'won'
+          && unl1(g3, 'premiere-route'),
+          `victoire : dix combats, ${choices} propositions (2 bonus + 1 récompense, une gardée) ; Gourde d’hypocras pour un combat, Fumée des pins (+25 de fatigue à l’adversaire) ; talent de la carte au choix (${team3[0].talents.join(' + ')}), Grosse bourse reçue`);
+        // Écran : frise des dix combats, choix du combattant, bouton du calendrier.
+        const g4 = createRandomGame({ rng: createRng('singuliere-ecran') });
+        services.gameState.setSession(g4);
+        INV1.addItem(g4, 'ferveur_reine', 60);
+        const s4 = XS1.ensureSeasonOffers(g4);
+        s4.offers[0].kind = 'singular';
+        s4.offers[0].opponents = SR1.generateSingularOpponents(1, createRng('adv-ecran'));
+        XS1.startExpedition(g4, s4.offers[0].id, g4.playerFighters.slice(0, 3).map((f) => f.id));
+        window.behourd.screens.show('centre');
+        await wait(40);
+        const calBtn = document.querySelector('.btn-singular')?.textContent ?? '';
+        window.behourd.screens.show('singular-expedition');
+        await wait(60);
+        const nodes = document.querySelectorAll('.sx-timeline .sx-node').length;
+        const members = document.querySelectorAll('.sx-member').length;
+        const boss = document.querySelector('.sx-node.is-boss')?.title ?? '';
+        document.querySelector('.sx-fight')?.click();
+        await wait(40);
+        const playing = Boolean(document.querySelector('.sx-skip'));
+        document.querySelector('.sx-skip')?.click();
+        await wait(20);
+        document.querySelector('.sx-next')?.click();
+        await wait(20);
+        check(/EXPÉDITION EN COURS/.test(calBtn) && nodes === 10 && members === 3 && /4 étoiles/.test(boss) && playing && SR1.getSingularRun(g4).history.length === 1,
+          'écran : bouton « Expédition en cours » à la place du jour suivant ; frise des dix combats (le dernier marqué), trois combattants au choix, combat rejoué dans la lice');
+        // v1.1.4 : sur téléphone, la lice en plein écran (maquette A) ; l'adversaire s'ouvre au toucher.
+        {
+          const ML11 = await import('../src/ui/mobile/mobileLayout.js');
+          ML11.setMobileLayout(true);
+          window.behourd.screens.show('singular-expedition');
+          await wait(60);
+          const wrap = document.querySelector('.sx-canvas-wrap');
+          const screenRect = document.querySelector('.screen-singular').getBoundingClientRect();
+          const wrapRect = wrap.getBoundingClientRect();
+          const fightRect = document.querySelector('.sx-fight').getBoundingClientRect();
+          const opp = document.querySelector('.sx-opponent');
+          const full = getComputedStyle(wrap).position === 'absolute' && Math.abs(wrapRect.width - screenRect.width) < 2 && Math.abs(wrapRect.height - screenRect.height) < 2;
+          const thumbs = fightRect.right > screenRect.width * 0.6 && fightRect.bottom > screenRect.height * 0.7;
+          opp.click();
+          await wait(20);
+          const sheet = Boolean(document.querySelector('#modal-root .sx-opponent-modal'));
+          document.querySelector('#modal-root .sx-opponent-modal .modal-actions .btn')?.click();
+          await wait(10);
+          ML11.setMobileLayout(false);
+          check(full && thumbs && opp.getAttribute('role') === 'button' && sheet && document.querySelector('.sx-back')?.textContent === '◂',
+            'téléphone (maquette A) : la lice en plein écran, « Combattre » en bas à droite, fiche de l’adversaire au toucher, retour compact');
+        }
+        SR1.abandonRun(g4);
+        // v1.1.3 : succès des expéditions singulières (44 à 47).
+        {
+          const ACH3 = await import('../src/systems/achievements/AchievementService.js');
+          const ga = createRandomGame({ rng: createRng('succes-singulieres') });
+          const [x, y] = ga.playerFighters;
+          const won = (id) => ({ fighterId: id, won: true });
+          // Deux combattants, une défaite : Sentier des pins seulement.
+          ACH3.recordSingularVictory(ga, { band: 0, history: [won(x.id), { fighterId: y.id, won: false }, ...Array(10).fill(0).map(() => won(x.id))] });
+          const first = ['sentier-des-pins', 'trois-debout', 'loup-solitaire', 'seigneur-des-cimes'].map((id) => ACH3.isUnlocked(ga, id)).join();
+          // Sans KO, deux combattants : Trois debout ; tranche 3 : Seigneur des cimes.
+          ACH3.recordSingularVictory(ga, { band: 2, history: [...Array(5).fill(0).map(() => won(x.id)), ...Array(5).fill(0).map(() => won(y.id))] });
+          const second = ['trois-debout', 'loup-solitaire', 'seigneur-des-cimes'].map((id) => ACH3.isUnlocked(ga, id)).join();
+          // Les dix par le même : Loup solitaire.
+          ACH3.recordSingularVictory(ga, { band: 0, history: Array(10).fill(0).map(() => won(x.id)) });
+          check(first === 'true,false,false,false' && second === 'true,false,true' && ACH3.isUnlocked(ga, 'loup-solitaire') && run3 && unl1(g3, 'sentier-des-pins'),
+            'succès 44–47 : Le Sentier des pins (première victoire), Trois debout (aucun KO), Loup solitaire (dix combats, un seul combattant), Seigneur des cimes (tranche la plus chère)');
+        }
+        // v1.1.1 (simulation de six saisons) : plus personne en état après une halte → perdue ;
+        // Amulette de l'ours jamais proposée à qui l'a déjà ; jamais plus de 3 flammes.
+        {
+          const g5 = createRandomGame({ rng: createRng('singuliere-v111') });
+          services.gameState.setSession(g5);
+          INV1.addItem(g5, 'ferveur_reine', 60);
+          const s5 = XS1.ensureSeasonOffers(g5);
+          s5.offers[0].kind = 'singular';
+          s5.offers[0].opponents = SR1.generateSingularOpponents(0, createRng('adv-v111'));
+          s5.offers[0].reward = { type: 'potential', value: 1 };
+          const t5 = g5.playerFighters.slice(0, 3);
+          XS1.startExpedition(g5, s5.offers[0].id, t5.map((f) => f.id));
+          const r5 = SR1.getSingularRun(g5);
+          // Amulette : les trois l'ont → plus jamais proposée.
+          t5.forEach((f) => r5.boons.push({ id: 'amulette-de-l-ours', fighterId: f.id, fightsLeft: null }));
+          const seen = new Set(Array.from({ length: 60 }, (_, i) => SR1.rollOptions(g5, r5, createRng(`o${i}`)).map((o) => o.id)).flat());
+          // Potentiel : carte +1 et Flamme nouvelle au même combattant à 2 flammes → refusé.
+          r5.phase = 'victory';
+          r5.stage = 10;
+          r5.rewards = [{ id: 'flamme-nouvelle' }];
+          t5[0].potential = 2;
+          const both = XS1.claimSingularVictory(g5, { card: { fighterId: t5[0].id }, 'reward-0': { fighterId: t5[0].id } });
+          // Halte : deux KO, le troisième épuisé → la proposition gardée, l'expédition est perdue.
+          r5.phase = 'choice';
+          r5.stage = 4;
+          r5.ko = [t5[0].id, t5[1].id];
+          ss1(t5[2], 'fatigue', 100);
+          r5.options = [{ kind: 'reward', id: 'bourse-du-chasseur' }];
+          SR1.chooseOption(g5, 0);
+          check(!seen.has('amulette-de-l-ours') && !both.ok && /3 flammes/.test(both.reason) && !SR1.getSingularRun(g5) && g5.expeditions.lastRun.outcome === 'lost',
+            'v1.1.1 : plus personne en état après une halte → expédition perdue (plus de blocage) ; Amulette de l’ours jamais proposée deux fois ; jamais plus de 3 flammes de potentiel');
+        }
+        window.behourd.screens.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v1.0 : talents d'expédition ; succès des expéditions ----------
+      {
+        const XS0 = await import('../src/systems/expeditions/ExpeditionService.js');
+        const INV0 = await import('../src/systems/inventory/InventoryService.js');
+        const TE0 = await import('../src/systems/talents/TalentEffects.js');
+        const ACH0 = await import('../src/systems/achievements/AchievementService.js');
+        const { TALENTS: T0 } = await import('../src/data/talents.js');
+        const { ACHIEVEMENTS: AL0 } = await import('../src/data/achievements.js');
+        const { advanceDay: adv0 } = await import('../src/systems/time/TimeSystem.js');
+        const { buildLogbookView: blv0 } = await import('../src/ui/report/logbookFormats.js');
+        const { getStat: gs0 } = await import('../src/systems/fighters/stats.js');
+        const { daysSinceReturn: dsr0 } = await import('../src/systems/expeditions/journeys.js');
+        const ids0 = ['marcheur', 'retour-du-pelerin', 'devot', 'eclaireur', 'voyageur-aguerri', 'compagnon-du-capitaine'];
+        const defs0 = ids0.map((id) => T0.find((t) => t.id === id));
+        check(defs0.every((t) => t && t.sources.join() === 'tavern,study') && defs0.map((t) => t.rarity).join() === 'common,common,common,rare,rare,epic',
+          `talents d’expédition : ${defs0.map((t) => t?.name).join(', ')} (3 ordinaires, 2 rares, 1 épique), à la Taverne et au Scriptorium`);
+        // Éclaireur (−1 Ferveur, non cumulable, 1 au moins) et Marcheur (−4 jours).
+        const g0 = createRandomGame({ rng: createRng('talents-expedition') });
+        services.gameState.setSession(g0);
+        INV0.addItem(g0, 'ferveur_reine', 60);
+        const s0 = XS0.ensureSeasonOffers(g0);
+        const [o1, o2, o3] = s0.offers;
+        o1.cost = 1; o2.cost = 10; o2.duration = 24; o2.kind = 'peregrination';
+        o2.reward = { type: 'deniers', amount: 2000 };
+        const [walker, scout, scout2] = g0.playerFighters;
+        const baseCost = XS0.getOfferCost(g0, o2);
+        scout.talents = ['eclaireur'];
+        scout2.talents = ['eclaireur'];
+        walker.talents = ['marcheur', 'compagnon-du-capitaine'];
+        const cut = XS0.getOfferCost(g0, o2);
+        const floor = XS0.getOfferCost(g0, o1);
+        const days = XS0.getJourneyDuration(walker, o2);
+        const before0 = INV0.getItemQuantity(g0, 'ferveur_reine');
+        const purse0 = g0.player.resources.deniers;
+        const go0 = XS0.startExpedition(g0, o2.id, walker.id);
+        check(baseCost === 10 && cut === 9 && floor === 1 && days === 20 && go0.ok && go0.journey.duration === 20 && go0.journey.band === 1
+          && INV0.getItemQuantity(g0, 'ferveur_reine') === before0 - 9,
+          `Éclaireur : expéditions à ${cut} Ferveurs au lieu de 10 (deux Éclaireurs : pas de cumul ; jamais sous 1) ; Marcheur : 24 → ${days} jours`);
+        // Compagnon du Capitaine : seconde récompense de la même tranche, jamais un talent.
+        let back0 = null; let view0 = null;
+        for (let i = 0; i < 25 && !back0; i++) {
+          const r = adv0(g0, { rng: createRng(`j0-${i}`) });
+          back0 = r.ofType('expedition.return')[0] ?? null;
+          if (back0) view0 = blv0(r, { session: g0 });
+        }
+        const line0 = view0?.tiles.flatMap((t) => t.lines).find((l) => /revient d’expédition/.test(l.text))?.text ?? '';
+        let bonusTypes = new Set();
+        for (let k = 0; k < 30; k++) {
+          const gk = createRandomGame({ rng: createRng(`compagnon-${k}`) });
+          INV0.addItem(gk, 'ferveur_reine', 60);
+          const sk = XS0.ensureSeasonOffers(gk);
+          const fk = gk.playerFighters[0];
+          fk.talents = ['compagnon-du-capitaine'];
+          fk.potential = 1;
+          sk.offers[0].kind = 'peregrination'; sk.offers[0].duration = 20;
+          sk.offers[0].reward = { type: 'deniers', amount: 600 };
+          XS0.startExpedition(gk, sk.offers[0].id, fk.id);
+          for (let i = 0; i < 22; i++) adv0(gk, { rng: createRng(`jk-${k}-${i}`) });
+          const bonus = gk.expeditions.journeys[0].bonusResult;
+          if (bonus) bonusTypes.add(bonus.type);
+        }
+        check(back0?.bonusReward && back0.bonusReward.type !== 'talent' && /Compagnon du Baron/.test(line0) && g0.player.resources.deniers >= purse0 + 2000
+          && !bonusTypes.has('talent') && bonusTypes.size >= 2,
+          `Compagnon du Baron : seconde récompense (${back0?.bonusReward?.type} ; vues sur 30 retours : ${[...bonusTypes].join(', ')}), jamais un talent, notée au carnet`);
+        // Voyageur aguerri : +2 dans chaque compétence de combat (plafond).
+        const gv = createRandomGame({ rng: createRng('voyageur-aguerri') });
+        services.gameState.setSession(gv);
+        INV0.addItem(gv, 'ferveur_reine', 60);
+        const sv = XS0.ensureSeasonOffers(gv);
+        const fv = gv.playerFighters[0];
+        fv.talents = ['voyageur-aguerri'];
+        fv.potential = 3;
+        const skills = ['polearm', 'wrestling', 'percussion', 'endurance'];
+        const sk0 = skills.map((id) => gs0(fv, id));
+        sv.offers[0].kind = 'peregrination'; sv.offers[0].duration = 20;
+        sv.offers[0].reward = { type: 'deniers', amount: 700 };
+        XS0.startExpedition(gv, sv.offers[0].id, fv.id);
+        let backV = null;
+        for (let i = 0; i < 22 && !backV; i++) backV = adv0(gv, { rng: createRng(`jv-${i}`) }).ofType('expedition.return')[0] ?? null;
+        const gained = skills.map((id, i) => gs0(fv, id) - sk0[i]);
+        check(backV?.training && gained.every((g, i) => g === backV.training[skills[i]] && g >= 0 && g <= 2) && gained.some((g) => g === 2),
+          `Voyageur aguerri : au retour, compétences +${gained.join(' / +')} (HAS, LUT, PER, END ; plafond respecté)`);
+        // Retour du pèlerin : +6 % pendant les 10 jours qui suivent le retour.
+        fv.talents = ['retour-du-pelerin'];
+        const since = dsr0(gv, fv);
+        const active = TE0.combatEffectsOf(fv, { season: 'summer', daysSinceReturn: since }).some((e) => e.talentId === 'retour-du-pelerin');
+        const late = TE0.combatEffectsOf(fv, { season: 'summer', daysSinceReturn: 11 }).some((e) => e.talentId === 'retour-du-pelerin');
+        const never = TE0.combatEffectsOf(fv, { season: 'summer', daysSinceReturn: null }).some((e) => e.talentId === 'retour-du-pelerin');
+        check(since !== null && since >= 0 && since <= 1 && active && !late && !never,
+          `Retour du pèlerin : actif ${since} jour(s) après le retour, plus après 10 jours, jamais sans expédition`);
+        // Dévot : +1 Ferveur (non cumulable).
+        const devots = gv.playerFighters.slice(0, 2);
+        devots.forEach((f) => { f.talents = ['devot']; });
+        check(TE0.queenFerveurBonus(devots) === 1 && TE0.queenFerveurBonus([gv.playerFighters[3]]) === 0,
+          'Dévot : +1 Ferveur de la Reine par Combat de la Reine gagné, même avec deux Dévots');
+        // Succès 41–43 (catégorie Monde).
+        const ach = AL0.filter((a) => a.number >= 41 && a.number <= 43);
+        const gA = createRandomGame({ rng: createRng('succes-expeditions') });
+        services.gameState.setSession(gA);
+        const before41 = ACH0.isUnlocked(gA, 'premiere-route');
+        ['broceliande', 'gavarnie', 'tintagel', 'glencoe'].forEach((p) => ACH0.recordExpeditionDeparture(gA, p));
+        ACH0.recordExpeditionDeparture(gA, 'glencoe');
+        const four = !ACH0.isUnlocked(gA, 'pelerins-d-europe') && ACH0.getAchievementProgress(gA, 'pelerins-d-europe').value === 4;
+        ACH0.recordExpeditionDeparture(gA, 'meteores');
+        const five = ACH0.isUnlocked(gA, 'pelerins-d-europe');
+        ACH0.recordExpeditionReturn(gA);
+        gA.playerFighters[0].talents = ['feu-follet', 'avalanche'];
+        ACH0.checkAchievements(gA);
+        const two = !ACH0.isUnlocked(gA, 'merveilles-d-ailleurs') && ACH0.exoticTalentCount(gA) === 2;
+        gA.playerFighters[1].talents = ['avalanche', 'echo-des-cimes'];
+        ACH0.checkAchievements(gA);
+        check(ach.map((a) => a.id).join() === 'premiere-route,pelerins-d-europe,merveilles-d-ailleurs' && ach.every((a) => a.category === 'world')
+          && !before41 && ACH0.isUnlocked(gA, 'premiere-route') && four && five && two && ACH0.isUnlocked(gA, 'merveilles-d-ailleurs'),
+          'succès 41–43 (Monde) : Première route au premier retour, Pèlerins d’Europe à 5 lieux différents (4/5 avant), Merveilles d’ailleurs à 3 exotiques différents');
+        window.behourd.screens.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.99 : récompenses des expéditions ; talents exotiques ----------
+      {
+        const XS9 = await import('../src/systems/expeditions/ExpeditionService.js');
+        const XD9 = await import('../src/data/expeditions.js');
+        const INV9 = await import('../src/systems/inventory/InventoryService.js');
+        const TS9 = await import('../src/systems/talents/TalentService.js');
+        const { TALENTS: T9, TALENT_RARITIES: TR9 } = await import('../src/data/talents.js');
+        const { combatEffectsOf: cfx9 } = await import('../src/systems/talents/TalentEffects.js');
+        const { createCombatUnit: ccu9 } = await import('../src/combat/engine/CombatUnit.js');
+        const { simulateRound: sim9 } = await import('../src/combat/engine/CombatManager.js');
+        const { prepareTalentUnits: prep9, talentStrikeModifiers: tsm9, ignoresFatigue: ign9, isLastStanding: last9 } = await import('../src/combat/engine/TalentCombat.js');
+        const { createArena: arena9 } = await import('../src/combat/Arena.js');
+        const { COMBAT_RULES } = await import('../src/data/combatRules.js');
+        const { generateRecruitmentPool: pool9 } = await import('../src/systems/tavern/TavernService.js');
+        const { DailyReport: DR9 } = await import('../src/systems/report/DailyReportService.js');
+        const { buildLogbookView: blv9 } = await import('../src/ui/report/logbookFormats.js');
+        const { advanceDay: adv9 } = await import('../src/systems/time/TimeSystem.js');
+        const { getResource: res9 } = await import('../src/systems/economy/wallet.js');
+        // Famille exotique : verte, 10 talents, seulement par les expéditions (ni Taverne, ni étude).
+        const exotics = T9.filter((t) => t.rarity === 'exotic');
+        const drawn = new Set();
+        for (let i = 0; i < 400; i++) {
+          drawn.add(TS9.rollTalent('tavern', createRng(`tv${i}`))?.rarity);
+          drawn.add(TS9.rollTalent('study', createRng(`st${i}`))?.rarity);
+          drawn.add(TS9.rollTalentWithOdds('study', { common: 0.2, rare: 0.3, epic: 0.5 }, createRng(`ro${i}`)).talent?.rarity);
+        }
+        check(TR9.exotic?.name === 'Exotique' && /^#[0-9a-f]{6}$/i.test(TR9.exotic.color) && exotics.length === 10
+          && exotics.every((t) => t.sources.length === 1 && t.sources[0] === 'expedition') && !drawn.has('exotic')
+          && TS9.pickTalentOfRarity('study', 'exotic', createRng('x')).talent?.rarity !== 'exotic',
+          `talents exotiques : famille verte, ${exotics.length} talents (${exotics.map((t) => t.name).join(', ')}), jamais à la Taverne ni au Scriptorium`);
+        // Combat : unités de manche d'après les talents (combattant d'une vraie partie).
+        const gc = createRandomGame({ rng: createRng('exotiques-combat') });
+        const [fa, fb, fc] = gc.playerFighters;
+        const unitOf9 = (fighter, talents, side, x, y) => {
+          fighter.talents = talents;
+          return ccu9({ fighter, side, tile: { x, y }, fatigue: 0, talentEffects: cfx9(fighter) });
+        };
+        const ours = unitOf9(fa, ['ours-de-bialowieza', 'avalanche'], 'A', 5, 3);
+        const ascete = unitOf9(fb, ['ascete-des-meteores', 'oeil-de-skellig'], 'A', 5, 4);
+        const foe9 = unitOf9(fc, ['feu-follet', 'druide-de-broceliande'], 'B', 7, 3);
+        check(Math.abs(ours.damageTakenReduction - 0.15) < 1e-9 && ours.comboExtra === 2 && Math.abs(ours.speedBonus - 0.15) < 1e-9
+          && ascete.fatigueEffort === 0 && ascete.fatigueShift === 40 && ascete.preferWounded === 6
+          && foe9.dodgeChance === 0.15 && foe9.allyHeal?.value === 40 && foe9.allyHeal.available,
+          'talents exotiques en combat : Ours (−15 % reçus), Avalanche (+2 coups, +15 % vitesse), Ascète (sans effort, pénalités à 90), Œil de Skellig, Feu follet, Druide');
+        // Écho des cimes : −5 % reçus pour toute sa manche ; Dernier rempart ; Fureur du Nord.
+        const echo = unitOf9(fa, ['echo-des-cimes'], 'A', 5, 3);
+        const mate = unitOf9(fb, [], 'A', 5, 4);
+        const rempart = unitOf9(fc, ['dernier-rempart', 'fureur-du-nord'], 'B', 7, 3);
+        prep9([echo, mate, rempart]);
+        const aloneB = last9(rempart, [echo, mate, rempart]);
+        const modsVsRempart = tsm9(echo, rempart, [echo, mate, rempart], COMBAT_RULES);
+        const modsRempart = tsm9(rempart, echo, [echo, mate, rempart], COMBAT_RULES);
+        rempart.hp = 40;
+        const furyLow = ign9(rempart, echo, [echo, mate, rempart]);
+        rempart.hp = 90;
+        const furyHigh = ign9(rempart, echo, [echo, mate, rempart]);
+        check(Math.abs(mate.damageTakenReduction - 0.05) < 1e-9 && Math.abs(echo.damageTakenReduction - 0.05) < 1e-9 && Math.abs(mate.auraBonus - 0.07) < 1e-9
+          && aloneB && Math.abs(modsVsRempart.reduction - 0.2) < 1e-9 && Math.abs(modsRempart.bonus - 0.3) < 1e-9 && furyLow && !furyHigh,
+          `Écho des cimes (+7 % / −5 % pour la manche), Dernier rempart (seul debout : +30 %, −20 % reçus), Fureur du Nord (sous 50 % : la fatigue ne compte plus) — bonus ${modsRempart.bonus.toFixed(2)}`);
+        // Vraies manches : esquives (Feu follet) à 0 dégât et soin du Druide (une fois par manche, PV justes).
+        const lice9 = arena9();
+        let dodges = 0; let heals = 0; let healOk = true; let dodgeOk = true;
+        for (let k = 0; k < 10; k++) {
+          const g9 = createRandomGame({ rng: createRng(`manche-exo-${k}`) });
+          const fs = g9.playerFighters;
+          const units = [
+            unitOf9(fs[0], ['feu-follet'], 'A', 5, 2), unitOf9(fs[1], ['druide-de-broceliande'], 'A', 5, 4), unitOf9(fs[2], [], 'A', 4, 3),
+            unitOf9(fs[3], ['avalanche'], 'B', 7, 2), unitOf9(fs[4], ['lame-d-avalon'], 'B', 7, 4), unitOf9(fs[5], ['oeil-de-skellig'], 'B', 8, 3),
+          ];
+          const sim = sim9({ arena: lice9, units, rng: createRng(`exo-${k}`) });
+          const attacks = sim.events.filter((e) => e.type === 'attack');
+          for (const e of attacks.filter((a) => a.detail.dodged)) { dodges++; if (e.damage !== 0 || e.targetId !== fs[0].id) dodgeOk = false; }
+          const healEvents = sim.events.filter((e) => e.type === 'heal');
+          heals += healEvents.length;
+          if (healEvents.length > 1) healOk = false;
+          for (const e of attacks.filter((a) => a.detail.heal)) if (e.hpAfter > 100 || e.hpAfter <= 0 || e.detail.heal.unitId !== fs[1].id) healOk = false;
+        }
+        check(dodges > 0 && dodgeOk && heals > 0 && healOk,
+          `vraies manches : ${dodges} esquives (Feu follet, aucun dégât) et ${heals} soins du Druide (un par manche au plus, PV corrects)`);
+        // Propositions : tranches 1–5, 6–10, 11–18 ; récompenses et durées ; probabilités.
+        const counts = [{}, {}, {}];
+        let durOk = true; let amountOk = true; let rarityOk = true; let talentKnown = true;
+        for (let i = 0; i < 300; i++) {
+          for (const o of XS9.generateOffers(createRng(`rw${i}`))) {
+            const key = o.reward.type === 'talent' ? `talent:${o.reward.rarity}` : o.reward.type;
+            counts[o.band][key] = (counts[o.band][key] ?? 0) + 1;
+            if (o.kind !== 'singular' && (o.duration < 20 || o.duration > 30)) durOk = false;
+            if (o.kind === 'singular' && (o.duration !== null || o.opponents?.length !== 10)) durOk = false;
+            if (o.reward.type === 'deniers') {
+              const [lo, hi] = [[500, 1000], [1500, 3000], [5000, 7000]][o.band];
+              if (o.reward.amount < lo || o.reward.amount > hi) amountOk = false;
+            }
+            if (o.reward.type === 'talent') {
+              const t = TS9.getTalent(o.reward.talentId);
+              if (!t || t.rarity !== o.reward.rarity) talentKnown = false;
+            }
+            if (o.reward.type === 'talent' && !({ 0: ['common'], 1: ['rare', 'epic'], 2: ['epic', 'exotic'] })[o.band].includes(o.reward.rarity)) rarityOk = false;
+          }
+        }
+        const bands9 = XD9.EXPEDITION_RULES.costBands.map((b) => `${b.min}–${b.max}`).join(', ');
+        const keys = counts.map((c) => Object.keys(c).sort().join());
+        const near = (n, p) => Math.abs(n / 300 - p) < 0.09;
+        check(bands9 === '1–5, 6–10, 11–18' && durOk && amountOk && rarityOk && talentKnown
+          && keys[0] === 'deniers,potential,recruit,talent:common' && keys[1] === 'deniers,talent:epic,talent:rare' && keys[2] === 'deniers,talent:epic,talent:exotic'
+          && near(counts[0].potential, 0.25) && near(counts[0].recruit, 0.25) && near(counts[1].deniers, 0.33) && near(counts[2]['talent:exotic'], 0.33),
+          `expéditions : tranches ${bands9}, 20–30 jours ; récompenses par tranche (${keys.join(' | ')}) ; +1 potentiel seulement dans la première`);
+        // Talent : deux talents → choisir au départ celui qu'il remplace ; remplacé au retour.
+        const gt = createRandomGame({ rng: createRng('expedition-talent') });
+        services.gameState.setSession(gt);
+        INV9.addItem(gt, 'ferveur_reine', 60);
+        const st = XS9.ensureSeasonOffers(gt);
+        st.offers[2].kind = 'peregrination';
+        st.offers[2].reward = { type: 'talent', rarity: 'exotic', talentId: 'feu-follet' };
+        st.offers[2].duration = 21;
+        const ft = gt.playerFighters[0];
+        ft.talents = ['fourbe', 'fidele'];
+        const already = gt.playerFighters[1];
+        already.talents = ['feu-follet'];
+        const refusedSame = !XS9.canSendOnExpedition(gt, already, st.offers[2]).ok;
+        const noSlot = XS9.startExpedition(gt, st.offers[2].id, ft.id);
+        const goT = XS9.startExpedition(gt, st.offers[2].id, ft.id, { replaceSlot: 0 });
+        let backT = null;
+        let tileT = null;
+        for (let i = 0; i < 30 && !backT; i++) {
+          const r = adv9(gt, { rng: createRng(`jt-${i}`) });
+          backT = r.ofType('expedition.return')[0] ?? null;
+          if (backT) tileT = blv9(r, { session: gt }).tiles.find((t) => t.id === 'expeditions');
+        }
+        check(refusedSame && !noSlot.ok && /remplacera/.test(noSlot.reason) && goT.ok && goT.journey.replaceSlot === 0 && backT
+          && ft.talents.join() === 'feu-follet,fidele' && backT.reward.previousId === 'fourbe' && tileT?.lines.some((l) => /Feu follet/.test(l.text) && /Fourbe/.test(l.text)),
+          `Pérégrination (talent exotique) : sans choix du talent remplacé, refusée ; au retour, ${ft.talents.join(' + ')} (noté au carnet) ; un combattant qui l'a déjà ne peut pas partir`);
+        // Deniers et recrue offerte (gardée aux rotations et par la sauvegarde, recrutée gratuitement).
+        const gd = createRandomGame({ rng: createRng('expedition-deniers') });
+        services.gameState.setSession(gd);
+        INV9.addItem(gd, 'ferveur_reine', 60);
+        const sd = XS9.ensureSeasonOffers(gd);
+        sd.offers[1].reward = { type: 'deniers', amount: 2222 };
+        sd.offers[1].kind = 'peregrination'; sd.offers[1].duration = 20;
+        const purse0 = res9(gd, 'deniers');
+        XS9.startExpedition(gd, sd.offers[1].id, gd.playerFighters[0].id);
+        for (let i = 0; i < 22; i++) adv9(gd, { rng: createRng(`jd-${i}`) });
+        const gotDeniers = gd.expeditions.journeys[0].status === 'completed' && gd.expeditions.journeys[0].rewardResult?.amount === 2222;
+        const gr = createRandomGame({ rng: createRng('expedition-recrue') });
+        services.gameState.setSession(gr);
+        INV9.addItem(gr, 'ferveur_reine', 60);
+        const sr = XS9.ensureSeasonOffers(gr);
+        sr.offers[0].reward = { type: 'recruit', minPotential: 1 };
+        sr.offers[0].kind = 'peregrination'; sr.offers[0].duration = 20;
+        XS9.startExpedition(gr, sr.offers[0].id, gr.playerFighters[0].id);
+        let backR = null;
+        for (let i = 0; i < 25 && !backR; i++) backR = adv9(gr, { rng: createRng(`jr-${i}`) }).ofType('expedition.return')[0] ?? null;
+        const gift = gr.recruitment.candidates.find((c) => c.gift);
+        pool9(gr, createRng('rotation-apres'));
+        const keptRot = gr.recruitment.candidates.some((c) => c.id === gift?.id);
+        services.saves.save(gr);
+        const reR = services.saves.load(gr.saveId);
+        const keptSave = reR.recruitment.candidates.find((c) => c.id === gift?.id)?.gift?.placeId === gift?.gift.placeId;
+        services.saves.delete(gr.saveId);
+        gr.player.resources.deniers = 0;
+        const { recruit: hire9 } = await import('../src/systems/tavern/TavernService.js');
+        const hired = hire9(gr, gift?.id ?? '');
+        check(gotDeniers && backR?.reward.type === 'recruit' && gift && gift.cost === 0 && gift.fighter.potential >= 1 && keptRot && keptSave && hired.ok && hired.cost === 0,
+          `récompenses : +2 222 deniers au Trésor ; recrue ramenée (${gift?.fighter.name}, potentiel ${gift?.fighter.potential}) offerte à la Taverne, gardée aux rotations et par la sauvegarde, engagée sans deniers`);
+        // Écran du Capitaine : les deux natures s'entreprennent ; récompense sur chaque carte ; choix du talent remplacé.
+        const gu9 = createRandomGame({ rng: createRng('capitaine-v099') });
+        services.gameState.setSession(gu9);
+        INV9.addItem(gu9, 'ferveur_reine', 40);
+        const su9 = XS9.ensureSeasonOffers(gu9);
+        su9.offers[0].kind = 'peregrination'; su9.offers[0].reward = { type: 'recruit', minPotential: 1 };
+        su9.offers[1].kind = 'singular'; su9.offers[1].reward = { type: 'deniers', amount: 2500 };
+        su9.offers[2].kind = 'peregrination'; su9.offers[2].reward = { type: 'talent', rarity: 'exotic', talentId: 'avalanche' };
+        gu9.playerFighters[0].talents = ['fourbe', 'fidele'];
+        window.behourd.screens.show('expeditions');
+        await wait(40);
+        window.behourd.screens.current.openCaptain();
+        await wait(20);
+        const cards9 = [...document.querySelectorAll('#modal-root .xp-card')];
+        const allOpen = cards9.every((c) => !c.querySelector('.xp-frame').disabled);
+        const rewardsShown = /recrue/i.test(cards9[0]?.textContent) && /2\s?500 deniers/.test(cards9[1]?.textContent.replace(/ /g, ' ')) && cards9[2]?.querySelector('.talent-badge[data-rarity="exotic"]');
+        cards9[2]?.querySelector('.xp-frame').click();
+        await wait(20);
+        document.querySelector(`#modal-root .xp-picker-modal .xp-fighter[data-fighter-id="${gu9.playerFighters[0].id}"]`)?.click();
+        await wait(10);
+        const slotShown = Boolean(document.querySelector('#modal-root .xp-picker-modal .xp-slot-picker.is-pending'));
+        const confirm9 = document.querySelector('#modal-root .xp-picker-modal .modal-actions .btn-primary');
+        const blocked = confirm9?.disabled;
+        document.querySelector('#modal-root .xp-picker-modal .xp-slot-picker input[value="1"]')?.click();
+        await wait(10);
+        const unlocked = !confirm9?.disabled;
+        check(cards9.length === 3 && allOpen && rewardsShown && slotShown && blocked && unlocked,
+          'expéditions : Pérégrination et Expédition singulière s’entreprennent ; récompense sur chaque carte (recrue, deniers, talent exotique) ; deux talents → choisir celui remplacé avant de partir');
+        document.querySelectorAll('#modal-root .modal').forEach(() => document.querySelector('#modal-root .modal .modal-actions .btn')?.click());
+        await wait(10);
+        window.behourd.screens.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.98 : expéditions du Capitaine (Pérégrinations) ; Ferveurs au carnet ----------
+      {
+        const XS = await import('../src/systems/expeditions/ExpeditionService.js');
+        const XD = await import('../src/data/expeditions.js');
+        const INV8 = await import('../src/systems/inventory/InventoryService.js');
+        const MS8 = await import('../src/systems/match/MatchService.js');
+        const AS8 = await import('../src/systems/activities/ActivityService.js');
+        const SS8 = await import('../src/systems/talents/StudyService.js');
+        const { DailyReport: DR8 } = await import('../src/systems/report/DailyReportService.js');
+        const { buildLogbookView: blv8 } = await import('../src/ui/report/logbookFormats.js');
+        const { advanceDay: adv8 } = await import('../src/systems/time/TimeSystem.js');
+        // Carnet : victoire de la Reine → Ferveurs dans le sceau et en annonce.
+        const gl = createRandomGame({ rng: createRng('carnet-ferveurs') });
+        const rq = new DR8(5);
+        rq.add({ type: 'queen.result', opponentTeamId: gl.leagues[0].teamIds.find((id) => id !== gl.player.teamId), won: true, roundsFor: 2, roundsAgainst: 1, reward: 120, ferveurs: 3 });
+        const view8 = blv8(rq, { session: gl });
+        check(/\+3 Ferveurs de la Reine/.test(view8.seal.subtitle) && view8.notices.some((n) => /Ferveurs de la Reine/.test(`${n.who} ${n.text}`) && /\+3/.test(n.text)),
+          `carnet de bord : la victoire de la Reine indique les Ferveurs obtenues (« ${view8.seal.subtitle} »)`);
+        // Propositions : 3 par saison, une par tranche de coût, lieux différents, nature au hasard.
+        const offers8 = XS.generateOffers(createRng('offres'));
+        const bandsOk = offers8.every((o, i) => o.cost >= XD.EXPEDITION_RULES.costBands[i].min && o.cost <= XD.EXPEDITION_RULES.costBands[i].max);
+        const placesOk = new Set(offers8.map((o) => o.placeId)).size === 3 && offers8.every((o) => XD.getExpeditionPlace(o.placeId));
+        const pere = offers8.filter((o) => o.kind === 'peregrination');
+        const kindsSeen = new Set(Array.from({ length: 40 }, (_, i) => XS.generateOffers(createRng(`k${i}`)).map((o) => o.kind)).flat());
+        check(offers8.length === 3 && bandsOk && placesOk && pere.every((o) => o.duration >= 20 && o.duration <= 30 && o.reward) && kindsSeen.has('peregrination') && kindsSeen.has('singular')
+          && XD.EXPEDITION_PLACES.length >= 12 && XD.EXPEDITION_PLACES.every((p) => p.name && p.region && p.theme),
+          `expéditions : trois propositions (coûts ${offers8.map((o) => o.cost).join(', ')} dans 1–5, 6–10, 11–18), lieux d’Europe différents, Pérégrination ou Expédition singulière au hasard`);
+        // Partir : Ferveurs dépensées, combattant indisponible ; une seule expédition par saison.
+        const gx = createRandomGame({ rng: createRng('peregrination-v098') });
+        services.gameState.setSession(gx);
+        check(!XS.canTalkExpeditions(gx), 'expéditions : sans Ferveur, le Capitaine ne propose rien');
+        INV8.addItem(gx, 'ferveur_reine', 30);
+        const season8 = XS.ensureSeasonOffers(gx);
+        season8.offers.forEach((o, i) => { o.kind = i === 2 ? 'singular' : 'peregrination'; o.duration = 22; o.reward = { type: 'potential', value: 1 }; });
+        const fx8 = gx.playerFighters.find((f) => f.potential < 3) ?? gx.playerFighters[0];
+        fx8.potential = Math.min(fx8.potential ?? 0, 2);
+        const maxed8 = gx.playerFighters.find((f) => f !== fx8);
+        maxed8.potential = 3;
+        const refusedMax = !XS.canSendOnPeregrination(gx, maxed8).ok;
+        const before8 = fx8.potential;
+        const cost8 = season8.offers[0].cost;
+        const go = XS.startPeregrination(gx, season8.offers[0].id, fx8.id);
+        const spent = INV8.getItemQuantity(gx, 'ferveur_reine') === 30 - cost8;
+        const away = !SS8.isFighterAvailable(gx, fx8) && /expédition/.test(MS8.canSelectForMatch(gx, fx8).reason ?? '')
+          && !AS8.assignActivity(gx, fx8.id, AS8.listActivities(gx)[1].id).ok && !SS8.canStartStudy(gx, fx8.id).ok;
+        const lockedOthers = !XS.canChooseOffer(gx, season8.offers[1].id).ok && !XS.startPeregrination(gx, season8.offers[1].id, gx.playerFighters.find((f) => f !== fx8 && f.potential < 3)?.id ?? '').ok;
+        check(go.ok && refusedMax && spent && away && lockedOthers && go.journey.endDay === gx.calendar.currentDay + 22,
+          'Pérégrination : Ferveurs dépensées, le combattant part (ni combat, ni Centre, ni étude) ; potentiel déjà à 3 refusé ; une seule expédition par saison');
+        // Sauvegarde : l'état des expéditions est gardé.
+        services.saves.save(gx);
+        const reloaded8 = services.saves.load(gx.saveId);
+        const kept8 = reloaded8.expeditions?.journeys?.length === 1 && reloaded8.expeditions.chosenOfferId === season8.offers[0].id && !SS8.isFighterAvailable(reloaded8, fx8.id);
+        services.saves.delete(gx.saveId);
+        // Retour : au bout des jours, potentiel +1 (3 au plus), au carnet de bord.
+        let returned = null;
+        for (let i = 0; i < 30 && !returned; i++) {
+          const report8 = adv8(gx, { rng: createRng(`jour-${i}`) });
+          returned = report8.ofType('expedition.return')[0] ?? null;
+          if (returned) {
+            const lv = blv8(report8, { session: gx });
+            returned.logged = lv.tiles.some((t) => t.id === 'potential' && t.lines.some((l) => /expédition/.test(l.text)));
+          }
+        }
+        check(kept8 && returned && returned.fighterId === fx8.id && fx8.potential === Math.min(3, before8 + 1) && returned.logged && SS8.isFighterAvailable(gx, fx8),
+          `Pérégrination : retour au bout de 22 jours, potentiel ${before8} → ${fx8.potential} (noté au carnet de bord), le combattant redevient disponible ; état gardé par la sauvegarde`);
+        // Nouvelle saison : nouvelles propositions, nouveau choix possible.
+        const key8 = gx.expeditions.seasonKey;
+        gx.calendar.currentDay += 25;
+        const next8 = XS.ensureSeasonOffers(gx);
+        check(next8.seasonKey !== key8 && next8.chosenOfferId === null && next8.offers.length === 3,
+          'expéditions : renouvelées à chaque saison — un nouveau choix devient possible');
+        // Écran : le Capitaine montre ses trois cartes illustrées (gain et durée sous les Pérégrinations).
+        const gu = createRandomGame({ rng: createRng('capitaine-cartes') });
+        services.gameState.setSession(gu);
+        INV8.addItem(gu, 'ferveur_reine', 20);
+        const su = XS.ensureSeasonOffers(gu);
+        su.offers[0].kind = 'peregrination'; su.offers[0].duration = 25; su.offers[0].reward = { type: 'potential', value: 1 };
+        su.offers[1].kind = 'singular';
+        window.behourd.screens.show('expeditions');
+        await wait(40);
+        window.behourd.screens.current.openCaptain();
+        await wait(20);
+        const cards8 = [...document.querySelectorAll('#modal-root .xp-card')];
+        const firstText = cards8[0]?.textContent ?? '';
+        const artOk = cards8.every((c) => c.querySelector('.xp-art svg') && c.querySelector('.xp-cost') && c.querySelector('.xp-badge'));
+        check(cards8.length === 3 && artOk && /\+1 potentiel/.test(firstText) && /25 jours/.test(firstText) && /Pérégrination/.test(firstText)
+          && /Expédition singulière/.test(cards8[1].textContent),
+          'expéditions : trois cartes illustrées (lieu, nature, coût en Ferveurs) ; sous une Pérégrination, « +1 potentiel » et sa durée');
+        document.querySelectorAll('#modal-root .modal').forEach(() => document.querySelector('#modal-root .modal .modal-actions .btn-primary')?.click());
+        await wait(10);
+        window.behourd.screens.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.97 : Ferveurs de la Reine ----------
+      {
+        const Q7 = await import('../src/systems/queen/QueenCombatService.js');
+        const INV7 = await import('../src/systems/inventory/InventoryService.js');
+        const CS7 = await import('../src/systems/items/ConsumableService.js');
+        const { getItemDefinition: gid7 } = await import('../src/data/items.js');
+        const { QUEEN_COMBAT_CONFIG: QC7 } = await import('../src/data/queenCombat.js');
+        const item7 = gid7('ferveur_reine');
+        check([Q7.getFerveurReward(4), Q7.getFerveurReward(2.5), Q7.getFerveurReward(0.5), Q7.getFerveurReward(5)].join() === '4,2,0,5'
+          && item7?.keepsake && !item7.usableIn.length && item7.effect === null && /rose/.test(item7.description) && item7.sprite.endsWith('ferveur_reine.svg') && QC7.ferveur.itemId === 'ferveur_reine',
+          'Ferveurs de la Reine : autant que d’étoiles pleines de l’adversaire (4 → 4, 2,5 → 2) ; objet sans usage (petit billet rose)');
+        // Victoire : les Ferveurs vont au Coffre (cumulables) ; défaite : rien.
+        let won7 = null;
+        let lost7 = null;
+        for (let i = 0; i < 12 && (!won7 || !lost7); i++) {
+          const gq = createRandomGame({ rng: createRng(`ferveurs-${i}`) });
+          const ev = gq.calendar.events.find((e) => e.typeId === 'queen');
+          gq.calendar.currentDay = ev.day;
+          Q7.generateQueenCombat(gq, ev, createRng(`tirage-${i}`));
+          const option = ev.data.options[0];
+          INV7.addItem(gq, 'ferveur_reine', 3);
+          const { report } = Q7.playQueenCombatAutomatically(gq, ev, option.teamId, createRng(`combat-${i}`));
+          const entry = { report, stars: ev.data.selectedStars, have: INV7.getItemQuantity(gq, 'ferveur_reine') };
+          if (report.won && !won7) won7 = entry;
+          if (!report.won && !lost7) lost7 = entry;
+        }
+        check(won7 && won7.report.ferveurs === Math.floor(won7.stars) && won7.have === 3 + Math.floor(won7.stars) && (!lost7 || (lost7.report.ferveurs === 0 && lost7.have === 3)),
+          `Ferveurs de la Reine : victoire contre ${won7?.stars} étoiles → +${won7?.report.ferveurs} dans Le Coffre (cumulées : ${won7?.have}) ; défaite : aucune`);
+        // Coffre : rangées, empilées, sans « Utiliser » ; jamais utilisables.
+        const g7 = createRandomGame({ rng: createRng('coffre-ferveurs') });
+        services.gameState.setSession(g7);
+        INV7.addItem(g7, 'ferveur_reine', 5);
+        INV7.addItem(g7, 'ferveur_reine', 2);
+        const { openChest: oc7 } = await import('../src/ui/components/ChestModal.js');
+        const chest7 = oc7({ session: g7 });
+        await wait(10);
+        const row7 = document.querySelector('#modal-root .chest-item[data-item="ferveur_reine"]');
+        const rowText7 = row7?.textContent ?? '';
+        const noUse = row7 && ![...row7.querySelectorAll('button')].some((b) => b.textContent === 'Utiliser');
+        chest7?.close?.();
+        document.querySelectorAll('#modal-root .modal').forEach(() => document.querySelector('#modal-root .modal .btn-primary')?.click());
+        await wait(10);
+        check(noUse && /×7/.test(rowText7) && !CS7.canUseItem(g7, 'ferveur_reine', { context: 'outsideCombat' }).ok,
+          'Coffre : les Ferveurs s’empilent (×7), sans bouton « Utiliser » — elles se gardent');
+        // Choix de l'adversaire : la récompense en Ferveurs à côté des deniers.
+        const gq7 = createRandomGame({ rng: createRng('choix-ferveurs') });
+        services.gameState.setSession(gq7);
+        const evq = gq7.calendar.events.find((e) => e.typeId === 'queen');
+        gq7.calendar.currentDay = evq.day;
+        Q7.generateQueenCombat(gq7, evq, createRng('tirage-choix'));
+        window.behourd.screens.show('match');
+        await wait(40);
+        const cards7 = [...app.querySelectorAll('.queen-option')];
+        const shown7 = cards7.map((card) => card.querySelector('.queen-option-ferveurs')?.textContent ?? '');
+        const expected7 = cards7.map((card) => {
+          const stars = Q7.getClubStars(gq7, card.dataset.teamId);
+          const n = Q7.getFerveurReward(stars);
+          return `${n} ferveur${n > 1 ? 's' : ''}`;
+        });
+        check(cards7.length && shown7.join() === expected7.join() && cards7.every((card) => /deniers/.test(card.querySelector('.queen-option-reward').textContent)),
+          `Combat de la Reine : chaque adversaire montre ses deniers et ses Ferveurs (${shown7.join(', ')})`);
+        window.behourd.screens.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.96 : le Bourg sans carrefour ; Les Expéditions ----------
+      {
+        const { BOROUGH_LAYOUT: BL } = await import('../src/data/boroughLayout.js');
+        const { EXPEDITIONS_LAYOUT: EL } = await import('../src/data/expeditionsLayout.js');
+        const { CENTRE_LAYOUT: CL } = await import('../src/data/centreLayout.js');
+        const { ExpeditionScene } = await import('../src/expeditions/ExpeditionScene.js');
+        const { HUB_LOCATIONS: HL } = await import('../src/ui/hub/hubLocations.js');
+        const { getSpectatorSprite: gss } = await import('../src/data/spectators.js');
+        const { PROP_RENDERERS: PR } = await import('../src/render/propRenderers.js');
+        const NAV = await import('../src/systems/navigation/LocationNavigationService.js');
+        // Bourg : une seule rue (nord-ouest → sud-est), de l'herbe entre Boulanger et Sénéchal, Menuisier et Bûcheron.
+        const { BoroughScene: BS } = await import('../src/borough/BoroughScene.js');
+        const bs = new BS();
+        const grassBetween = [[8, 10], [9, 11], [8, 2], [9, 3]].every(([x, y]) => !bs.isPath(x, y));
+        const street = Array.from({ length: 17 }, (_, x) => bs.isPath(x, 6) && bs.isPath(x, 7)).every(Boolean);
+        const toExp = NAV.resolveTravel('bourg_path_south_east');
+        check(BL.paths.length === 1 && grassBetween && street && toExp.screen === 'expeditions' && toExp.params.arrivalExitId === 'expeditions_path_north_west'
+          && NAV.getExits('EXPEDITIONS').map((e) => `${e.id}:${e.destination}`).join() === 'expeditions_path_north_west:BOURG'
+          && NAV.getExits('BOURG').find((e) => e.id === 'bourg_path_south_east').position.w === 1 && NAV.getExits('BOURG').find((e) => e.id === 'bourg_path_south_east').position.h === 2,
+          'Bourg : plus de carrefour — la rue du marché rendue à l’herbe ; seule la grande rue (Centre ↔ Expéditions), une case 1 × 2 et un poteau en bas du Bourg mènent aux Expéditions');
+        // Carte des Expéditions : taille du Centre, rivière et pont, marché au nord, montagne au sud, le Capitaine (5 × 5).
+        const es = new ExpeditionScene();
+        const river = Array.from({ length: es.height }, (_, y) => es.isWater(8, y) && es.isWater(9, y)).every(Boolean);
+        const bridge = EL.props.find((p) => p.type === 'bridge');
+        const north = EL.props.filter((p) => p.x + (p.w ?? 1) <= 8 && ['stall', 'crate', 'barrel', 'flourSacks', 'cart'].includes(p.type)).length;
+        const civilians = EL.villagers.filter((v) => (v.x ?? v.path?.[0].x) < 8).length;
+        const mountains = EL.props.filter((p) => p.type === 'mountain' && p.x >= EL.wildFrom).length;
+        const zone = EL.captain.area;
+        check(EL.width === CL.width && EL.height === CL.height && river && bridge.x === 8 && bridge.y === 6 && north >= 8 && civilians >= 4 && mountains >= 2
+          && zone.w === 5 && zone.h === 5 && zone.x >= EL.wildFrom && es.targetAt(13, 7) === 'captain' && es.targetAt(3, 3) === null
+          && gss('expedition_captain')?.heightScale > 1.1 && typeof PR.mountain === 'function' && HL.some((item) => item.id === 'expeditions' && item.screen === 'expeditions'),
+          `Expéditions : carte de la taille du Centre (${EL.width} × ${EL.height}), rivière de droite à gauche et pont au milieu, marché au nord (${north} étals et marchandises, ${civilians} civils), montagne au sud (${mountains} pics), le Capitaine et sa zone 5 × 5 ; bouton « Les Expéditions »`);
+        // L'écran : climat, Capitaine cliquable, retour au Bourg.
+        const g6 = createRandomGame({ rng: createRng('expeditions-v096') });
+        services.gameState.setSession(g6);
+        const sc6b = window.behourd.screens;
+        sc6b.show('expeditions');
+        await wait(60);
+        const ren6 = sc6b.current.renderer;
+        const seasonOk = ren6.season === (await import('../src/systems/climate/ClimateService.js')).getCurrentSeason(g6).id;
+        ren6.render(1);
+        const cr6 = sc6b.current.canvas.getBoundingClientRect();
+        const pc = ren6.toScreen(13.5, 7.5);
+        sc6b.current.canvas.dispatchEvent(new MouseEvent('click', { clientX: cr6.left + pc.x, clientY: cr6.top + pc.y, bubbles: true }));
+        await wait(20);
+        const captainModal = document.querySelector('#modal-root .expedition-captain-modal')?.textContent ?? '';
+        document.querySelector('#modal-root .expedition-captain-modal .btn-primary')?.click();
+        await wait(10);
+        const exits6 = ren6.exits.map((e) => e.id).join();
+        // Été : la grande rivière ne s'assèche pas (eau basse).
+        ren6.season = 'summer';
+        ren6.render(2);
+        check(seasonOk && /Le Baron/.test(captainModal) && exits6 === 'expeditions_path_north_west' && EL.river.neverDry,
+          'Expéditions : climat de la saison (sol, rivière, neige des pics, météo) ; toucher le Capitaine ou son camp ouvre sa fenêtre (dialogue à venir) ; le chemin du nord ramène au Bourg');
+        // Téléphone : le volet fermé reste fermé (aucun contenu par-dessus la carte) ; six lieux au-dessus des boutons.
+        const ML6b = await import('../src/ui/mobile/mobileLayout.js');
+        ML6b.setMobileLayout(true);
+        sc6b.show('centre');
+        await wait(30);
+        const closedHidden = getComputedStyle(app.querySelector('.m-sheet .m-sheet-content')).display === 'none';
+        const placesBottom = app.querySelector('.m-places').getBoundingClientRect().bottom;
+        const togglesTop = app.querySelector('.m-sheet-toggles').getBoundingClientRect().top;
+        check(closedHidden && app.querySelectorAll('.m-places .m-place').length === 6,
+          `téléphone : volet fermé invisible sur la carte du Centre ; six lieux à gauche (${Math.round(placesBottom)} px) au-dessus des boutons du volet (${Math.round(togglesTop)} px)`);
+        ML6b.setMobileLayout(false);
+        sc6b.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.95 : téléphone — affectations par lieu, classement ----------
+      {
+        const ML5 = await import('../src/ui/mobile/mobileLayout.js');
+        const AB = await import('../src/ui/mobile/AssignBoard.js');
+        const AS5 = await import('../src/systems/activities/ActivityService.js');
+        const sc5 = window.behourd.screens;
+        const g5 = createRandomGame({ rng: createRng('affectations-lieux-v095') });
+        services.gameState.setSession(g5);
+        ML5.setMobileLayout(true);
+        sc5.show('centre');
+        await wait(30);
+        app.querySelector('.m-sheet-toggle[data-part="assignments"]').click();
+        await wait(10);
+        const cols = [...app.querySelectorAll('.m-assign-col')].map((c) => c.dataset.activity);
+        const expectedCols = ['rest', ...AS5.listActivities(g5).map((a) => a.id)];
+        const emptyStrip = app.querySelector('.m-assign-strip.is-empty');
+        const noTable = !app.querySelector('.assign-table');
+        // Choisir un combattant : sa fiche (compétences) en haut, les lieux possibles soulignés.
+        const f5 = g5.playerFighters[0];
+        app.querySelector(`.m-assign-chip[data-fighter-id="${f5.id}"]`).click();
+        await wait(10);
+        const strip = app.querySelector('.m-assign-strip');
+        const stats = [...strip.querySelectorAll('.m-assign-stat small')].map((s) => s.textContent).join();
+        const statValues = [...strip.querySelectorAll('.m-assign-stat b')].map((b) => Number(b.textContent));
+        const statsRight = statValues.join() === ['wrestling', 'polearm', 'percussion', 'endurance'].map((id) => Math.round(f5.stats[id])).join();
+        const target = AS5.listActivities(g5).find((a) => AB.canSendTo(g5, f5, a.id).ok);
+        const targetCol = app.querySelector(`.m-assign-col[data-activity="${target.id}"]`);
+        const targetMarked = targetCol.classList.contains('is-target');
+        targetCol.click();
+        await wait(10);
+        const moved = g5.getFighter(f5.id).activityId === target.id
+          && Boolean(app.querySelector(`.m-assign-col[data-activity="${target.id}"] .m-assign-chip[data-fighter-id="${f5.id}"]`))
+          && Boolean(app.querySelector('.m-assign-strip.is-empty'));
+        // Lieu complet : grisé, refus.
+        const limited = AS5.listActivities(g5).find((a) => Number.isFinite(a.capacity) && a.capacity > 0 && !AS5.getActivityClosure(g5, a.id));
+        const others = g5.playerFighters.filter((f) => f.id !== f5.id);
+        for (const f of others.slice(0, limited.capacity)) AS5.assignActivity(g5, f.id, limited.id);
+        sc5.current.renderPanels();
+        app.querySelector(`.m-assign-chip[data-fighter-id="${f5.id}"]`).click();
+        await wait(10);
+        const fullCol = app.querySelector(`.m-assign-col[data-activity="${limited.id}"]`);
+        const fullDimmed = fullCol.classList.contains('is-dimmed') && /Complet/.test(fullCol.textContent);
+        fullCol.click();
+        await wait(10);
+        const refused = g5.getFighter(f5.id).activityId === target.id;
+        check(cols.join() === expectedCols.join() && emptyStrip && noTable && stats === 'LUT,HAS,PER,END' && statsRight && targetMarked && moved && fullDimmed && refused,
+          `téléphone : affectations par lieu — une colonne par lieu (${cols.length}), le combattant choisi en haut avec ses compétences (${stats}), lieux possibles soulignés, lieu complet grisé ; toucher un lieu y envoie le combattant`);
+        // Classement : divisions en onglets, votre compagnie épinglée, lignes compactes.
+        sc5.show('league');
+        await wait(30);
+        const tabs5 = [...app.querySelectorAll('.m-league-tab')].map((t) => t.dataset.league);
+        const meCard = app.querySelector('.m-league-me')?.textContent ?? '';
+        const playerRow = app.querySelector('.m-league-row.is-player');
+        const rows5 = app.querySelectorAll('.m-league-row:not(.is-head)').length;
+        app.querySelector(`.m-league-tab:not(.is-own)`).click();
+        await wait(30);
+        const otherLeague = sc5.current.params.leagueId && sc5.current.params.leagueId !== g5.playerLeague.id && !app.querySelector('.m-league-me');
+        check(tabs5.length === 3 && /Votre compagnie/.test(meCard) && playerRow?.textContent.includes(g5.playerTeam.name) && rows5 === g5.playerLeague.teamIds.length && otherLeague,
+          `téléphone : classement — divisions en onglets, « Votre compagnie » épinglée (${meCard.replace('Votre compagnie', '').trim()}), ${rows5} lignes compactes, la vôtre surlignée`);
+        ML5.setMobileLayout(false);
+        sc5.show('main-menu', {});
+        await wait(10);
+        sc5.show('centre');
+        await wait(30);
+        check(app.querySelector('.assign-table') && !app.querySelector('.m-assign'), 'téléphone : sur ordinateur, le tableau des affectations est inchangé');
+        sc5.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.94 : téléphone — fenêtres ouvertes en haut, remplacement de talent ----------
+      {
+        const ML4b = await import('../src/ui/mobile/mobileLayout.js');
+        const { openModal: om4 } = await import('../src/ui/components/Modal.js');
+        const { TALENTS: T4 } = await import('../src/data/talents.js');
+        const { h } = await import('../src/utils/dom.js');
+        const sc4b = window.behourd.screens;
+        ML4b.setMobileLayout(true);
+        // Une longue fenêtre (carnet de fin de saison…) s'ouvre en haut, même si son bouton est en bas.
+        const long = om4({ title: 'Long', body: h('div', { style: { height: '3000px' } }, 'texte'), actions: [{ label: 'Aller en Coupe de France ▸', variant: 'primary' }] });
+        await wait(10);
+        const topOnOpen = long.element.scrollTop === 0 && document.activeElement === long.element.querySelector('.btn-primary');
+        long.close();
+        // Bureau d'étude : combattant à deux talents → le choix du talent à remplacer, en tête du résumé.
+        const g4 = createRandomGame({ rng: createRng('remplacer-talent-v094') });
+        services.gameState.setSession(g4);
+        g4.player.resources.deniers = 5000;
+        const f4 = g4.playerFighters[2];
+        f4.talents = [T4[0].id, T4[3].id];
+        sc4b.show('scriptorium');
+        await wait(30);
+        sc4b.current.openSelection();
+        await wait(10);
+        document.querySelector(`#modal-root .study-candidate[data-fighter="${f4.id}"]`).click();
+        await wait(10);
+        const summary4 = document.querySelector('#modal-root .study-summary');
+        const picker4 = summary4.querySelector('.study-slot-picker');
+        const order = (el) => Number(getComputedStyle(el).order);
+        const pickerFirst = picker4 && [...summary4.children].filter((c) => c !== picker4 && !c.classList.contains('study-summary-title')).every((c) => order(c) > order(picker4));
+        const sideBySide = getComputedStyle(document.querySelector('#modal-root .study-selection')).gridTemplateColumns.split(' ').length === 2;
+        const pending = picker4?.classList.contains('is-pending');
+        const startBtn = document.querySelector('#modal-root .study-modal .modal-actions .btn-primary');
+        const disabledBefore = startBtn.disabled;
+        picker4.querySelector('input[value="1"]').click();
+        await wait(10);
+        const chosen = !document.querySelector('#modal-root .study-slot-picker').classList.contains('is-pending') && !startBtn.disabled;
+        button('Annuler', document.querySelector('#modal-root .study-modal')).click();
+        await wait(10);
+        check(topOnOpen && pickerFirst && sideBySide && pending && disabledBefore && chosen,
+          'téléphone : une fenêtre s’ouvre en haut (carnet de fin de saison) ; « Remplacer ce talent » — combattants à gauche, choix du talent en tête du résumé à droite, mis en avant tant qu’il n’est pas fait');
+        ML4b.setMobileLayout(false);
+        sc4b.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.93 : téléphone — glisser pour fermer, fiche rapide, vibrations ----------
+      {
+        const ML3 = await import('../src/ui/mobile/mobileLayout.js');
+        const HP = await import('../src/ui/mobile/Haptics.js');
+        const QC = await import('../src/ui/mobile/QuickCard.js');
+        const SW = await import('../src/ui/mobile/SwipeClose.js');
+        const sc3 = window.behourd.screens;
+        const g3 = createRandomGame({ rng: createRng('ergonomie-v093') });
+        services.gameState.setSession(g3);
+        ML3.setMobileLayout(true);
+        HP.setHapticsEnabled(true);
+        sc3.show('centre');
+        await wait(30);
+        // (La page de test démarre en mode ordinateur : l'appui long est branché ici, comme dans main.js.)
+        const offQuick = QC.installQuickCards(document, () => services.gameState.session, {
+          resolveAt: (x, y, event) => (event.target.matches?.('canvas') ? sc3.current?.renderer?.pickFighter?.(x, y) ?? null : null),
+        });
+        const pe = (el, type, x, y, id) => el.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, cancelable: true }));
+        const drag = async (el, from, to, steps = 8, id = 71) => {
+          pe(el, 'pointerdown', from.x, from.y, id);
+          for (let k = 1; k <= steps; k++) pe(el, 'pointermove', from.x + ((to.x - from.x) * k) / steps, from.y + ((to.y - from.y) * k) / steps, id);
+          pe(el, 'pointerup', to.x, to.y, id);
+          await wait(260);
+        };
+        // 1. Volet : tiré vers le bas, il se ferme ; un petit geste le laisse ouvert.
+        const sheet3 = app.querySelector('.m-sheet');
+        sheet3.querySelector('.m-sheet-toggle[data-part="assignments"]').click();
+        await wait(10);
+        const head3 = sheet3.querySelector('.m-sheet-head').getBoundingClientRect();
+        const p0 = { x: head3.left + 300, y: head3.top + 20 };
+        await drag(sheet3.querySelector('.m-sheet-head'), p0, { x: p0.x, y: p0.y + 30 }, 3, 72);
+        const stillOpen = sheet3.dataset.state === 'open';
+        await drag(sheet3.querySelector('.m-sheet-head'), p0, { x: p0.x, y: p0.y + 220 }, 8, 73);
+        const swipedClosed = sheet3.dataset.state === 'closed' && sheet3.querySelector('.m-grip') && sheet3.classList.contains('is-swipeable');
+        // Menu : poussé vers la droite, il se ferme.
+        app.querySelector('.mobile-menu-button').click();
+        await wait(10);
+        const drawer3 = document.querySelector('#modal-root .m-drawer-modal');
+        const dr = drawer3.getBoundingClientRect();
+        await drag(drawer3, { x: dr.left + 60, y: dr.top + 200 }, { x: dr.left + 260, y: dr.top + 205 }, 8, 74);
+        const drawerClosed = !document.querySelector('#modal-root .m-drawer-modal');
+        check(stillOpen && swipedClosed && drawerClosed,
+          'téléphone : glisser pour fermer — le volet tiré vers le bas se referme (poignée), un petit geste le laisse ouvert ; le menu poussé vers la droite se referme');
+        // 2. Appui long = fiche rapide ; le « clic » qui suit n'agit pas.
+        sheet3.querySelector('.m-sheet-toggle[data-part="assignments"]').click();
+        await wait(10);
+        const row3 = sheet3.querySelector('.m-assign-chip[data-fighter-id]');
+        const fighter3 = g3.getFighter(row3.dataset.fighterId);
+        const rb = row3.getBoundingClientRect();
+        let rowClicks = 0;
+        row3.addEventListener('click', () => { rowClicks++; });
+        pe(row3, 'pointerdown', rb.left + 30, rb.top + 8, 75);
+        await wait(520);
+        const quick = document.querySelector('.m-quick-card');
+        const quickText = quick?.textContent ?? '';
+        pe(row3, 'pointerup', rb.left + 30, rb.top + 8, 75);
+        row3.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        const quickHaptic = HP.lastHaptic();
+        pe(document.body, 'pointerdown', 5, 5, 76);
+        const quickGone = !document.querySelector('.m-quick-card');
+        pe(document.body, 'pointerup', 5, 5, 76);
+        // Un toucher bref reste un toucher.
+        pe(row3, 'pointerdown', rb.left + 30, rb.top + 8, 77);
+        await wait(60);
+        pe(row3, 'pointerup', rb.left + 30, rb.top + 8, 77);
+        row3.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        const shortTap = rowClicks === 1 && !document.querySelector('.m-quick-card');
+        // Sur la carte du Centre : le combattant sous le doigt.
+        sc3.current.closeMobileSheet();
+        const ren3 = sc3.current.renderer;
+        await wait(80);
+        const box = ren3.fighterBoxes?.[0];
+        const canvas3 = app.querySelector('canvas.centre-canvas');
+        const cr = canvas3.getBoundingClientRect();
+        let mapQuick = '';
+        if (box) {
+          const mx = cr.left + (box.left + box.right) / 2;
+          const my = cr.top + (box.top + box.bottom) / 2;
+          pe(canvas3, 'pointerdown', mx, my, 78);
+          await wait(520);
+          mapQuick = document.querySelector('.m-quick-card')?.getAttribute('aria-label') ?? '';
+          pe(canvas3, 'pointerup', mx, my, 78);
+          QC.hideQuickCard();
+          await wait(400);
+        }
+        check(quick && quickText.includes(fighter3.name) && quickText.includes(fighter3.specialty.name) && rowClicks === 0 + (shortTap ? 1 : 0) && quickHaptic === 'select' && quickGone && shortTap
+          && (!box || mapQuick.startsWith('Fiche rapide de ')),
+          `téléphone : appui long sur un combattant (tableau des affectations, carte du Centre) — sa fiche en bulle (classe, étoiles, compétences, fatigue, potentiel), sans déclencher le toucher ; un toucher bref reste un toucher`);
+        // 3. Vibrations : cocher, refus (effectif complet), lancer une manche ; boutons au pouce.
+        g3.calendar.currentDay = g3.calendar.events.find((e) => e.typeId === 'combat').day;
+        sc3.show('match');
+        await wait(30);
+        app.querySelector('.mm-card:not(.is-disabled):not(.is-ko)').click();
+        const tapHaptic = HP.lastHaptic();
+        button('Équipe type', app).click();
+        await wait(10);
+        app.querySelector('.mm-card:not(.is-selected)')?.click();
+        const refusal = app.querySelector('.mm-card:not(.is-selected)') ? HP.lastHaptic() : 'warning';
+        const goStyle = getComputedStyle(app.querySelector('.mm-go'));
+        const matchSrc3 = await (await fetch('../src/ui/screens/MatchScreen.js')).text();
+        check(tapHaptic === 'tap' && refusal === 'warning' && goStyle.position === 'sticky'
+          && /this\.placement\.lock\(\);\n    haptic\('heavy'\);/.test(matchSrc3) && /audioDirector\.play\('victory'\);\n      haptic\('success'\);/.test(matchSrc3),
+          `téléphone : vibrations — cocher un combattant (${tapHaptic}), refus quand l’effectif est complet (${refusal}), lancer une manche, victoire ; le bouton d’action du combat reste en bas, au pouce (${goStyle.position})`);
+        HP.setHapticsEnabled(false);
+        const off = HP.haptic('tap') === false;
+        check(off, 'téléphone : sur ordinateur, aucune vibration');
+        void SW;
+        offQuick();
+        ML3.setMobileLayout(false);
+        sc3.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.92 : téléphone — Lieux et Affectations séparés, événement à droite, Compagnie ----------
+      {
+        const ML2 = await import('../src/ui/mobile/mobileLayout.js');
+        const TM = await import('../src/ui/mobile/TeamMetric.js');
+        const sc2 = window.behourd.screens;
+        const g2 = createRandomGame({ rng: createRng('lieux-affectations-v092') });
+        services.gameState.setSession(g2);
+        ML2.setMobileLayout(true);
+        sc2.show('centre');
+        await wait(30);
+        const sheet2 = app.querySelector('.m-sheet.has-parts');
+        const toggles2 = [...sheet2.querySelectorAll('.m-sheet-toggle')].map((t) => `${t.dataset.part}:${t.textContent}`).join();
+        const visible = (sel) => { const el = sheet2.querySelector(sel); return Boolean(el) && getComputedStyle(el).display !== 'none'; };
+        sheet2.querySelector('.m-sheet-toggle[data-part="assignments"]').click();
+        await wait(10);
+        const assignOnly = sheet2.dataset.state === 'open' && visible('.centre-roster') && !visible('.zone-grid');
+        sheet2.querySelector('.m-sheet-toggle[data-part="places"]').click();
+        await wait(10);
+        const placesOnly = sheet2.dataset.state === 'open' && visible('.zone-grid') && !visible('.centre-roster');
+        sheet2.querySelector('.m-sheet-toggle[data-part="places"]').click();
+        await wait(10);
+        const closedAgain = sheet2.dataset.state === 'closed';
+        sheet2.querySelector('.m-sheet-toggle[data-part="assignments"]').click();
+        sc2.current.refreshContent();
+        await wait(10);
+        const keptPart = app.querySelector('.m-sheet').dataset.state === 'open' && app.querySelector('.m-sheet').dataset.part === 'assignments';
+        sc2.current.closeMobileSheet();
+        const right2 = app.querySelector('.m-hud-right');
+        const eventRight = right2?.firstElementChild?.classList.contains('m-hud-event') || !app.querySelector('.m-hud-event');
+        const deniersBorder = getComputedStyle(app.querySelector('.m-hud-deniers')).borderTopColor;
+        check(toggles2 === 'places:Lieux,assignments:Affectations' && assignOnly && placesOnly && closedAgain && keptPart && eventRight && deniersBorder === 'rgb(226, 189, 102)',
+          'téléphone : Centre — deux boutons « Lieux » et « Affectations », chacun n’ouvre que sa partie ; prochain événement à droite ; deniers cerclés d’or');
+        // Compagnie : la liste montre la fatigue, les mises à terre ou le potentiel.
+        const fx = g2.playerFighters[0];
+        fx.record.takedowns = 7;
+        sc2.show('team');
+        await wait(20);
+        const headOrder = [...app.querySelector('.m-team-head').children].map((c) => (c.tagName === 'H1' ? 'h1' : c.className.split(' ')[0])).slice(0, 3).join();
+        const firstRow = () => app.querySelector(`.m-team-row[data-fighter-id="${fx.id}"]`);
+        const fatigueShown = firstRow().querySelector('.m-team-fatigue') && TM.getListMetric().id === 'fatigue';
+        app.querySelector('.m-metric-button').click();
+        await wait(5);
+        const options = [...app.querySelectorAll('.m-metric-option')].map((o) => o.dataset.metric).join();
+        app.querySelector('.m-metric-option[data-metric="takedowns"]').click();
+        await wait(10);
+        const takedownsShown = firstRow().querySelector('.m-team-takedowns')?.textContent === '7';
+        app.querySelector('.m-metric-button').click();
+        app.querySelector('.m-metric-option[data-metric="potential"]').click();
+        await wait(10);
+        const potentialShown = Boolean(firstRow().querySelector('.m-team-potential .potential-flames'));
+        const iconOnly = app.querySelector('.m-metric-button').textContent.trim() === '' && app.querySelector('.m-metric-button svg');
+        TM.setListMetric('fatigue');
+        check(headOrder === 'h1,roster-size,m-metric',
+          `téléphone : Compagnie — le bouton d’affichage est juste à droite de « La Compagnie x / y » (${headOrder})`);
+        check(fatigueShown && options === 'fatigue,takedowns,potential' && takedownsShown && potentialShown && iconOnly,
+          'téléphone : Compagnie — un bouton à icône change ce que montre la liste : fatigue, mises à terre (carrière) ou potentiel (flammes)');
+        ML2.setMobileLayout(false);
+        sc2.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.91 : téléphone — zoom des cartes (pincer, glisser) ----------
+      {
+        const ML1 = await import('../src/ui/mobile/mobileLayout.js');
+        const { MAP_ZOOM } = await import('../src/data/mapZoom.js');
+        const sc1 = window.behourd.screens;
+        services.gameState.setSession(createRandomGame({ rng: createRng('zoom-cartes-v091') }));
+        ML1.setMobileLayout(true);
+        const zoomable = [];
+        for (const id of ['centre', 'borough', 'tavern', 'scriptorium', 'training']) {
+          sc1.show(id);
+          await wait(30);
+          if (app.querySelector('canvas.is-zoomable') && app.querySelector('.m-zoom-reset')) zoomable.push(id);
+        }
+        sc1.show('centre');
+        await wait(40);
+        const ren = sc1.current.renderer;
+        const canvas1 = app.querySelector('canvas.is-zoomable');
+        const rect1 = canvas1.getBoundingClientRect();
+        // Cadrage : à l'échelle 2, les cases doublent ; une case reste celle qu'on touche.
+        const baseW = ren.tile.w;
+        ren.setUserZoom({ scale: 2, x: 30, y: -20 }, MAP_ZOOM);
+        const doubled = Math.abs(ren.tile.w - baseW * 2) < 1e-6;
+        const p = ren.toScreen(10.5, 8.5);
+        const picked = ren.pickTile(rect1.left + p.x, rect1.top + p.y);
+        const tooFar = ren.setUserZoom({ scale: 9, x: 99999, y: 0 }, MAP_ZOOM);
+        const bounded = tooFar.scale === MAP_ZOOM.max && tooFar.x < ren.view.w * MAP_ZOOM.max;
+        ren.setUserZoom({ scale: 1 }, MAP_ZOOM);
+        const back = !ren.isZoomed && Math.abs(ren.tile.w - baseW) < 1e-6;
+        check(zoomable.join() === 'centre,borough,tavern,scriptorium,training' && doubled && picked?.x === 10 && picked?.y === 8 && bounded && back,
+          `téléphone : zoom des cartes (${zoomable.join(', ')}) — échelle et décalage dans le cadrage, toucher toujours juste, agrandissement borné (×${MAP_ZOOM.max})`);
+        // Gestes : pincer agrandit, glisser déplace ; le « clic » d'un glissé n'est pas un toucher.
+        let clicks = 0;
+        canvas1.addEventListener('click', () => { clicks++; });
+        const ev1 = (type, id, x, y) => canvas1.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', clientX: rect1.left + x, clientY: rect1.top + y, bubbles: true, cancelable: true }));
+        const tap = (x, y) => canvas1.dispatchEvent(new MouseEvent('click', { clientX: rect1.left + x, clientY: rect1.top + y, bubbles: true, cancelable: true }));
+        const cx1 = rect1.width / 2;
+        const cy1 = rect1.height / 2;
+        ev1('pointerdown', 1, cx1 - 30, cy1); ev1('pointerdown', 2, cx1 + 30, cy1);
+        for (let k = 1; k <= 5; k++) { ev1('pointermove', 1, cx1 - 30 - k * 6, cy1); ev1('pointermove', 2, cx1 + 30 + k * 6, cy1); }
+        ev1('pointerup', 1, cx1 - 60, cy1); ev1('pointerup', 2, cx1 + 60, cy1);
+        tap(cx1, cy1);
+        const pinched = ren.userZoom.scale;
+        const resetShown = !app.querySelector('.m-zoom-reset').hidden;
+        ev1('pointerdown', 3, cx1, cy1);
+        for (let k = 1; k <= 4; k++) ev1('pointermove', 3, cx1 + k * 10, cy1);
+        ev1('pointerup', 3, cx1 + 40, cy1);
+        tap(cx1 + 40, cy1);
+        const panned = ren.userZoom.x;
+        const clicksAfterGestures = clicks;
+        ev1('pointerdown', 4, cx1, cy1);
+        ev1('pointerup', 4, cx1, cy1);
+        tap(cx1, cy1);
+        const tapCounted = clicks === clicksAfterGestures + 1;
+        app.querySelector('.m-zoom-reset').click();
+        await wait(10);
+        check(Math.abs(pinched - 2) < 0.05 && resetShown && panned > 30 && clicksAfterGestures === 0 && tapCounted && !ren.isZoomed && app.querySelector('.m-zoom-reset').hidden,
+          `téléphone : pincer agrandit (×${pinched.toFixed(2)}), glisser déplace, un simple toucher reste un toucher ; « Vue d’ensemble » ramène la carte entière`);
+        ML1.setMobileLayout(false);
+        sc1.show('main-menu', {});
+        await wait(10);
+        sc1.show('centre');
+        await wait(30);
+        check(!app.querySelector('canvas.is-zoomable') && !app.querySelector('.m-zoom-reset'), 'téléphone : sur ordinateur, les cartes ne changent pas (pas de zoom au doigt)');
+        sc1.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.90 : téléphone — menu en volet, Coupe de France ----------
+      {
+        const ML0 = await import('../src/ui/mobile/mobileLayout.js');
+        const CM = await import('../src/systems/frenchCup/FrenchCupManager.js');
+        const sc0 = window.behourd.screens;
+        const mg0 = createRandomGame({ rng: createRng('menu-volet-v090') });
+        services.gameState.setSession(mg0);
+        ML0.setMobileLayout(true);
+        sc0.show('centre');
+        await wait(30);
+        // Menu : volet latéral (état de la sauvegarde, Sauvegarder, rubriques, Menu principal en bas).
+        app.querySelector('.mobile-menu-button').click();
+        await wait(20);
+        const drawer = document.querySelector('#modal-root .m-drawer-modal');
+        const ids = [...(drawer?.querySelectorAll('[data-menu]') ?? [])].map((b) => b.dataset.menu).join();
+        const saveLine = drawer?.querySelector('.m-drawer-save')?.textContent ?? '';
+        const exitsLast = drawer?.querySelector('.m-drawer-exits [data-menu="main-menu"]');
+        drawer.querySelector('[data-menu="save"]').click();
+        await wait(20);
+        const savedAfter = !document.querySelector('#modal-root .m-drawer-modal') && mg0.dirty === false;
+        app.querySelector('.mobile-menu-button').click();
+        await wait(20);
+        const savedLine = document.querySelector('#modal-root .m-drawer-save')?.textContent ?? '';
+        document.querySelector('#modal-root .m-drawer-close').click();
+        await wait(10);
+        check(ids === 'save,achievements,almanac,options,patch-notes,main-menu' && /non sauvegardée/i.test(saveLine) && exitsLast && savedAfter
+          && savedLine.startsWith('Sauvegardée') && !document.querySelector('#modal-root .modal'),
+          `téléphone : menu en volet latéral — état de la sauvegarde (« ${saveLine} » puis « ${savedLine} »), Sauvegarder, Succès, Almanach, Options, Patch Notes, Menu principal en bas`);
+        // Coupe : tirage en blasons ; toucher une poule montre ses compagnies.
+        mg0.season.status = 'finished';
+        CM.openSeasonCup(mg0, { seed: 'coupe-mobile' });
+        sc0.show('french-cup');
+        await wait(30);
+        const hud = app.querySelector('.m-cup-hud');
+        for (let i = 0; i < 10; i++) { button('Tirer la suivante', app).click(); await wait(5); }
+        const cup0 = CM.getCup(mg0);
+        const groupCards = app.querySelectorAll('.m-cup-group');
+        const shields = app.querySelectorAll('.m-cup-shield:not(.is-empty)').length;
+        const revealName = app.querySelector('.m-cup-reveal-name')?.textContent;
+        app.querySelector('.m-cup-group[data-group="A"]').click();
+        await wait(10);
+        const sheet = document.querySelector('#modal-root .m-cup-group-modal');
+        const sheetNames = [...(sheet?.querySelectorAll('.m-cup-slot-name') ?? [])].map((n) => n.textContent);
+        const expectedA = cup0.groups[0].teamIds.filter(Boolean).map((id) => mg0.getTeam(id).name);
+        button('Fermer', sheet).click();
+        await wait(10);
+        check(hud && !app.querySelector('.cup-header') && groupCards.length === 9 && shields === 10 && revealName === mg0.getTeam(cup0.draw.order[9]).name
+          && sheetNames.join('|') === expectedA.join('|') && sheetNames.length === 2,
+          `téléphone : Coupe, tirage — la dernière tirée en grand, les 9 poules en blasons (${shields}) ; toucher une poule donne ses noms (${sheetNames.join(', ')})`);
+        // Gabarnac : carte, prochain combat, dock de la Coupe, « Combattre ».
+        button('Tout tirer d’un coup', app).click();
+        await wait(40);
+        const dock = [...app.querySelectorAll('.m-cup-dock [data-cup-dock]')].map((b) => b.dataset.cupDock).join();
+        const fight = app.querySelector('.m-cup-fight');
+        const next = app.querySelector('.m-cup-next')?.textContent ?? '';
+        const status = app.querySelector('.m-cup-status')?.textContent ?? '';
+        const stage = app.querySelector('.m-cup-gabarnac .centre-stage');
+        const dockTop = app.querySelector('.m-cup-dock').getBoundingClientRect().top;
+        const stageBottom = stage.getBoundingClientRect().bottom;
+        check(dock === 'map,board,bracket,results' && fight?.textContent === 'Combattre' && next.includes('Prochain combat') && /^En lice · Poule [A-I] · \d+e$/.test(status)
+          && stageBottom <= dockTop + 1,
+          `téléphone : Château de Gabarnac — prochain combat, « ${status} », dock Gabarnac · Tableau · Arbre · Résultats, « Combattre » ; la carte s’arrête au-dessus du dock (le tableau de la Coupe reste visible)`);
+        // Tableau : volet, rubriques à gauche, poules en onglets (blasons dans le classement).
+        app.querySelector('[data-cup-dock="board"]').click();
+        await wait(20);
+        const board = document.querySelector('#modal-root .m-board-modal');
+        const tabs = [...board.querySelectorAll('.m-board-tab')].map((t) => t.dataset.tab).join();
+        const activeGroup = board.querySelector('.m-board-group-tab.is-active')?.dataset.group;
+        const tableEmblems = board.querySelectorAll('.cup-standings tbody tr .emblem, .cup-standings tbody tr svg').length;
+        board.querySelector('.m-board-group-tab[data-group="B"]').click();
+        await wait(10);
+        const afterB = board.querySelector('.m-board-group-tab.is-active')?.dataset.group;
+        const bNames = [...board.querySelectorAll('.cup-standings tbody tr')].map((tr) => tr.textContent);
+        check(tabs === 'results,groups,bracket,qualified,fighters' && activeGroup === cup0.playerGroup && tableEmblems >= 6 && afterB === 'B'
+          && cup0.groups[1].teamIds.every((id) => bNames.some((t) => t.includes(mg0.getTeam(id).name))),
+          `téléphone : tableau de la Coupe en volet — rubriques à gauche, poules A à I en onglets (la sienne d’abord : ${activeGroup}), blasons dans le classement`);
+        // Arbre final : tours en pastilles, colonnes à partir du tour choisi, parcours en or.
+        board.querySelector('.m-board-close').click();
+        await wait(10);
+        for (let i = 0; i < 30 && !(CM.getCup(mg0).step.stage === 'knockout' && (CM.getCup(mg0).step.round ?? 0) >= 1); i++) {
+          const pending = CM.getPlayerPendingMatch(CM.getCup(mg0));
+          if (pending) CM.simulateMatch(mg0, pending);
+          await CM.simulateStep(mg0);
+          CM.advanceStep(mg0);
+        }
+        const ko = CM.getCup(mg0);
+        // Parcours fictif en or : la compagnie gagne la première affiche du premier tour.
+        const firstMatch = ko.bracket.rounds[0].matches[0];
+        const savedA = firstMatch.teamAId;
+        const savedWinner = firstMatch.winnerId;
+        firstMatch.teamAId = ko.playerTeamId;
+        firstMatch.winnerId = ko.playerTeamId;
+        const { openBoardMobile } = await import('../src/ui/mobile/MobileCup.js');
+        const handle0 = openBoardMobile(sc0.current, 'bracket');
+        await wait(10);
+        const root0 = handle0.element;
+        const roundsChips = [...root0.querySelectorAll('.m-bracket-round')].map((b) => b.textContent).join();
+        root0.querySelector('.m-bracket-round[data-round="0"]').click();
+        await wait(10);
+        const cards16 = root0.querySelectorAll('.m-bracket-card').length;
+        const goldLines = root0.querySelectorAll('.m-bracket-lines .is-gold path').length;
+        const playerCard = root0.querySelector('.m-bracket-card.is-player');
+        root0.querySelector('.m-bracket-round[data-round="2"]').click();
+        await wait(10);
+        const cardsQuarts = root0.querySelectorAll('.m-bracket-card').length;
+        handle0.close();
+        firstMatch.teamAId = savedA;
+        firstMatch.winnerId = savedWinner;
+        check(roundsChips === '16es,8es,Quarts,Demies,Finale' && cards16 === 31 && goldLines === 1 && playerCard && cardsQuarts === 7,
+          `téléphone : arbre final — tours en pastilles, colonnes à partir du tour choisi (${cards16} affiches depuis les 16es, ${cardsQuarts} depuis les quarts), parcours de la compagnie en or`);
+        // Menu de la Coupe : abandonner en bas, en rouge, tant qu'il reste un combat.
+        sc0.show('french-cup');
+        await wait(20);
+        app.querySelector('.mobile-menu-button').click();
+        await wait(10);
+        const cupIds = [...document.querySelectorAll('#modal-root .m-drawer [data-menu]')].map((b) => b.dataset.menu).join();
+        document.querySelector('#modal-root .m-drawer-close').click();
+        await wait(10);
+        check(/^save,board,options,patch-notes,main-menu,(abandon|quit)$/.test(cupIds),
+          `téléphone : menu de la Coupe — Sauvegarder, Tableau, Options, Patch Notes, puis Menu principal et ${cupIds.endsWith('abandon') ? 'Abandonner' : 'Quitter'} la Coupe`);
+        // Ordinateur : l'en-tête de la Coupe et la fenêtre du tableau d'origine.
+        ML0.setMobileLayout(false);
+        sc0.show('main-menu', {});
+        await wait(10);
+        sc0.show('french-cup');
+        await wait(30);
+        check(app.querySelector('.cup-header') && !app.querySelector('.m-cup-hud') && !app.querySelector('.m-cup-dock'),
+          'téléphone : la version ordinateur garde l’en-tête et la carte de la Coupe');
+        sc0.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.89 : nom du jeu « Béhourd Management » ----------
+      {
+        const sc9 = window.behourd.screens;
+        sc9.show('main-menu', {});
+        await wait(20);
+        const titleEl = app.querySelector('.game-title');
+        const parts = [titleEl?.querySelector('.game-title-main')?.textContent, titleEl?.querySelector('.game-title-tag')?.textContent];
+        const page = await (await fetch('../index.html')).text();
+        const cap = await (await fetch('../capacitor.config.json')).json();
+        const strings = await (await fetch('../android/app/src/main/res/values/strings.xml')).text();
+        const { GAME_CONFIG: gc9 } = await import('../src/config/gameConfig.js');
+        check(gc9.title === 'Béhourd Management' && parts.join('|') === 'Béhourd|Management' && titleEl.getAttribute('aria-label') === 'Béhourd Management'
+          && page.includes('<title>Béhourd Management') && cap.appName === 'Béhourd Management' && strings.includes('<string name="app_name">Béhourd Management</string>'),
+          'nom du jeu : « Béhourd Management » sur l’écran principal (deux lignes), l’onglet et l’application Android');
+      }
+
+      // ---------- v0.88 : téléphone — pas de clavier d'office, bulle des talents, air du démarrage ----------
+      {
+        const ML8 = await import('../src/ui/mobile/mobileLayout.js');
+        const TT = await import('../src/ui/mobile/TalentTip.js');
+        const SB = await import('../src/ui/mobile/splashBoot.js');
+        const sc8 = window.behourd.screens;
+        // Création de l'équipe et du capitaine : sur téléphone, aucun champ ne prend le focus d'office.
+        ML8.setMobileLayout(true);
+        document.activeElement?.blur?.();
+        sc8.show('new-team', { countryId: 'fr', leagueId: 'league_3' });
+        await wait(20);
+        const teamFocus = document.activeElement?.tagName;
+        sc8.show('new-captain', { countryId: 'fr', leagueId: 'league_3', teamName: 'Les Essais', emblem: {} });
+        await wait(20);
+        const captainFocus = document.activeElement?.tagName;
+        ML8.setMobileLayout(false);
+        sc8.show('new-team', { countryId: 'fr', leagueId: 'league_3' });
+        await wait(20);
+        const desktopFocus = document.activeElement?.tagName;
+        check(teamFocus !== 'INPUT' && captainFocus !== 'INPUT' && desktopFocus === 'INPUT',
+          `téléphone : création de l’équipe et du capitaine sans focus d’office (le clavier ne s’ouvre qu’au toucher du champ) — l’ordinateur garde le curseur dans le nom`);
+        // Bulle des talents : un toucher l'ouvre (sans actionner le bouton qui contient l'étiquette), un autre la ferme.
+        const tg = createRandomGame({ rng: createRng('bulle-talent-v088') });
+        services.gameState.setSession(tg);
+        const { TALENTS } = await import('../src/data/talents.js');
+        const { TalentBadge } = await import('../src/ui/components/TalentBadge.js');
+        const { h } = await import('../src/utils/dom.js');
+        const talent = TALENTS[0];
+        let pressed = 0;
+        const host = h('button', { type: 'button', onclick: () => { pressed++; } }, TalentBadge(talent, tg));
+        const other = h('button', { type: 'button' }, 'ailleurs');
+        const zone = h('div', {}, host, other);
+        document.body.append(zone);
+        const off = TT.installTalentTips(document);
+        host.querySelector('.talent-badge').click();
+        const tipEl = document.querySelector('.talent-tip');
+        const tipText = tipEl?.textContent ?? '';
+        other.click();
+        const closed = !document.querySelector('.talent-tip');
+        off();
+        zone.remove();
+        const parsed = TT.parseTalentTitle('Talent rare — Fait ceci (actif en été)');
+        check(tipEl && tipText.includes(talent.name) && tipText.includes(talent.description) && pressed === 0 && closed
+          && parsed.kind === 'Talent rare' && parsed.text === 'Fait ceci (actif en été)',
+          `téléphone : toucher un talent affiche une bulle (nom, famille, effet : « ${talent.name} »), un autre toucher la referme`);
+        // Air du démarrage : « Girls » au volume des Options, la musique du jeu attend la fin de l'écran.
+        const vols = [SB.splashVolume({}), SB.splashVolume({ 'audio.master': 50, 'audio.music': 100 }), SB.splashVolume({ 'audio.muted': true })];
+        const tune = await fetch('../' + SB.SPLASH_TUNE, { method: 'HEAD' });
+        const splashSrc = await (await fetch('../src/ui/mobile/Splash.js')).text();
+        const mainSrc8 = await (await fetch('../src/main.js')).text();
+        check(Math.abs(vols[0] - 0.56) < 1e-9 && vols[1] === 0.5 && vols[2] === 0 && tune.ok && /const DURATION_MS = 4600;/.test(splashSrc)
+          && /globalThis\.behourdSplash\.then\(\(\) => audio\.tryAutoplay\(\)\)/.test(mainSrc8) && /if \(mobile\) installTalentTips\(document\)/.test(mainSrc8),
+          'Android : l’écran de démarrage joue « Girls » (4,6 s, volume des Options, rien si le son est coupé) ; la musique du jeu attend sa fin');
+        sc8.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.87 : téléphone — cadence des scènes, arrière-plan ----------
+      {
+        const FP = await import('../src/render/framePacing.js');
+        const LC = await import('../src/ui/mobile/appLifecycle.js');
+        const VL = await import('../src/render/vfx/vfxLevel.js');
+        // Cadence : sans plafond, chaque image ; à 30 i/s sur un écran à 60 Hz, une sur deux ; écran caché, aucune.
+        const count = (cap, hidden = false) => {
+          FP.setFrameCap(cap);
+          const pace = FP.createFramePacer({ hidden: () => hidden });
+          let drawn = 0;
+          for (let i = 0; i < 60; i++) if (pace(i * (1000 / 60))) drawn++;
+          return drawn;
+        };
+        const frames = [count(0), count(30), count(30, true)];
+        FP.setFrameCap(0);
+        const lowEnd = [VL.isLowEndDevice({ cores: 4, memory: 8 }), VL.isLowEndDevice({ cores: 8, memory: 2 }), VL.isLowEndDevice({ cores: 8, memory: 8 }), VL.isLowEndDevice({ cores: undefined, memory: undefined })];
+        const reduced = [VL.resolveVfxLevel('full', { reducedMotion: false, lowEnd: true }), VL.resolveVfxLevel('off', { reducedMotion: false, lowEnd: true }), VL.resolveVfxLevel('full', { reducedMotion: false, lowEnd: false })];
+        check(frames.join() === '60,30,0' && lowEnd.join() === 'true,true,false,false' && reduced.join() === 'reduced,off,full'
+          && FP.getFrameCap() === 0,
+          `téléphone : scènes à 30 images par seconde (${frames[1]} sur 60), rien quand l’écran est caché ; effets réduits d’eux-mêmes sur un petit appareil — l’ordinateur garde le rythme de l’écran`);
+        // Sauvegarde à la mise en arrière-plan.
+        const lg = createRandomGame({ rng: createRng('arriere-plan-v087') });
+        services.gameState.setSession(lg);
+        lg.dirty = true;
+        const fakeScreens = (id) => ({ currentId: id, current: null });
+        const rules = [
+          LC.canSaveOnPause({ session: lg, screenId: 'centre', autosave: true }),
+          LC.canSaveOnPause({ session: lg, screenId: 'match', autosave: true }),
+          LC.canSaveOnPause({ session: lg, screenId: 'centre', autosave: false }),
+          LC.canSaveOnPause({ session: null, screenId: 'centre', autosave: true }),
+        ];
+        const before = services.settings.get('gameplay.autosave');
+        services.settings.set('gameplay.autosave', true);
+        const savedInMatch = LC.saveOnPause({ services, screens: fakeScreens('match') });
+        const saved = LC.saveOnPause({ services, screens: fakeScreens('centre') });
+        const stored = services.saves.listSaves().some((entry) => entry.id === lg.saveId);
+        const clean = lg.dirty === false && LC.saveOnPause({ services, screens: fakeScreens('centre') }) === false;
+        services.settings.set('gameplay.autosave', before);
+        // Son : suspendu en arrière-plan, repris au retour (boucles en pause puis relancées).
+        const { AudioEngine } = await import('../src/audio/AudioEngine.js');
+        const ae = new AudioEngine();
+        const ctxCalls = [];
+        const el = { paused: false, pause() { this.paused = true; }, play() { this.paused = false; return Promise.resolve(); } };
+        ae.ctx = { suspend: () => { ctxCalls.push('suspend'); return Promise.resolve(); }, resume: () => { ctxCalls.push('resume'); return Promise.resolve(); } };
+        ae.unlocked = true;
+        ae.loops.set('music:x', { id: 'x', kind: 'music', el });
+        ae.setBackground(true);
+        const silent = el.paused;
+        ae.setBackground(false);
+        const sound = ctxCalls.join() === 'suspend,resume' && silent && !el.paused;
+        const mainSrc = await (await fetch('../src/main.js')).text();
+        check(rules.join() === 'true,false,false,false' && !savedInMatch && saved && stored && clean && sound
+          && /if \(mobile\) installAppLifecycle\(/.test(mainSrc) && /setFrameCap\(30\)/.test(mainSrc),
+          'téléphone : en arrière-plan, la partie modifiée est sauvegardée (sauvegarde automatique active, jamais en plein combat) et le son se tait jusqu’au retour — seulement sur téléphone');
+        services.saves.delete(lg.saveId);
+      }
+
+      // ---------- v0.86 : combat sur téléphone (effectif, manche, résultats) ----------
+      {
+        const ML6 = await import('../src/ui/mobile/mobileLayout.js');
+        const sc6 = window.behourd.screens;
+        const kg = createRandomGame({ rng: createRng('mobile-combat-v086') });
+        services.gameState.setSession(kg);
+        kg.calendar.currentDay = kg.calendar.events.find((e) => e.typeId === 'combat').day;
+        ML6.setMobileLayout(true);
+        sc6.show('match');
+        await wait(30);
+        const ms6 = sc6.current;
+        const squadCards = app.querySelectorAll('.m-match.mm-squad .mm-card').length;
+        const headerHidden = getComputedStyle(app.querySelector('.match-header')).display === 'none';
+        const skills6 = [...app.querySelectorAll('.mm-card')].every((c) => c.querySelectorAll('.pfc-skill').length === 4 && c.querySelector('.stars, [class*="star"]'));
+        const opponent6 = app.querySelector('.mm-opponent')?.textContent.includes(ms6.opponentTeam.name);
+        button('Équipe type', app).click();
+        await wait(10);
+        const pill = app.querySelector('.mm-pill')?.textContent;
+        app.querySelector('.mm-card.is-selected').click();
+        await wait(10);
+        const afterUntick = ms6.squad.length;
+        button('Équipe type', app).click();
+        await wait(10);
+        button('Valider l’effectif', app).click();
+        await wait(10);
+        const lineupCards = app.querySelectorAll('.m-match.mm-lineup .mm-card').length;
+        button('Les moins fatigués', app).click();
+        await wait(10);
+        const chosen = app.querySelectorAll('.mm-lineup .mm-card.is-selected').length;
+        const canPlace = !button('Placer dans La Lice', app)?.disabled;
+        check(squadCards === kg.playerFighters.length && headerHidden && skills6 && opponent6 && pill === `${MATCH_RULES.maxSquadSize} / ${MATCH_RULES.maxSquadSize}`
+          && afterUntick === MATCH_RULES.maxSquadSize - 1 && ms6.match.squadIds.length === MATCH_RULES.maxSquadSize
+          && lineupCards === MATCH_RULES.maxSquadSize && chosen === MATCH_RULES.fightersPerRound && canPlace,
+          `mobile : combat — effectif engagé en cartes (${squadCards}, étoiles et compétences), compteur ${pill}, adversaire à droite ; manche : ${chosen} combattants d’un toucher`);
+        // Manches concédées : résultat de manche puis fin du combat, mis en page pour le téléphone.
+        ms6.forfeitRound();
+        ms6.goTo('result');
+        await wait(10);
+        const result6 = app.querySelector('.m-match.mm-result');
+        const resultTitle = result6?.querySelector('.mm-result-title')?.textContent;
+        const nextRound = button('Préparer la manche 2', app);
+        nextRound.click();
+        await wait(10);
+        const backToLineup = ms6.step === 'lineup' && Boolean(app.querySelector('.mm-lineup'));
+        ms6.forfeitRound();
+        ms6.goTo('result');
+        await wait(10);
+        button('Voir le résultat du combat', app).click();
+        await wait(30);
+        const final6 = app.querySelector('.m-match.mm-final');
+        check(result6 && resultTitle === 'Manche 1 perdue' && backToLineup && final6 && final6.classList.contains('is-loss')
+          && final6.querySelector('.mm-final-title')?.textContent === 'Défaite' && final6.querySelectorAll('.mm-rounds li').length === 2
+          && final6.querySelector('.mm-standings .league-mini, .mm-standings ol') && button('Terminer la journée', app),
+          `mobile : résultat de manche (${resultTitle}) puis fin du combat (défaite 0 – 2, manches, classement, « Terminer la journée »)`);
+        // Mise en page : marges d'encoche symétriques, bouton rond assez large pour « Combattre ».
+        const css6 = await (await fetch('../css/mobile.css')).text();
+        check(/html\.is-android\.is-mobile body \{ padding-left: 0; padding-right: 0; \}/.test(css6)
+          && /--sl: max\(env\(safe-area-inset-left, 0px\), env\(safe-area-inset-right, 0px\)\)/.test(css6)
+          && !/\.m-advance \{[^}]*overflow-wrap: anywhere/.test(css6),
+          'mobile : écrans centrés sur téléphone (encoche comptée une seule fois, des deux côtés) ; « Combattre » tient sur une ligne');
+        ML6.setMobileLayout(false);
+        const dg = createRandomGame({ rng: createRng('ordinateur-combat-v086') });
+        services.gameState.setSession(dg);
+        dg.calendar.currentDay = dg.calendar.events.find((e) => e.typeId === 'combat').day;
+        sc6.show('main-menu', {});
+        await wait(20);
+        sc6.show('match');
+        await wait(20);
+        check(!app.querySelector('.m-match') && app.querySelector('.pick-grid') && button('Sélection de l’équipe Type', app),
+          'mobile : la version ordinateur garde son écran d’effectif engagé');
+        sc6.show('main-menu', {});
+        await wait(20);
+      }
+
+      // ---------- v0.85 : écran de démarrage (application Android) ----------
+      {
+        const SPL = await import('../src/ui/mobile/Splash.js');
+        const gone = SPL.showSplash({ duration: 60000 });
+        const splash = document.querySelector('.splash');
+        const parts = splash ? [splash.querySelectorAll('.splash-blade').length, splash.querySelectorAll('.splash-flower').length, splash.querySelector('.splash-word')?.textContent] : [];
+        splash?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        await gone;
+        const mainSrc = await (await fetch('../index.html')).text() + await (await fetch('../src/ui/mobile/splashBoot.js')).text();
+        const matchSrc = await (await fetch('../src/ui/screens/MatchScreen.js')).text();
+        check(splash && parts[0] > 30 && parts[1] >= 6 && parts[2] === 'BZW' && !document.querySelector('.splash')
+          && /src\/ui\/mobile\/splashBoot\.js[\s\S]*src\/main\.js/.test(mainSrc) && /getPlatform\?\.\(\) === 'android'\) \{\s*globalThis\.behourdSplash = showSplash\(/.test(mainSrc)
+          && /isMobileLayout\(\) \? SCREENS\.CENTRE/.test(matchSrc),
+          `Android : écran de démarrage (bassinet, ${parts[0]} brins d’herbe, ${parts[1]} fleurs, « BZW »), passé d’un toucher, seulement dans l’application ; après un combat, retour au Centre`);
       }
 
       // ---------- v0.81 : tutoriel du tavernier ----------

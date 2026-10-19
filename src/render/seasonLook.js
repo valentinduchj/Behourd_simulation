@@ -228,11 +228,14 @@ export function drawSeasonWaterDetail(view, x, y, seasonId) {
  * feuilles en automne, pétales au printemps, poussière dorée en été. area : { x, y, w, h }
  * (zone couverte) ; density : 1 = normale (réglage des effets : level.count).
  */
-export function seasonWeatherParticles(seasonId, time, area, density = 1) {
+export function seasonWeatherParticles(seasonId, time, area, density = 1, weather = undefined) {
   const look = seasonVisuals(seasonId);
   if (!look || density <= 0) return [];
   const out = [];
-  const kind = look.weather;
+  // Météo imposée par un décor (v1.1 : 'rain', 'snow'…) ; null : aucune.
+  const kind = weather === undefined ? look.weather : weather;
+  if (!kind) return [];
+  if (kind === 'rain') return rainParticles(time, area, density);
   const surface = Math.max(1, area.w * area.h);
   const base = kind === 'snow' ? 0.32 : kind === 'motes' ? 0.06 : 0.08;
   const count = Math.round(Math.min(160, surface * base) * density);
@@ -253,6 +256,25 @@ export function seasonWeatherParticles(seasonId, time, area, density = 1) {
     } else {
       out.push({ shape: 'puff', layer: 'over', x: x0 + Math.sin(time * 0.4 + i) * 0.3, y: y0, z: 0.2 + t * 1.2, size: 0.011, color: '#fff1bf', outline: null, alpha: Math.sin(t * Math.PI) * 0.55 });
     }
+  }
+  return out;
+}
+
+/** Pluie (v1.1, Le Sentier en automne) : traits obliques qui tombent vite. */
+function rainParticles(time, area, density) {
+  const out = [];
+  const count = Math.round(Math.min(220, Math.max(1, area.w * area.h) * 0.55) * density);
+  const fall = 0.7;
+  for (let i = 0; i < count; i++) {
+    const seed = noise(i, count, 'rain');
+    const t = ((time / fall) + (seed % 1000) / 1000) % 1;
+    const x0 = area.x + ((seed >> 3) % 1000) / 1000 * area.w;
+    const y0 = area.y + ((seed >> 13) % 1000) / 1000 * area.h;
+    const z = 3 * (1 - t);
+    out.push({
+      shape: 'spark', layer: 'over', x: x0 + t * 0.35, y: y0 + t * 0.1, z, px: x0 + t * 0.35 - 0.06, py: y0 + t * 0.1 - 0.02, pz: z + 0.32,
+      size: 0.009, color: 'rgba(176, 202, 230, 0.95)', outline: null, alpha: t < 0.92 ? 0.85 : (1 - t) * 8,
+    });
   }
   return out;
 }

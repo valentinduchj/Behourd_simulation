@@ -25,7 +25,10 @@ import { calculateFighterLevel } from '../../systems/fighters/ratings.js';
 import { SpecialtyBadge, FighterClassTags } from '../components/SpecialtyBadge.js';
 import { ClassRoles, ClassRolesInline } from '../components/ClassRoles.js';
 import { PlacementFighterCard } from '../components/PlacementFighterCard.js';
-import { getColorIntensity, getMatchFatigue, getFatigueState, fatigueLevelClass } from '../../systems/fighters/FatigueService.js';
+import { getColorIntensity, getMatchFatigue, getFatigueState, fatigueLevelClass, fatigueText } from '../../systems/fighters/FatigueService.js';
+import { TalentBadges } from '../components/TalentBadge.js';
+import { isMobileLayout, focusField } from '../mobile/mobileLayout.js';
+import { renderSquadMobile, renderLineupMobile, renderRoundResultMobile, renderFinalMobile } from '../mobile/MobileMatch.js';
 import { FATIGUE_RULES } from '../../data/fatigue.js';
 import { getActivity } from '../../systems/activities/ActivityService.js';
 import {
@@ -34,7 +37,7 @@ import {
 import { completeMatchdayAndCheckSeason } from '../../systems/league/SeasonService.js';
 import {
   getPendingQueenCombat, generateQueenCombat, selectOpponent, createQueenMatch, resolveQueenCombat,
-  getSelectedOption, getPoolName, sortOptionsByStars, getClubStars,
+  getSelectedOption, getPoolName, sortOptionsByStars, getClubStars, getFerveurReward,
 } from '../../systems/queen/QueenCombatService.js';
 import { getStandings, getTeamPosition } from '../../systems/league/StandingsService.js';
 import { getClubLevel, getLeagueName } from '../../systems/league/LeagueService.js';
@@ -68,6 +71,8 @@ import {
 } from '../../systems/frenchCup/FrenchCupManager.js';
 import { pointsFor } from '../../systems/frenchCup/CupGroups.js';
 import { currentLocale } from '../../i18n/i18n.js';
+import { createFramePacer } from '../../render/framePacing.js';
+import { haptic } from '../mobile/Haptics.js';
 
 /** « 1 de vos combattants a été mis KO : rétabli pour la manche suivante. » (accordé au nombre). */
 export function koSummary(count, lastsWholeMatch) {
@@ -262,7 +267,11 @@ export class MatchScreen extends BaseScreen {
     this.renderedStep = this.step;
     if (!stepChanged) return;
     if (this.step === 'battle') this.scrollToBattle();
-    else window.scrollTo(0, 0);
+    else {
+      window.scrollTo(0, 0);
+      // Téléphone : la page défile dans #app.
+      if (isMobileLayout()) document.getElementById('app')?.scrollTo?.(0, 0);
+    }
   }
 
   /** Manche lancée : la lice à l'écran, juste sous le rappel de la formation (collant). */
@@ -407,7 +416,11 @@ export class MatchScreen extends BaseScreen {
       h('h3', { class: 'queen-option-name' }, club.name),
       ClubStars(getClubLevel(this.session, club.id)),
       h('p', { class: 'queen-option-pool' }, getPoolName(option.pool)),
-      h('div', { class: 'queen-option-reward' }, h('span', {}, 'Récompense'), h('strong', {}, `${option.reward} deniers`)),
+      h('div', { class: 'queen-option-reward' }, h('span', {}, 'Récompense'), h('strong', {}, `${option.reward} deniers`),
+        // v0.97 : et les Ferveurs de la Reine (étoiles pleines de l'adversaire).
+        h('strong', { class: 'queen-option-ferveurs', title: 'Ferveurs de la Reine, rangées dans Le Coffre' },
+          h('img', { class: 'queen-ferveur-icon', src: 'assets/sprites/items/ferveur_reine.svg', alt: '', width: 24, height: 24 }),
+          `${getFerveurReward(option.stars)} ferveur${getFerveurReward(option.stars) > 1 ? 's' : ''}`)),
       h('button', { type: 'button', class: 'btn btn-queen', onclick: () => this.chooseOpponent(option) }, 'Affronter'),
     );
   }
@@ -438,6 +451,7 @@ export class MatchScreen extends BaseScreen {
   // --- Étape 1 : effectif ---
 
   renderSquadStep() {
+    if (isMobileLayout()) return renderSquadMobile(this);
     const max = MATCH_RULES.maxSquadSize;
     const full = this.squad.length >= max;
     // Filtres d'affichage (classe, tri) : la sélection n'est jamais modifiée par eux.
@@ -617,7 +631,7 @@ export class MatchScreen extends BaseScreen {
       ],
     });
     renderGrid();
-    input.focus();
+    focusField(input);
   }
 
   async confirmDeleteTeam(team) {
@@ -645,6 +659,7 @@ export class MatchScreen extends BaseScreen {
   }
 
   renderLineupStep() {
+    if (isMobileLayout()) return renderLineupMobile(this);
     const need = this.lineupSize;
     const full = this.lineup.length >= need;
     const squadFighters = this.squad.map((id) => this.session.getFighter(id));
@@ -760,6 +775,8 @@ export class MatchScreen extends BaseScreen {
     this.enemyCount = h('span', { class: 'placement-count' });
     this.placementStatus = h('p', { class: 'placement-status', role: 'status' });
     this.placementActions = h('div', { class: 'match-actions placement-actions' });
+    // Interface mobile (v0.83) : fiche du combattant à placer (compétences, état, rôle).
+    this.placementDetail = h('aside', { class: 'placement-detail', 'aria-live': 'polite' });
     this.refreshPlacementUi();
     return h(
       'div',
@@ -786,7 +803,40 @@ export class MatchScreen extends BaseScreen {
           this.enemyList),
       ),
       h('div', { class: 'placement-actionbar' }, this.placementStatus, this.placementActions),
+      this.placementDetail,
     );
+  }
+
+  /** Fiche du combattant en cours de placement (affichée en mobile, à côté de la main de cartes). */
+  renderPlacementDetail() {
+    if (!this.placementDetail) return;
+    const fighter = this.placingId ? this.session.getFighter(this.placingId) : null;
+    if (!fighter || !this.isPlayerTurn) {
+      this.placementDetail.hidden = true;
+      return;
+    }
+    const fatigue = this.matchFatigue(fighter);
+    const key = { lutteur: 'wrestling', hastier: 'polearm', runner: 'percussion' }[fighter.specialtyId];
+    const skills = [['wrestling', 'Lutte'], ['polearm', 'Arme d’hast'], ['percussion', 'Percussion'], ['endurance', 'Endurance']];
+    this.placementDetail.hidden = false;
+    // (replaceChildren écrirait « null » : les éléments absents sont retirés.)
+    this.placementDetail.replaceChildren(...[
+      h('div', { class: 'pd-head' },
+        FighterSprite(fighter, { size: 46, team: this.playerTeam, colorIntensity: getColorIntensity(fatigue) }),
+        h('div', { class: 'pd-identity' },
+          h('strong', { class: 'pd-name' }, FighterName(fighter, { session: this.session })),
+          h('span', { class: 'pd-tags' }, ...FighterClassTags(fighter, this.session), FighterStars(calculateFighterLevel(fighter))))),
+      h('div', { class: 'pd-skills' }, skills.map(([stat, label]) => {
+        const value = Math.round(fighter.stats?.[stat] ?? 0);
+        return h('div', { class: `pd-skill ${stat === key ? 'is-key' : ''}`.trim() },
+          h('span', {}, label),
+          h('span', { class: 'pd-bar' }, h('span', { style: { width: `${Math.min(100, value)}%` } })),
+          h('span', { class: 'pd-value' }, String(value)));
+      })),
+      h('p', { class: `pd-fatigue ${fatigueLevelClass(fighter, fatigue)}` }, fatigueText(fighter, fatigue)),
+      ...TalentBadges(fighter, this.session),
+      fighter.specialty?.formationRole ? h('p', { class: 'pd-role' }, `Rôle : ${fighter.specialty.formationRole}.`) : null,
+    ].filter(Boolean));
   }
 
   /** Colonnes (mon équipe à gauche, adversaires à droite), tour en cours et boutons. */
@@ -825,6 +875,7 @@ export class MatchScreen extends BaseScreen {
     });
     this.ownList.replaceChildren(...own);
     this.enemyList.replaceChildren(...enemies);
+    this.renderPlacementDetail();
     const placedOwn = this.lineup.filter((id) => manager.getPlacement('A', id)).length;
     const placedEnemy = this.opponentLineup.filter((id) => manager.getPlacement('B', id)).length;
     this.ownCount.textContent = `${placedOwn} / ${this.lineup.length} placés`;
@@ -967,11 +1018,14 @@ export class MatchScreen extends BaseScreen {
     }
 
     let last = performance.now();
+    const draw = createFramePacer();
     const frame = (now) => {
-      const dt = (now - last) / 1000;
-      last = now;
-      if (this.step === 'battle') this.advanceBattle(dt);
-      this.renderer.render(this.liceScene, now / 1000);
+      if (draw(now)) {
+        const dt = (now - last) / 1000;
+        last = now;
+        if (this.step === 'battle') this.advanceBattle(dt);
+        this.renderer.render(this.liceScene, now / 1000);
+      }
       this.frameId = requestAnimationFrame(frame);
     };
     this.frameId = requestAnimationFrame(frame);
@@ -1018,6 +1072,7 @@ export class MatchScreen extends BaseScreen {
   launchRound() {
     if (!this.placement?.isComplete) return;
     this.placement.lock();
+    haptic('heavy');
     const scoreBefore = { a: this.match.scoreA, b: this.match.scoreB };
     this.lastRound = resolvePlayerRound(this.session, this.match, {
       fightersA: [...this.lineup],
@@ -1318,7 +1373,9 @@ export class MatchScreen extends BaseScreen {
     );
   }
 
-  renderResultStep() {    const round = this.lastRound;
+  renderResultStep() {
+    if (isMobileLayout()) return renderRoundResultMobile(this);
+    const round = this.lastRound;
     const won = round.winnerTeamId === this.playerTeam.id;
     const winner = this.session.getTeam(round.winnerTeamId);
     const tie = !this.match.isFinished && this.match.scoreA === 1 && this.match.scoreB === 1;
@@ -1368,8 +1425,8 @@ export class MatchScreen extends BaseScreen {
         h('p', { class: 'final-sub' }, `${name(this.match.winnerId)} ${clubVerb(name(this.match.winnerId), 'remporte', 'remportent')} le Combat de la Reine`),
         h('p', { class: 'final-score' }, `${Math.max(this.match.scoreA, this.match.scoreB)} – ${Math.min(this.match.scoreA, this.match.scoreB)}`),
         h('p', { class: 'final-points queen-reward' }, won
-          ? `+${this.queenReport.reward} deniers de récompense`
-          : `Aucune récompense (${option.reward} deniers en cas de victoire)`),
+          ? `+${this.queenReport.reward} deniers de récompense${this.queenReport.ferveurs ? ` · +${this.queenReport.ferveurs} Ferveur${this.queenReport.ferveurs > 1 ? 's' : ''} de la Reine (Le Coffre)` : ''}`
+          : `Aucune récompense (${option.reward} deniers et ${getFerveurReward(this.event.data.selectedStars ?? option.stars)} ferveur${getFerveurReward(this.event.data.selectedStars ?? option.stars) > 1 ? 's' : ''} en cas de victoire)`),
         h(
           'ol',
           { class: 'round-summary' },
@@ -1450,6 +1507,7 @@ export class MatchScreen extends BaseScreen {
     if (this.match?.isFinished && this.match.winnerId === this.playerTeam?.id && !this.fanfarePlayed) {
       this.fanfarePlayed = true;
       audioDirector.play('victory');
+      haptic('success');
     }
     if (this.isCup) return this.renderCupFinalStep();
     if (this.isQueen) return this.renderQueenFinalStep();
@@ -1495,6 +1553,19 @@ export class MatchScreen extends BaseScreen {
     } else {
       headline = h('div', { class: 'match-final' }, h('p', { class: 'final-sub' }, 'Votre compagnie est exempte lors de cette journée.'));
     }
+    if (isMobileLayout() && this.match) {
+      const playerResult = this.results.find(({ match }) => match === this.match);
+      return renderFinalMobile(this, {
+        won: this.match.winnerId === playerId,
+        points: playerResult.points[playerId],
+        homeReward: playerResult.homeReward ?? 0,
+        others,
+        standingsTable: h('section', { class: 'mm-standings' }, h('h3', { class: 'sheet-section-title' }, `${this.seasonEnd ? 'Classement final' : 'Classement'} — ${getLeagueName(playerLeagueId)}`), LeagueMiniTable(standings, { around: 2 })),
+        seasonNote: this.seasonEnd ? h('p', { class: 'season-over-note', role: 'status' }, `Dernière journée : la saison ${this.seasonEnd.season} est terminée.`) : null,
+        soreness: this.renderSorenessBlock(),
+        onFinish: () => this.finishDay(),
+      });
+    }
 
     return h(
       'div',
@@ -1535,6 +1606,8 @@ export class MatchScreen extends BaseScreen {
   finishDay() {
     const report = advanceDay(this.session);
     report.prepend(this.isQueen ? this.queenReport : buildPlayerResultEvent(this.session, this.event, this.results));
-    this.navigate(this.isQueen ? SCREENS.TEAM : SCREENS.LEAGUE, autosaveDay({ services: this.services, session: this.session, report }));
+    // Interface mobile (v0.85) : retour systématique au Centre après le combat.
+    const next = isMobileLayout() ? SCREENS.CENTRE : this.isQueen ? SCREENS.TEAM : SCREENS.LEAGUE;
+    this.navigate(next, autosaveDay({ services: this.services, session: this.session, report }));
   }
 }

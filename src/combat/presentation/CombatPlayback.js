@@ -209,7 +209,10 @@ export class CombatPlayback {
         const age = now - start;
         if (age < 0 || age > EFFECT_SECONDS) return;
         const p = this.positions[k].get(attack.targetId);
-        effects.push({ x: p.x, y: p.y, text: `−${attack.damage}`, age: age / EFFECT_SECONDS, kind: attack.detail.highlight ? 'advantage' : 'normal' });
+        if (attack.detail?.dodged) effects.push({ x: p.x, y: p.y, text: 'Esquive !', age: age / EFFECT_SECONDS, kind: 'dodge' });
+        else effects.push({ x: p.x, y: p.y, text: `−${attack.damage}`, age: age / EFFECT_SECONDS, kind: attack.detail.highlight ? 'advantage' : 'normal' });
+        // Druide de Brocéliande : soin juste après le coup (PV déjà remontés dans hpAfter).
+        if (attack.detail?.heal) effects.push({ x: p.x, y: p.y, text: `+${attack.detail.heal.amount} PV`, age: Math.max(0, age / EFFECT_SECONDS - 0.15), kind: 'heal' });
         if (attack.hpAfter <= 0) effects.push({ x: p.x, y: p.y, text: 'KO', age: age / EFFECT_SECONDS, kind: 'ko' });
       });
     }

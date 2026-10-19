@@ -42,6 +42,21 @@ export function buildLiceScenery(arena, decoration) {
   const zoneAt = (x, y) => zoneOf(arena, x + 0.5 - offset.x, y + 0.5 - offset.y);
   const isPath = pathTest(arena, decoration, offset);
 
+  // Éléments fixes (v1.1 : cabane, bêtes…) : posés d'abord, à leur place.
+  for (const { lx, ly, w = 1, h = 1, ...rest } of decoration.fixed ?? []) {
+    const x = lx + offset.x;
+    const y = ly + offset.y;
+    if (x < 0 || y < 0 || x + w > width || y + h > height) continue;
+    // Toujours dans la ceinture de décor (jamais sur la lice ni parmi les spectateurs).
+    let inRing = true;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) inRing &&= isRing(x + dx, y + dy);
+    if (!inRing) continue;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) taken.add(`${x + dx},${y + dy}`);
+    const prop = { ...rest, x, y, zone: zoneAt(x, y) };
+    if (w > 1 || h > 1) Object.assign(prop, { w, h });
+    props.push(prop);
+  }
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (!isRing(x, y) || isPath(x, y) || taken.has(`${x},${y}`)) continue;

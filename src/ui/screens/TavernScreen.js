@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { SkillLine } from '../components/PlacementFighterCard.js';
 import { checkRecruit, recruit, getRecruitCost } from '../../systems/tavern/TavernService.js';
 import { upgradeTavern } from '../../systems/tavern/TavernUpgradeService.js';
 import { formatStarRange, formatStarCount, formatPriceTable } from '../../systems/tavern/TavernLevelConfig.js';
@@ -27,6 +28,9 @@ import { listTrophies } from '../../systems/trophies/TrophyService.js';
 import { TROPHY_CABINET } from '../../data/trophies.js';
 import { openFighterStatsBoard, openTrophyCabinet } from '../components/TavernBoards.js';
 import { currentLocale } from '../../i18n/i18n.js';
+import { createFramePacer } from '../../render/framePacing.js';
+import { attachMapZoom } from '../mobile/MapZoom.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 const HINT = 'Survolez un combattant pour voir sa spécialité et ses étoiles ; cliquez pour sa fiche. Le tavernier se tient derrière le comptoir ; la pancarte affiche les classements, l’armoire vos trophées ; la porte ramène au Centre.';
 const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
@@ -40,6 +44,8 @@ const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1
  */
 export class TavernScreen extends HubScreen {
   static hubLocationId = 'tavern';
+  // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
+  static mobileSheet = { label: 'Les recrues' };
 
   renderContent() {
     this.canvas = h('canvas', { class: 'centre-canvas tavern-canvas', 'aria-label': 'L’intérieur de la Taverne en vue isométrique' });
@@ -62,6 +68,8 @@ export class TavernScreen extends HubScreen {
 
   mounted() {
     super.mounted();
+    // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur la carte.
+    if (isMobileLayout()) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     const { recruitment } = this.session;
     this.scene = new TavernScene(recruitment.candidates, { seed: `taverne-${recruitment.generatedOnDay}` });
     this.renderer = new TavernRenderer(this.canvas, this.scene);
@@ -89,10 +97,13 @@ export class TavernScreen extends HubScreen {
     this.listen(this.canvas, 'mouseleave', () => { this.renderer.hover = null; this.hint.textContent = HINT; });
     this.listen(this.canvas, 'click', (event) => this.activate(this.interaction.targetAt(event.clientX, event.clientY)));
     let last = performance.now();
+    const draw = createFramePacer();
     const frame = (now) => {
-      this.scene.update((now - last) / 1000);
-      last = now;
-      this.renderer.render(now / 1000);
+      if (draw(now)) {
+        this.scene.update((now - last) / 1000);
+        last = now;
+        this.renderer.render(now / 1000);
+      }
       this.frameId = requestAnimationFrame(frame);
     };
     this.frameId = requestAnimationFrame(frame);
@@ -154,8 +165,13 @@ export class TavernScreen extends HubScreen {
             type: 'button', class: 'tavern-recruit-item', 'data-candidate': candidate.id, onclick: () => this.openRecruitSheet(candidate.id),
           },
           FighterSprite(candidate.fighter, { size: 40 }),
-          h('span', { class: 'tavern-recruit-who' }, h('strong', {}, candidate.fighter.name), h('span', { class: 'tavern-recruit-tags' }, ...FighterClassTags(candidate.fighter), ...TalentBadges(candidate.fighter, this.session), FighterStars(calculateFighterLevel(candidate.fighter)))),
-          h('span', { class: 'recruit-cost' }, formatDeniers(getRecruitCost(this.session, candidate)))))))
+          h('span', { class: 'tavern-recruit-who' }, h('strong', {}, candidate.fighter.name), h('span', { class: 'tavern-recruit-tags' }, ...FighterClassTags(candidate.fighter), ...TalentBadges(candidate.fighter, this.session), FighterStars(calculateFighterLevel(candidate.fighter))),
+            // v0.83 : le potentiel de la recrue, visible sans ouvrir sa fiche ; compétences (mobile).
+            h('span', { class: 'tavern-recruit-potential' }, h('span', { class: 'tavern-recruit-potential-label' }, 'Potentiel'), PotentialFlames(candidate.fighter)),
+            SkillLine(candidate.fighter)),
+          candidate.gift
+            ? h('span', { class: 'recruit-cost is-gift', title: 'Ramené d’expédition par le Baron : offert' }, '🧭 Offert')
+            : h('span', { class: 'recruit-cost' }, formatDeniers(getRecruitCost(this.session, candidate)))))))
           : h('p', { class: 'empty-state hub-card' }, 'Aucun combattant n’est disponible pour le moment. Revenez après la prochaine rotation.')),
     );
   }
@@ -199,8 +215,8 @@ export class TavernScreen extends HubScreen {
             PotentialFlames(fighter)))),
       StatList(fighter, { compact: true }),
       h('div', { class: 'recruit-footer' },
-        h('span', { class: 'recruit-cost' }, formatDeniers(cost)),
-        h('span', { class: 'muted' }, `Trésor : ${formatDeniers(getDeniers(this.session))}`)),
+        h('span', { class: 'recruit-cost' }, candidate.gift ? '🧭 Offert' : formatDeniers(cost)),
+        h('span', { class: 'muted' }, candidate.gift ? 'Ramené d’expédition par le Baron.' : `Trésor : ${formatDeniers(getDeniers(this.session))}`)),
       check.ok ? null : h('p', { class: 'recruit-reason' }, check.reason));
     openModal({
       title: 'Fiche de recrutement',
@@ -209,7 +225,7 @@ export class TavernScreen extends HubScreen {
       actions: [
         { label: 'Fermer', value: null },
         {
-          label: `Recruter (${formatDeniers(cost)})`, variant: 'primary', disabled: !check.ok, title: check.reason ?? `Engager ${fighter.name}`,
+          label: candidate.gift ? 'Recruter (offert)' : `Recruter (${formatDeniers(cost)})`, variant: 'primary', disabled: !check.ok, title: check.reason ?? `Engager ${fighter.name}`,
           onClick: (modal) => { modal.close(true); this.recruit(candidateId); },
         },
       ],

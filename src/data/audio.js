@@ -27,6 +27,7 @@ export const SCREEN_AUDIO = Object.freeze({
   tavern: Object.freeze({ music: 'taverne', ambience: 'tavern' }),
   training: Object.freeze({ music: 'taverne', ambience: 'training' }),
   scriptorium: Object.freeze({ music: 'scriptorium', ambience: 'scriptorium' }),
+  expeditions: Object.freeze({ music: 'taverne', ambience: 'expeditions' }),
   match: Object.freeze({ music: 'keep', ambience: 'lice' }),
   'french-cup': Object.freeze({ music: 'keep', ambience: 'cup' }),
 });
@@ -40,7 +41,7 @@ export const MOMENT_MUSIC = Object.freeze({
 
 const A = (name) => `assets/audio/ambience/${name}.mp3`;
 const S = (name) => `assets/audio/sfx/${name}.mp3`;
-// Variantes numérotées d'un même son : « hit-plate-1.mp3 », « hit-plate-2.mp3 »…
+// Variantes numérotées d'un même son : « hit-steel-1.mp3 », « hit-steel-2.mp3 »…
 const variants = (folder, base, count) => Array.from({ length: count }, (_, i) => `assets/audio/${folder}/${base}-${i + 1}.mp3`);
 
 /**
@@ -60,6 +61,11 @@ export const AMBIENCES = Object.freeze({
   borough: Object.freeze({
     label: 'Le Bourg : marché', volume: 0.85,
     layers: [{ file: A('market'), volume: 0.8 }],
+  }),
+  // Les Expéditions (v0.96) : le marché au nord, le vent des montagnes au sud.
+  expeditions: Object.freeze({
+    label: 'Les Expéditions : marché, vent des montagnes', volume: 0.85,
+    layers: [{ file: A('market'), volume: 0.45 }, { file: A('wind-trees'), volume: 0.6 }],
   }),
   tavern: Object.freeze({
     label: 'La Taverne : conversations, âtre', volume: 0.85,
@@ -93,11 +99,12 @@ export const AMBIENCES = Object.freeze({
  *   { files, volume, pitchJitter?, throttle? (limité à maxHitsPerSecond), maxSeconds? (coupé en fondu) }
  */
 export const SOUND_EFFECTS = Object.freeze({
-  // Coups : sur l'armure (plaque) et le métal des armes.
-  hit: Object.freeze({ files: Object.freeze([...variants('sfx', 'hit-plate', 3), ...variants('sfx', 'hit-metal', 3)]), volume: 0.55, pitchJitter: 0.08, throttle: true }),
-  bigHit: Object.freeze({ files: Object.freeze([...variants('sfx', 'bighit-plate', 2), ...variants('sfx', 'bighit-metal', 2)]), volume: 0.75, pitchJitter: 0.06, throttle: true }),
-  // KO : le coup sourd du combattant qui tombe.
-  ko: Object.freeze({ files: Object.freeze(variants('sfx', 'ko', 3)), volume: 0.9, pitchJitter: 0.05 }),
+  // Coups (v1.1.5) : des lames d'acier qui s'entrechoquent.
+  hit: Object.freeze({ files: Object.freeze(variants('sfx', 'hit-steel', 3)), volume: 0.55, pitchJitter: 0.08, throttle: true }),
+  // Gros coups : un long choc d'épées, ou une masse qui sonne sur le métal.
+  bigHit: Object.freeze({ files: Object.freeze([S('bighit-steel-1'), S('bighit-pipe-1')]), volume: 0.75, pitchJitter: 0.06, throttle: true }),
+  // KO : la lourde chute du combattant dans la terre.
+  ko: Object.freeze({ files: Object.freeze([S('ko-fall-1')]), volume: 0.9, pitchJitter: 0.05 }),
   // Fanfare de victoire : l'ouverture d'un thème médiéval (8 s, fondu).
   victory: Object.freeze({ files: Object.freeze([S('victory-fanfare')]), volume: 0.8, maxSeconds: 8 }),
   // Exploit accompli : une cloche.
@@ -107,7 +114,10 @@ export const SOUND_EFFECTS = Object.freeze({
 /** Sources des sons (toutes sous licence CC0 : utilisables sans condition, crédit facultatif). */
 export const AUDIO_CREDITS = Object.freeze([
   Object.freeze({ files: 'ambience/camp-fire, forest, market, tavern-chatter, hearth, hearth-quiet, wind-trees, crowd, big-crowd, applause-*', author: 'Joseph Sardin', source: 'BigSoundBank (bigsoundbank.com) — sons n° 0989, 2749, 2729, 0480, 2855, 0030, 0904, 2969, 2970, 3523, 0019, 0021', license: 'CC0' }),
-  Object.freeze({ files: 'sfx/hit-*, bighit-*, ko-*, achievement-bell ; ambience/dummy-hit-*', author: 'Kenney', source: 'Impact Sounds (kenney.nl)', license: 'CC0' }),
+  Object.freeze({ files: 'sfx/hit-steel-1, 2, 3', author: 'loudernoises, Bird_man, JohnBuhr', source: 'Freesound — « Sword Clash » (n° 334169), « Sword Clash.wav » (n° 275159), « Sword_Clash (7).wav » (n° 326868)', license: 'CC0' }),
+  Object.freeze({ files: 'sfx/bighit-steel-1, bighit-pipe-1', author: 'Christopherderp, ani_music', source: 'Freesound — « Swords Clash - High Quality #3 » (n° 364531), « ANI Big Pipe Hit » (n° 244983)', license: 'CC0' }),
+  Object.freeze({ files: 'sfx/ko-fall-1', author: 'leonelmail', source: 'Freesound — « BODY FALL - V HVY - DIRT » (n° 504626)', license: 'CC0' }),
+  Object.freeze({ files: 'sfx/achievement-bell ; ambience/dummy-hit-*', author: 'Kenney', source: 'Impact Sounds (kenney.nl)', license: 'CC0' }),
   Object.freeze({ files: 'ambience/book-flip-*', author: 'Kenney', source: 'RPG Audio (kenney.nl)', license: 'CC0' }),
   Object.freeze({ files: 'sfx/victory-fanfare', author: 'RandomMind', source: 'Medieval: Victory Theme (opengameart.org)', license: 'CC0' }),
 ]);

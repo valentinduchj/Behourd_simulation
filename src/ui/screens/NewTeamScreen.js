@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { MobileSteps } from '../mobile/MobileSteps.js';
 import { SCREENS } from '../../core/screenIds.js';
 import { PALETTE, getPaletteColor } from '../../data/palette.js';
 import { EMBLEM_PATTERNS, DEFAULT_PATTERN_ID } from '../../data/emblemPatterns.js';
@@ -10,6 +11,7 @@ import { DEFAULT_LEAGUE_ID } from '../../data/leagues.js';
 import { getLocation } from '../../systems/geography/LocationService.js';
 import { BaseScreen } from './BaseScreen.js';
 import { EmblemView } from '../components/EmblemView.js';
+import { focusField } from '../mobile/mobileLayout.js';
 
 export class NewTeamScreen extends BaseScreen {
   constructor(context) {
@@ -107,11 +109,12 @@ export class NewTeamScreen extends BaseScreen {
         h('p', { class: 'screen-subtitle' }, 'Donnez un nom et des couleurs à votre équipe. Vous créerez ensuite son capitaine.'),
       ),
       h('div', { class: 'new-team-layout' }, form, preview),
+      MobileSteps(2),
     );
   }
 
   mounted() {
-    this.nameInput.focus();
+    focusField(this.nameInput);
   }
 
   buildEmblem(patternId = this.draft.patternId) {
@@ -142,7 +145,7 @@ export class NewTeamScreen extends BaseScreen {
     const problem = validateTeamName(name);
     if (problem) {
       this.errorEl.textContent = problem;
-      this.nameInput.focus();
+      focusField(this.nameInput);
       return;
     }
     // Étape suivante : création du capitaine (la partie est créée à la fin de cette étape).

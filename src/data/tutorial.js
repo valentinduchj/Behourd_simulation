@@ -12,7 +12,9 @@
 //             'select' (target activity) le joueur doit sélectionner ce lieu sur la carte
 //   text      paragraphes ; {nom} est remplacé par une valeur du jeu (voir Tutorial.js)
 //   list      contenu tiré des données : 'specialties' (rôles) ou 'activities' (lieux du Centre)
-//   action    consigne mise en avant (étapes à cliquer)
+//   action    consigne mise en avant (étapes à cliquer) ; mobileAction : sa version téléphone
+//   sheet     interface mobile : la zone est dans le volet du lieu, ouvert pour cette bulle
+//             (sinon le volet est refermé) ; les cibles listent aussi leur équivalent mobile.
 //   watch     après le clic : { target, ms } — la bulle s'efface et l'on regarde la zone `target`
 //             pendant `ms` millisecondes (ex. les combattants qui rejoignent la Petite lice)
 // La dernière bulle porte le bouton « Terminer » ; « Passer le tutoriel » est toujours là.
@@ -46,21 +48,22 @@ export const TUTORIAL_STEPS = Object.freeze([
     action: 'Cliquez sur « La Compagnie ».',
   },
   {
-    id: 'roles', chapter: 'centre', screen: 'team', target: { selectorAll: '.roster-group' }, advance: 'next',
+    id: 'roles', chapter: 'centre', screen: 'team', target: { selectorAll: '.roster-group, .m-team-list' }, advance: 'next',
     text: ['Chaque combattant a une spécialité, qui fixe son rôle dans la lice :'],
     list: 'specialties',
     after: ['Un combat se joue à cinq contre cinq : un bon mélange des trois rôles fait la différence.'],
   },
   {
-    id: 'fighter-card', chapter: 'centre', screen: 'team', target: '.fighter-card', advance: 'next',
+    id: 'fighter-card', chapter: 'centre', screen: 'team', target: '.fighter-card, .m-team-sheet', advance: 'next',
     text: [
       'Les étoiles donnent le niveau d’un combattant. Un clic sur sa carte ouvre sa fiche : compétences, fatigue, talents.',
     ],
   },
   {
-    id: 'centre-button', chapter: 'centre', target: '[data-hub-item="centre"]', advance: 'click',
+    id: 'centre-button', chapter: 'centre', target: '[data-hub-item="centre"], .m-dock [data-hub-item="domain"]', advance: 'click',
     text: ['Allons au Centre, là où vos combattants s’entraînent.'],
     action: 'Cliquez sur « Le Centre ».',
+    mobileAction: 'Touchez « Domaine », en bas : il mène au Centre.',
   },
   {
     id: 'centre', chapter: 'centre', screen: 'centre', target: '.centre-stage', advance: 'next',
@@ -85,13 +88,13 @@ export const TUTORIAL_STEPS = Object.freeze([
     action: 'Cliquez sur « + ».',
   },
   {
-    id: 'assign-table', chapter: 'centre', screen: 'centre', target: '.assign-table', advance: 'next',
+    id: 'assign-table', chapter: 'centre', screen: 'centre', target: '.assign-table', advance: 'next', sheet: true,
     text: [
       'Vous pouvez aussi affecter vos combattants un par un : choisissez-en un dans ce tableau, puis un lieu. Chaque lieu a un nombre de places limité.',
     ],
   },
   {
-    id: 'fatigue', chapter: 'centre', screen: 'centre', target: '.fatigue-legend', advance: 'next',
+    id: 'fatigue', chapter: 'centre', screen: 'centre', target: '.fatigue-legend', advance: 'next', sheet: true,
     text: [
       'Surveillez la fatigue : chaque combat en laisse. Fatigué (orange), un combattant réussit moins bien ses activités ; épuisé (rouge), il ne peut plus aller qu’au Banquet.',
     ],
@@ -103,51 +106,51 @@ export const TUTORIAL_STEPS = Object.freeze([
     action: 'Cliquez sur « La Taverne ».',
   },
   {
-    id: 'recruits', chapter: 'tavern', screen: 'tavern', target: '.tavern-recruits', advance: 'next',
+    id: 'recruits', chapter: 'tavern', screen: 'tavern', target: '.tavern-recruits', advance: 'next', sheet: true,
     text: [
       'Voici les recrues présentes. Leurs étoiles disent leur niveau, et leur prix est en deniers. Un clic sur l’une ouvre sa fiche, d’où vous pouvez l’engager.',
     ],
   },
   {
-    id: 'keeper', chapter: 'tavern', screen: 'tavern', target: '.tavern-keeper-card', advance: 'next',
+    id: 'keeper', chapter: 'tavern', screen: 'tavern', target: '.tavern-keeper-card', advance: 'next', sheet: true,
     text: [
       'Les recrues changent chaque semaine. Parlez-moi pour améliorer la Taverne : vous attirerez de meilleurs combattants à la rotation suivante.',
     ],
   },
   {
-    id: 'purse', chapter: 'tavern', screen: 'tavern', target: '.tavern-purse', advance: 'next',
+    id: 'purse', chapter: 'tavern', screen: 'tavern', target: '.tavern-purse', advance: 'next', sheet: true,
     text: [
       'Votre compagnie compte au plus {maxFighters} combattants. Vos deniers servent à recruter ici et à payer les artisans du Bourg.',
     ],
   },
   // ---------- (3/3) Le fil des jours ----------
   {
-    id: 'today', chapter: 'days', target: '.calendar-today', advance: 'next',
+    id: 'today', chapter: 'days', target: '.calendar-today, .mobile-day', advance: 'next',
     text: [
       'Le jeu avance jour par jour. L’année traverse quatre saisons, qui changent le domaine, les activités et les combats.',
     ],
   },
   {
-    id: 'strip', chapter: 'days', target: '.calendar-main', advance: 'next',
+    id: 'strip', chapter: 'days', target: '.calendar-main, .mobile-event', advance: 'next',
     text: [
       'La frise montre les jours à venir et leurs événements : journées de championnat ⚔, Combat de la Reine ♛, rotation de la Taverne…',
     ],
   },
   {
-    id: 'advance', chapter: 'days', target: '.calendar-bar .btn-advance, .calendar-bar .btn-fight', advance: 'next',
+    id: 'advance', chapter: 'days', target: '.calendar-bar .btn-advance, .calendar-bar .btn-fight, .mobile-advance', advance: 'next',
     text: [
       'Quand vos affectations sont prêtes, « Passer la journée » : les activités se déroulent, puis le carnet de bord raconte la journée.',
       'Un jour de combat, ce bouton devient « ⚔ COMBATTRE » : le Centre ferme et vous rejoignez la lice.',
     ],
   },
   {
-    id: 'league', chapter: 'days', target: '.hub-league', advance: 'next',
+    id: 'league', chapter: 'days', target: '.hub-league, .m-dock [data-hub-item="league"]', advance: 'next',
     text: [
       'En championnat, une victoire rapporte {winPoints} points, une défaite avec une manche gagnée {lossWithRoundPoints} point. En fin de saison, les premiers montent de division et les derniers descendent.',
     ],
   },
   {
-    id: 'almanac', chapter: 'days', target: '.hub-almanac', advance: 'next',
+    id: 'almanac', chapter: 'days', target: '.hub-almanac, .mobile-menu-button', advance: 'next',
     text: [
       'C’est tout pour moi ! L’Almanach répond à toutes vos questions sur les règles. Bonne saison, capitaine !',
     ],

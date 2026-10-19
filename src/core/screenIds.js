@@ -10,6 +10,8 @@ export const SCREENS = Object.freeze({
   BOROUGH: 'borough',
   SCRIPTORIUM: 'scriptorium',
   TRAINING: 'training',
+  EXPEDITIONS: 'expeditions',
+  SINGULAR: 'singular-expedition',
   LEAGUE: 'league',
   LOAD: 'load',
   OPTIONS: 'options',

@@ -22,6 +22,10 @@
 //   path         chemin au-delà de la bande des spectateurs, le long d'un côté :
 //                { side: 'south' | 'north' | 'east' | 'west', width, span? } ; sol `ground.path`, sans décor ;
 //                span { from, to } : seulement cette portion du côté (cases du terrain), sinon tout le côté
+//   fixed        éléments posés à une place précise (v1.1) : { type, lx, ly, w?, h?, …props } en cases
+//                du terrain (négatives : au-delà du bord haut / gauche), placés avant le tirage
+//   weather      météo propre au décor (v1.1) : { [saison]: 'rain' | 'snow' | … } ; saison absente :
+//                aucune (sinon, celle de la saison de l'année, render/seasonLook.js)
 
 const WOOD_FENCE = Object.freeze({ rail: '#8a6235', post: '#5a3b1e' });
 
@@ -289,7 +293,48 @@ export const LICE_DECORATIONS = Object.freeze([
       ],
     },
   },
+  {
+    // Expéditions singulières (v1.1) : la lice du Sentier, en pleine forêt de grands pins, la
+    // cabane du chasseur au loin, quelques villageois, des enfants et des bêtes.
+    id: 'lice_sentier',
+    name: 'Le Sentier des pins',
+    description: 'Une petite lice de cordes au cœur de la forêt : grands pins, cabane de chasseur, et quelques curieux.',
+    exclusiveTo: 'singular',
+    weight: 1,
+    background: ['#9fbfd2', '#cfe0e6'],
+    ground: {
+      arena: { style: 'speckle', colors: ['#b49a6a', '#ab9061', '#bca274'], grain: '#8a7048' },
+      crowd: { style: 'speckle', colors: ['#7fae5c', '#77a554', '#86b463'], grain: '#5e8a40' },
+      outer: { style: 'speckle', colors: ['#5f8f45', '#678f4a', '#58873f', '#6a9a4c'], grain: '#3f6a2c' },
+      slab: { left: '#6e5230', right: '#5a4226' },
+    },
+    fence: WOOD_FENCE,
+    layout: { crowdBand: 1, ringWidth: 3 },
+    weather: { autumn: 'rain', winter: 'snow' },
+    fixed: [
+      { type: 'cabin', lx: 7, ly: -4, w: 2, h: 2 },
+      { type: 'logs', lx: 6, ly: -3 },
+      { type: 'animal', lx: -2, ly: 1, kind: 'hen' },
+      { type: 'animal', lx: -3, ly: 2, kind: 'hen' },
+      { type: 'animal', lx: 2, ly: -3, kind: 'deer' },
+      { type: 'animal', lx: 8, ly: 2, kind: 'goat' },
+      { type: 'animal', lx: 1, ly: 5, kind: 'dog' },
+    ],
+    props: {
+      back: [
+        { type: 'pine', weight: 58 }, { type: 'tree', weight: 10 }, { type: 'bush', weight: 8 }, { type: 'rock', weight: 5 },
+        { type: 'stump', weight: 4 }, { type: null, weight: 15 },
+      ],
+      front: [
+        { type: 'bush', weight: 22 }, { type: 'stump', weight: 10 }, { type: 'rock', weight: 10 }, { type: 'flowers', weight: 14 },
+        { type: 'tuft', weight: 14 }, { type: null, weight: 30 },
+      ],
+    },
+  },
 ].map((decoration) => Object.freeze(decoration)));
+
+/** Le Sentier des pins (expéditions singulières). */
+export const SINGULAR_DECORATION_ID = 'lice_sentier';
 
 /** Ma Lice d'entraînement (TrainingScreen). */
 export const TRAINING_DECORATION_ID = 'lice_training';

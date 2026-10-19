@@ -51,7 +51,9 @@ export function createCombatUnit({
   for (const effect of talentEffects.filter((e) => e.type === 'combatStats' && (e.when !== 'decisive' || decisive))) {
     for (const statId of effect.stat === 'all' ? LEVEL_STAT_IDS : [effect.stat]) stats[statId] *= 1 + effect.value;
   }
-  const sumOf = (type) => talentEffects.filter((e) => e.type === type).reduce((total, e) => total + (e.value ?? 0), 0);
+  // (Les effets conditionnels — `when`, ex. Dernier rempart — sont lus au moment du coup : TalentCombat.)
+  const sumOf = (type) => talentEffects.filter((e) => e.type === type && !e.when).reduce((total, e) => total + (e.value ?? 0), 0);
+  const heal = talentEffects.find((e) => e.type === 'allyHeal') ?? null;
   const lastStand = talentEffects.find((e) => e.type === 'lastStand') ?? null;
   return {
     id: fighter.id,
@@ -92,6 +94,11 @@ export function createCombatUnit({
     fatigueShift: sumOf('fatigueThreshold'),
     comboExtra: sumOf('comboHits'),
     lucky: talentEffects.some((e) => e.type === 'luckyRoll'),
+    // Exotiques (v0.99) : préférence pour l'adversaire blessé (Œil de Skellig), esquive (Feu
+    // follet), soin d'un allié une fois par manche (Druide de Brocéliande).
+    preferWounded: sumOf('preferWounded'),
+    dodgeChance: Math.min(0.75, sumOf('dodgeChance')),
+    allyHeal: heal ? { value: heal.value, threshold: heal.threshold, talentId: heal.talentId, available: true } : null,
     // Saison de l'année (v0.70, ClimateService) : efficacité de sa classe (Hastier en été, Runner
     // en automne : 0,9), sauf talent qui l'en protège. Multiplie ses dégâts finaux ; ses
     // statistiques ne changent pas. `talentEffects` ne contient déjà que les effets actifs.

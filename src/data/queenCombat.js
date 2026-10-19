@@ -38,6 +38,10 @@ export const QUEEN_COMBAT_CONFIG = Object.freeze({
   // Multiplicateur propre aux Combats de la Reine, appliqué au montant tiré (barème ± variation).
   rewardMultiplier: 2,
 
+  // Ferveurs de la Reine (v0.97) : en cas de victoire, autant de Ferveurs que d'étoiles PLEINES
+  // du club adverse (4 étoiles : 4 ; 2 étoiles et demie : 2), rangées dans Le Coffre.
+  ferveur: Object.freeze({ itemId: 'ferveur_reine', perFullStar: 1 }),
+
   // Fatigue des manches d'un Combat de la Reine — VALEUR PROPRE NON DÉFINIE : avec null,
   // la fatigue des combats de championnat s'applique (MATCH_RULES.fatigue). Pour la
   // définir : { roundWinner: { min, max }, roundLoser: { min, max } }.

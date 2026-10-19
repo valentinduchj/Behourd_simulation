@@ -52,9 +52,13 @@ export function getRecruitPriceTable(range) {
   return starStepsInRange(range).map((stars) => ({ stars, price: getRecruitPriceForStars(stars) }));
 }
 
-/** Génère une nouvelle offre de recrues (remplace l'offre précédente). Renvoie les candidats. */
+/**
+ * Génère une nouvelle offre de recrues (remplace l'offre précédente ; les recrues ramenées
+ * d'expédition restent). Renvoie les nouveaux candidats.
+ */
 export function generateRecruitmentPool(session, rng = Math.random) {
-  const usedFirstNames = new Set(session.playerFighters.map((fighter) => firstNameOf(fighter.name)));
+  const gifts = session.recruitment.candidates.filter((candidate) => candidate.gift);
+  const usedFirstNames = new Set([...session.playerFighters, ...gifts.map((c) => c.fighter)].map((fighter) => firstNameOf(fighter.name)));
   const names = generateFighterNames(RECRUITMENT_CONFIG.poolSize, rng, usedFirstNames);
   const starRange = getNextRotationStarRange(session);
   const candidates = names.map((name) => {
@@ -64,7 +68,7 @@ export function generateRecruitmentPool(session, rng = Math.random) {
     rollTavernTalent(session, candidate);
     return candidate;
   });
-  session.recruitment.setCandidates(candidates, session.calendar.currentDay);
+  session.recruitment.setCandidates([...gifts, ...candidates], session.calendar.currentDay);
   session.markDirty();
   return candidates;
 }

@@ -33,6 +33,11 @@ import {
   applyAssignmentPreset, canCreateAssignmentPreset, captureAssignments, createAssignmentPreset, deleteAssignmentPreset,
   describeAssignmentPreset, describePresetIssues, getAssignmentPreset, listAssignmentPresets, updateAssignmentPreset,
 } from '../../systems/activities/AssignmentPresetService.js';
+import { createFramePacer } from '../../render/framePacing.js';
+import { focusField } from '../mobile/mobileLayout.js';
+import { attachMapZoom } from '../mobile/MapZoom.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
+import { AssignBoard } from '../mobile/AssignBoard.js';
 
 // Encombrement du panneau de réglage d'un lieu (px), pour l'ouvrir du côté où il tient.
 const QUICK_PANEL_SIZE = Object.freeze({ width: 290, height: 250 });
@@ -40,8 +45,20 @@ const QUICK_PANEL_SIZE = Object.freeze({ width: 290, height: 250 });
 const DEFAULT_HINT = 'Sélectionnez un combattant (dans la scène ou la liste), puis cliquez sur un lieu pour l’y affecter. Les chemins mènent à la Taverne (en haut à droite) et au Bourg (en bas à droite).';
 
 /** Le Centre : scène isométrique où l'on affecte les combattants aux activités. */
+/** Marque un bloc du Centre pour le volet du téléphone (partie « places » ou « assignments »). */
+function withPart(el, part) {
+  el.dataset.sheetPart = part;
+  return el;
+}
+
 export class CentreScreen extends HubScreen {
   static hubLocationId = 'centre';
+  // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
+  // Téléphone (v0.92) : deux boutons, « Lieux » et « Affectations », chacun sa partie du volet.
+  static mobileSheet = {
+    label: 'Lieux et affectations',
+    parts: [{ id: 'places', label: 'Lieux', icon: 'places' }, { id: 'assignments', label: 'Affectations', icon: 'assign' }],
+  };
 
   renderContent() {
     this.scene = new CentreScene(this.session);
@@ -67,16 +84,18 @@ export class CentreScreen extends HubScreen {
       ),
       h('div', { class: `centre-stage ${this.closed ? 'is-closed' : ''}`.trim() }, this.canvas, this.renderQuickAssign()),
       this.hint,
-      h('h2', { class: 'hub-section-title' }, 'Lieux'),
-      this.zonesHost,
-      h('h2', { class: 'hub-section-title' }, 'Affectations'),
-      this.presetsHost,
-      this.rosterHost,
+      h('h2', { class: 'hub-section-title', 'data-sheet-part': 'places' }, 'Lieux'),
+      withPart(this.zonesHost, 'places'),
+      h('h2', { class: 'hub-section-title', 'data-sheet-part': 'assignments' }, 'Affectations'),
+      withPart(this.presetsHost, 'assignments'),
+      withPart(this.rosterHost, 'assignments'),
     );
   }
 
   mounted() {
     super.mounted();
+    // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur la carte.
+    if (isMobileLayout()) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     this.renderer = new CentreRenderer(this.canvas, this.scene);
     // Arrivée par un chemin (retour de la Taverne, du Bourg) : la caméra part de ce bout de chemin.
     if (this.params.arrivalExitId) this.renderer.setArrival(this.params.arrivalExitId);
@@ -88,8 +107,9 @@ export class CentreScreen extends HubScreen {
     this.listen(window, 'keydown', (event) => { if (event.key === 'Escape') { this.select(null); this.selectActivity(null); } });
     this.listen(this.canvas, 'mouseleave', () => { this.hoverActivityId = null; });
 
+    const draw = createFramePacer();
     const frame = (now) => {
-      this.drawFrame(now / 1000);
+      if (draw(now)) this.drawFrame(now / 1000);
       this.frameId = requestAnimationFrame(frame);
     };
     this.frameId = requestAnimationFrame(frame);
@@ -175,7 +195,7 @@ export class CentreScreen extends HubScreen {
           control.renderPanel();
           panel.hidden = false;
           gear.setAttribute('aria-expanded', 'true');
-          panel.querySelector('select, input')?.focus();
+          focusField(panel.querySelector('select, input'));
         } else this.closeQuickPanel(control);
       },
     }, '⚙');
@@ -510,7 +530,7 @@ export class CentreScreen extends HubScreen {
       body,
       actions: [{ label: 'Annuler', value: false }, { label: preset ? 'Enregistrer' : 'Valider', variant: 'primary', onClick: submit }],
     });
-    input.focus();
+    focusField(input);
   }
 
   async confirmDeletePreset(preset) {
@@ -574,6 +594,11 @@ export class CentreScreen extends HubScreen {
       }),
     );
 
+    // Téléphone (v0.95) : les lieux en colonnes, la fiche du combattant choisi en haut.
+    if (isMobileLayout()) {
+      this.rosterHost.replaceChildren(AssignBoard(this));
+      return;
+    }
     this.rosterHost.replaceChildren(
       h(
         'table',
@@ -598,7 +623,7 @@ export class CentreScreen extends HubScreen {
         )),
         h('tbody', {}, sortFighters(this.session.playerFighters, sort).map((fighter) => h(
           'tr',
-          { class: fighter.id === this.selectedId ? 'is-selected' : '' },
+          { class: fighter.id === this.selectedId ? 'is-selected' : '', 'data-fighter-id': fighter.id },
           h('td', {}, h('button', {
             type: 'button', class: 'link-button', 'aria-pressed': String(fighter.id === this.selectedId),
             onclick: () => this.select(fighter.id === this.selectedId ? null : fighter.id),

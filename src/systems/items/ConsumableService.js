@@ -49,6 +49,7 @@ const CONTEXT_REASONS = Object.freeze({
 
 /** Texte « où l'utiliser » d'un objet, d'après ses contextes. */
 export function describeUsage(item) {
+  if (!item.usableIn?.length) return item.keepsake ? 'Inutilisable pour l’instant : à garder (il s’empile dans Le Coffre).' : 'Inutilisable.';
   const labels = { [ITEM_USE_CONTEXTS.OUTSIDE_COMBAT]: 'hors combat (depuis Le Coffre)', [ITEM_USE_CONTEXTS.PLACEMENT]: 'pendant le placement avant une manche' };
   return `Utilisable ${item.usableIn.map((context) => labels[context] ?? context).join(' ou ')}.`;
 }
@@ -56,7 +57,7 @@ export function describeUsage(item) {
 /** Combattants que l'objet peut viser dans ce contexte, chacun avec { fighter, ok, reason }. */
 export function getItemTargets(session, itemId, { context, match = null, eligibleFighterIds = null } = {}) {
   const item = getItemDefinition(itemId);
-  if (!item) return [];
+  if (!item?.effect) return [];
   const handler = getEffectHandler(item.effect.type);
   let fighters = item.target === 'playerFighter' ? session.playerFighters : [];
   if (eligibleFighterIds) fighters = fighters.filter((fighter) => eligibleFighterIds.includes(fighter.id));
@@ -74,6 +75,7 @@ export function canUseItem(session, itemId, options = {}) {
   const item = getItemDefinition(itemId);
   if (!item) return { ok: false, reason: 'Objet inconnu.' };
   if (getItemQuantity(session, itemId) < 1) return { ok: false, reason: 'Vous n’en avez plus.' };
+  if (!item.usableIn?.length || !item.effect) return { ok: false, reason: 'Cet objet ne s’utilise pas : il se garde.' };
   if (!item.usableIn.includes(options.context)) return { ok: false, reason: CONTEXT_REASONS[item.usableIn[0]] ?? 'Inutilisable ici.' };
   if (options.context === ITEM_USE_CONTEXTS.PLACEMENT && !options.match) return { ok: false, reason: 'Aucun combat en cours.' };
   const targets = getItemTargets(session, itemId, options);

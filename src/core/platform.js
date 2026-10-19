@@ -1,14 +1,23 @@
-// Abstraction de l'environnement d'exécution (navigateur aujourd'hui, application de
-// bureau demain). Pour Electron, le preload devra exposer window.electronAPI.quit().
+// Abstraction de l'environnement d'exécution : navigateur, application Android (Capacitor, v0.82),
+// application de bureau. Pour Electron, le preload devra exposer window.electronAPI.quit().
 
 const ENVIRONMENT_LABELS = {
+  android: 'Application Android',
   electron: 'Application Electron',
   tauri: 'Application Tauri',
   nwjs: 'Application NW.js',
   browser: 'Navigateur web',
 };
 
+/** Module natif « App » de Capacitor (bouton retour, fermeture), ou null hors de l'application Android. */
+export function getNativeApp() {
+  const capacitor = window.Capacitor;
+  if (!capacitor?.isNativePlatform?.()) return null;
+  return capacitor.Plugins?.App ?? null;
+}
+
 export function detectEnvironment() {
+  if (window.Capacitor?.isNativePlatform?.() && window.Capacitor.getPlatform?.() === 'android') return 'android';
   if (typeof window.electronAPI?.quit === 'function') return 'electron';
   if (window.__TAURI__) return 'tauri';
   if (window.nw?.App) return 'nwjs';
@@ -26,6 +35,14 @@ export function getEnvironmentLabel() {
  */
 export async function quitGame() {
   switch (detectEnvironment()) {
+    case 'android': {
+      const app = getNativeApp();
+      if (app?.exitApp) {
+        await app.exitApp();
+        return true;
+      }
+      break;
+    }
     case 'electron':
       window.electronAPI.quit();
       return true;

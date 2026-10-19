@@ -6,6 +6,7 @@ import { getTalent } from '../../systems/talents/TalentService.js';
 import { TALENT_RARITIES } from '../../data/talents.js';
 import { getClimateSeason } from '../../systems/climate/ClimateService.js';
 import { ordinal as ordinalOf } from '../../utils/format.js';
+import { getExpeditionPlace } from '../../data/expeditions.js';
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -32,6 +33,35 @@ const fighterName = (session, id) => session.getFighter(id)?.name ?? 'Un combatt
 const activityName = (id) => getActivity(id)?.name ?? 'activité';
 const teamName = (session, id) => session.getTeam(id)?.name ?? '?';
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
+
+/** Ce qu'un combattant rapporte d'expédition (v0.99 ; avant : toujours du potentiel). */
+function expeditionRewardText(e, reward = e.reward ?? { type: 'potential' }) {
+  switch (reward.type) {
+    case 'deniers': return `+${reward.amount.toLocaleString('fr-FR')} deniers au Trésor.`;
+    case 'talent': {
+      const name = getTalent(reward.talentId)?.name ?? reward.talentId;
+      const family = (TALENT_RARITIES[reward.rarity]?.name ?? '').toLowerCase();
+      if (!reward.granted) return `le talent ${name} (${family}), qu’il avait déjà.`;
+      const previous = reward.previousId ? getTalent(reward.previousId)?.name : null;
+      return `nouveau talent ${name} (${family})${previous ? `, à la place de ${previous}` : ''}.`;
+    }
+    case 'recruit': return `${reward.recruitName} l’accompagne et attend à la Taverne (offert, potentiel ${'🔥'.repeat(reward.potential ?? 1)}).`;
+    case 'potential':
+    default: return reward.potential !== undefined && reward !== e.reward
+      ? `potentiel ${'🔥'.repeat(reward.potential)} (+${reward.potential - reward.before}).`
+      : `potentiel ${'🔥'.repeat(e.potential)} (+${e.potential - e.before}).`;
+  }
+}
+
+/** Retour d'expédition complet : récompense, seconde récompense (Compagnon du Baron), entraînement. */
+function expeditionReturnText(e) {
+  const gains = e.training ? Object.values(e.training).reduce((sum, v) => sum + v, 0) : 0;
+  return [
+    expeditionRewardText(e),
+    e.bonusReward ? `En plus (Compagnon du Baron) : ${expeditionRewardText(e, e.bonusReward)}` : null,
+    e.training ? (gains ? `Voyageur aguerri : +${gains} points de compétences de combat.` : 'Voyageur aguerri : compétences déjà à leur plafond.') : null,
+  ].filter(Boolean).join(' ');
+}
 
 function describeStatGain(statId, amount) {
   const def = getStatDefinition(statId);
@@ -78,6 +108,13 @@ export const LOGBOOK_FORMATS = {
       ? `aujourd’hui contre ${teamName(session, e.opponentTeamId)}${e.location === 'HOME' ? ', à domicile' : e.location === 'AWAY' ? ', à l’extérieur' : ''}. Le Centre est fermé.`
       : 'aujourd’hui (exempt).',
   }),
+  // Expéditions du Baron (v0.98 ; récompenses v0.99) : retour d'un combattant et ce qu'il rapporte.
+  'expedition.return': (e) => ({
+    section: e.reward?.type === 'deniers' ? 'treasury' : e.reward?.type === 'recruit' ? 'tavern' : 'fighters',
+    tone: 'good',
+    who: `🧭 ${e.name}`,
+    text: `revient d’expédition (${getExpeditionPlace(e.placeId)?.name ?? 'au loin'}) : ${expeditionReturnText(e)}`,
+  }),
   'fighter.potential': (e) => ({
     section: 'fighters',
     tone: e.change > 0 ? 'good' : 'bad',
@@ -111,7 +148,7 @@ export const LOGBOOK_FORMATS = {
     tone: e.won ? 'good' : 'bad',
     who: e.won ? 'Victoire (Combat de la Reine)' : 'Défaite (Combat de la Reine)',
     text: `contre ${teamName(session, e.opponentTeamId)} — ${e.roundsFor} / ${e.roundsAgainst}`,
-    detail: `${e.won ? `+${e.reward} deniers de récompense` : 'Aucune récompense'} · sans effet sur le championnat${e.auto ? ' · combat disputé automatiquement' : ''}`,
+    detail: `${e.won ? `+${e.reward} deniers de récompense${e.ferveurs ? ` · +${e.ferveurs} Ferveur${e.ferveurs > 1 ? 's' : ''} de la Reine` : ''}` : 'Aucune récompense'} · sans effet sur le championnat${e.auto ? ' · combat disputé automatiquement' : ''}`,
   }),
   'queen.missed': () => ({
     section: 'combat',
@@ -240,19 +277,20 @@ export const LOGBOOK_TILES = Object.freeze([
   Object.freeze({ id: 'achievements', icon: '🏅', title: 'Succès' }),
   Object.freeze({ id: 'talents', icon: '📜', title: 'Études' }),
   Object.freeze({ id: 'potential', icon: '🔥', title: 'Potentiel' }),
+  Object.freeze({ id: 'expeditions', icon: '🧭', title: 'Expéditions' }),
   Object.freeze({ id: 'tavern', icon: '🏰', title: 'Taverne' }),
   Object.freeze({ id: 'other', icon: '✎', title: 'Divers' }),
 ]);
 
 // Tuile ouverte à l'ouverture du carnet : la première présente dans cet ordre (le plus rare d'abord).
-export const LOGBOOK_OPEN_FIRST = Object.freeze(['achievements', 'talents', 'potential', 'centre', 'deniers', 'points', 'tavern', 'other']);
+export const LOGBOOK_OPEN_FIRST = Object.freeze(['achievements', 'expeditions', 'talents', 'potential', 'centre', 'deniers', 'points', 'tavern', 'other']);
 
 // Événements lus par le carnet « Les Sceaux » ; tout autre type va dans la tuile « Divers ».
 const ANNOUNCEMENTS = new Set(['calendar.matchday', 'queen.available', 'queen.missed', 'season.end', 'season.start', 'save.failed', 'climate.season']);
 const HANDLED = new Set([
   ...ANNOUNCEMENTS, 'match.result', 'queen.result', 'activity.reward', 'activity.failure', 'activity.blocked', 'activity.exhausted',
   'talent.income', 'talent.revealed', 'fighter.potential', 'tavern.rotation', 'ai.recruitment', 'centre.closed', 'save.autosaved',
-  'achievement.unlocked',
+  'achievement.unlocked', 'expedition.return',
 ]);
 
 const sum = (values) => values.reduce((total, v) => total + (v ?? 0), 0);
@@ -292,7 +330,7 @@ function sealOf(report, ctx, hasCentre) {
     return {
       kind: q.won ? 'queen-win' : 'queen-loss', big: `${q.roundsFor}–${q.roundsAgainst}`, small: q.won ? 'Victoire' : 'Défaite',
       title: `${q.won ? 'Victoire' : 'Défaite'} contre ${teamName(session, q.opponentTeamId)}`, tone: q.won ? 'good' : 'bad',
-      subtitle: ['♛ Combat de la Reine', 'sans effet sur le championnat', q.auto ? 'combat disputé automatiquement' : null].filter(Boolean).join(' · '),
+      subtitle: ['♛ Combat de la Reine', q.won && q.ferveurs ? `🌸 +${q.ferveurs} Ferveur${q.ferveurs > 1 ? 's' : ''} de la Reine` : null, 'sans effet sur le championnat', q.auto ? 'combat disputé automatiquement' : null].filter(Boolean).join(' · '),
     };
   }
   if (league.length) {
@@ -399,7 +437,7 @@ export function buildLogbookView(report, ctx) {
   }
 
   // Potentiel.
-  const potential = of('fighter.potential');
+  const potential = [...of('fighter.potential'), ...of('expedition.return').filter((e) => (e.reward?.type ?? 'potential') === 'potential').map((e) => ({ ...e, change: e.potential - e.before }))];
   if (potential.length) {
     const ups = potential.filter((e) => e.change > 0).length;
     const downs = potential.length - ups;
@@ -407,6 +445,12 @@ export function buildLogbookView(report, ctx) {
       value: [ups ? `▲ ${ups}` : null, downs ? `▼ ${downs}` : null].filter(Boolean).join(' '), label: 'potentiel',
       tone: ups && !downs ? 'good' : downs && !ups ? 'bad' : 'highlight', lines: potential.map(format),
     });
+  }
+
+  // Retours d'expédition (v0.99) : deniers, talent, recrue (le potentiel est dans sa tuile).
+  const returns = of('expedition.return').filter((e) => (e.reward?.type ?? 'potential') !== 'potential');
+  if (returns.length) {
+    add('expeditions', { value: String(returns.length), label: returns.length > 1 ? 'retours d’expédition' : 'retour d’expédition', tone: 'good', lines: returns.map(format) });
   }
 
   // Taverne.
@@ -427,6 +471,11 @@ export function buildLogbookView(report, ctx) {
     // Combats en plus du premier (rare), annonces du jour, fin de saison : à ne pas manquer.
     notices: [
       ...of('queen.result').slice(played.length ? 0 : 1).map(format),
+      // Ferveurs de la Reine gagnées (rangées dans Le Coffre).
+      ...of('queen.result').filter((e) => e.won && e.ferveurs).map((e) => ({
+        section: 'combat', tone: 'good', who: '🌸 Ferveurs de la Reine',
+        text: `+${e.ferveurs} rangée${e.ferveurs > 1 ? 's' : ''} dans Le Coffre — le Baron saura quoi en faire.`,
+      })),
       ...report.entries.filter((e) => ANNOUNCEMENTS.has(e.type)).map(format),
     ],
     tiles,

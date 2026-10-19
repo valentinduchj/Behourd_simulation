@@ -91,6 +91,14 @@ export function buildVfxEvents(playback, { arenaHeight = null, config = VFX_CONF
       const atAttacker = { time, x: attacker.x, y: attacker.y, dirX: 0, dirY: 0, damage: 0 };
       if (config.lucky && attack.detail?.lucky) events.push({ ...atAttacker, kind: 'lucky', seed: `lucky:${tick}:${i}` });
       // Talents de l'attaquant lui-même (pas l'aura d'un allié) qui ont joué sur ce coup.
+      // Exotiques (v0.99) : esquive (Feu follet, sur la cible) et soin (Druide, sur le soigneur).
+      if (config.talent && attack.detail?.dodged && attack.detail.dodgeTalentId) {
+        events.push({ time, x: target.x, y: target.y, dirX: 0, dirY: 0, damage: 0, kind: 'talent', rarity: rarityOf(attack.detail.dodgeTalentId), seed: `dodge:${tick}:${i}` });
+      }
+      if (config.talent && attack.detail?.heal) {
+        const healer = center(positions.get(attack.detail.heal.unitId) ?? positions.get(attack.targetId));
+        events.push({ time, x: healer.x, y: healer.y, dirX: 0, dirY: 0, damage: 0, kind: 'talent', rarity: rarityOf(attack.detail.heal.talentId), seed: `heal:${tick}:${i}` });
+      }
       const own = new Set((unitOf.get(attack.unitId)?.talentEffects ?? []).map((e) => e.talentId));
       const played = (attack.detail?.bonuses ?? []).filter((id) => id.startsWith('talent:')).map((id) => id.slice(7)).filter((id) => own.has(id));
       for (const talentId of new Set(played)) {

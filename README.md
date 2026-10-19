@@ -1,4 +1,4 @@
-# Béhourd — Gestion de compagnie médiévale
+# Béhourd Management — Gestion de compagnie médiévale
 
 Prototype (v0.39.0) d'un jeu de gestion de compagnie de béhourd : entraînement au Centre, journées de championnat dans La Lice (vue isométrique), trois divisions avec montées et descentes.
 
@@ -118,6 +118,160 @@ Le joueur suit son club, et le carnet de bord annonce le résultat.
 6. On passe au jour suivant.
 
 Une journée de championnat sautée par l'avance rapide (Admin › Temps) est disputée automatiquement.
+
+## Expédition singulière sur téléphone (v1.1.4)
+
+- Maquette A (`css/mobile.css`, bloc « v1.2 — Expédition singulière sur téléphone ») : même écran (`SingularExpeditionScreen`), réorganisé en CSS sous `html.is-mobile` — lice en plein écran, barre (retour, lieu, frise en pastilles, abandon), adversaire en haut à droite (`openOpponent` : sa fiche au toucher), combattants en bas à gauche, « Combattre » et commandes du rejeu en bas à droite, propositions et victoire en volet du bas. La version ordinateur ne change pas.
+
+## Succès des expéditions singulières (v1.1.3)
+
+- Succès 44 à 47 (catégorie Monde, `data/achievements.js`), accordés à la victoire par `AchievementService.recordSingularVictory(session, run)` (appelé par `SingularRunService.claimVictory`) : Le Sentier des pins (toute victoire), Trois debout (aucun combat perdu dans `run.history`), Loup solitaire (les dix combats gagnés par le même combattant), Seigneur des cimes (`run.band === 2`).
+
+## Le Baron ; expéditions moins chères (v1.1.2)
+
+- Le Capitaine des Expéditions s'appelle désormais **le Baron** (textes seulement : l'identifiant du sprite `expedition_captain` et celui du talent `compagnon-du-capitaine` ne changent pas ; le capitaine des compagnies garde son nom).
+- `EXPEDITION_RULES.costBands` : 1–5, **6–10**, **11–18** Ferveurs.
+
+## Expéditions singulières (v1.1.0)
+
+- **Données** (`data/singularExpedition.js`) : `SINGULAR_RULES` (3 combattants, 10 combats, lice `sentier`, décor `lice_sentier`, épuisement à 100, propositions 2 bonus + 1 récompense, difficulté par tranche : étoiles 2–3,5 / 2,5–4 / 4–5, dernier 3,5 / 4 / 5 avec 1 / 1 / 2 talents, talents de combat à partir du 6e combat à 30 %), `SINGULAR_BOONS` (20 bonus : `target` one / all / ko / opponent, `effects` au format des talents, `fights`, `now`, `afterWin`, `once`) et `SINGULAR_REWARDS` (10 récompenses de fin).
+- **Règles** (`systems/expeditions/SingularRunService.js`, état `session.expeditions.run`) : `generateSingularOpponents` (tirés avec la proposition, `offer.opponents` ; les anciennes propositions sont complétées), `createSingularRun` (via `ExpeditionService.startExpedition(session, offerId, [ids])`), `fightNext` (une manche en 1 contre 1 : `createCombatUnit` + `simulateRound`, fatigue gardée, KO jusqu'à la fin, adversaire qui garde sa fatigue, bonus `boon-…` ajoutés aux effets), `rollOptions` / `optionTargets` / `chooseOption`, `abandonRun`, `getVictoryClaims` / `claimVictory` (via `ExpeditionService.claimSingularVictory` : récompense de la carte, récompenses de fin, Compagnon du Capitaine, Voyageur aguerri ; un seul nouveau talent par combattant). Les trois combattants sont « en expédition » (`journeys.getActiveJourney`). `HubScreen.advanceDay` et le bouton du jour (`CalendarBar`, `MobileHub`) ramènent à l'expédition : les jours ne passent pas.
+- **Lice** : arène `sentier` 7 × 4 (`data/arenas.js`) ; décor `lice_sentier` (`exclusiveTo: 'singular'`, `fixed` — cabane, bûches, bêtes — posés par `buildLiceScenery`, `weather` : pluie d'automne `seasonWeatherParticles(…, 'rain')`, neige d'hiver) ; nouveaux décors `pine`, `cabin`, `animal` (`render/propRenderers.js`).
+- **Interface** : `ui/screens/SingularExpeditionScreen.js` (écran `singular-expedition` : frise des dix combats, lice et rejeu, choix du combattant, propositions, victoire et attributions) ; cartes du Capitaine : « 10 combats », « Les dix adversaires » (`openOpponents`), choix des trois combattants, reprise d'une expédition en cours.
+
+## Talents de voyageurs ; succès des expéditions (v1.0.0)
+
+- **Talents** (`data/talents.js`, Taverne et Scriptorium) : Marcheur (`expeditionDays`), Retour du pèlerin (`finalDamage` avec `afterJourney: 10` — `isEffectActive` lit `daysSinceReturn`, calculé par `journeys.daysSinceReturn` et passé par `RoundService`), Dévot (`queenFerveur`, `queenFerveurBonus` dans `resolveQueenCombat`), Éclaireur (`expeditionDiscount` → `ExpeditionService.getOfferCost`), Voyageur aguerri (`expeditionTraining` → `improveStat` au retour, plafond du potentiel), Compagnon du Capitaine (`expeditionBonusReward` : seconde récompense tirée dans la tranche du voyage — `journey.band` —, sans talent ni potentiel déjà au plus haut). `getJourneyDuration` (Marcheur, 10 jours au moins).
+- **Succès** 41–43, catégorie Monde (`data/achievements.js`, `ACHIEVEMENT_RULES.expeditionPlaces` / `exoticTalents`) : Première route (`recordExpeditionReturn`), Pèlerins d'Europe (compteur `counters.expeditionPlaces`, `recordExpeditionDeparture`), Merveilles d'ailleurs (état, `exoticTalentCount`).
+- **Carnet** : `expedition.return` porte `bonusReward` et `training`.
+
+## Récompenses des expéditions ; talents exotiques (v0.99.0)
+
+- **Données** (`data/expeditions.js`) : chaque tranche de `EXPEDITION_RULES.costBands` (1–5, 8–13, 15–21 Ferveurs) porte ses `rewards` pondérées — `deniers { min, max }`, `talent { rarity }`, `potential { value }` (tranche 1 seulement), `recruit { minPotential }` ; `durationDays` 20–30 pour toute expédition ; `EXPEDITION_REWARDS` (icônes). La nature (Pérégrination / Expédition singulière) n'est plus qu'une couleur du récit : les deux s'entreprennent.
+- **Règles** (`ExpeditionService`) : `generateOffers` tire la récompense avec la proposition (`offer.reward`, talent précis connu d'avance — `expeditionTalentPool`) ; `canSendOnExpedition(session, fighter, offer)` (potentiel déjà à 3, talent déjà porté : refusé), `needsTalentSlot`, `startExpedition(session, offerId, fighterId, { replaceSlot })` (deux talents : place remplacée obligatoire) ; au retour (`completeDueJourneys`) : deniers au Trésor, talent ajouté ou remplacé (`setFighterTalentAt`), +1 potentiel, ou recrue `createExpeditionRecruit` — offerte (`cost: 0`, `gift: { placeId, byId }`), gardée par `generateRecruitmentPool` et la sauvegarde (`RecruitmentPool`). Les propositions d'une saison v0.98 non entreprise sont retirées ; les anciennes pérégrinations en cours rapportent leur potentiel. `startPeregrination` / `canSendOnPeregrination` restent (compatibilité).
+- **Talents exotiques** (`data/talents.js`, famille `exotic`, verte, `sources: ['expedition']` : jamais à la Taverne ni au Scriptorium) — nouveaux effets : `fatigueIgnore` (Fureur du Nord), `allyHeal` (Druide : une fois par manche, soin de 40 PV d'un allié sous 25 %, inscrit dans le coup — `detail.heal`, événement `heal`), `preferWounded` (Œil de Skellig : terme `wounded` de `scoreTargets`), `auraGuard` (Écho des cimes, `prepareTalentUnits`), `dodgeChance` (Feu follet : `detail.dodged`, 0 dégât), et la condition `when: 'lastStanding'` (`isLastStanding`, Dernier rempart, aussi pour `damageTaken`). Présentation : textes « Esquive ! » / « +40 PV » (`CombatPlayback`, `IsoRenderer`), runes vertes (`TALENT_VFX_COLORS.exotic`).
+- **Interface** : cartes du Capitaine avec la récompense (étiquette du talent, deniers, recrue, potentiel) et la durée ; choix du combattant puis, s'il a deux talents, du talent remplacé (`xp-slot-picker`). Taverne : « 🧭 Offert ». Carnet : tuile « Expéditions ».
+
+## Expéditions du Capitaine : les Pérégrinations (v0.98.0)
+
+- **Données** (`data/expeditions.js`) : `EXPEDITION_RULES` (trois tranches de coût en Ferveurs — 1–5, 6–12, 13–16 —, nature tirée au hasard : Pérégrination ou Expédition singulière, une par saison, pérégrination de 20 à 30 jours pour +1 potentiel, 3 au plus) et `EXPEDITION_PLACES` (16 lieux d'Europe : nom, région, thème d'illustration, palette, phrase du Capitaine).
+- **Règles** (`systems/expeditions/ExpeditionService.js`, état `session.expeditions`, sauvegardé) : `ensureSeasonOffers` (renouvelées au premier jour de chaque saison du climat, 25 jours), `canChooseOffer`, `canSendOnPeregrination`, `startPeregrination` (Ferveurs dépensées, le combattant quitte son activité), phase quotidienne `completeDueJourneys` (retour : potentiel +1, événement `expedition.return` au carnet). `systems/expeditions/journeys.js` : `isOnPeregrination` ; `StudyService.isAway` / `isFighterAvailable` / `awayReason` regroupent étude et pérégrination (Centre, combats, équipes enregistrées, Bureau d'étude).
+- **Interface** : le Capitaine (`ExpeditionsScreen.openCaptain`) ouvre `ui/components/ExpeditionBoard.js` dès qu'on a une Ferveur — trois cartes illustrées (`expeditions/ExpeditionArt.js` : forêt, sommets, ruines, forteresse, côte, fjord, landes, monastères perchés), coût, nature, lieu, et pour une Pérégrination le gain et la durée ; choix du combattant, confirmation ; « Entreprise » sur la carte choisie, les autres grisées.
+- **Carnet de bord** : la victoire au Combat de la Reine affiche les Ferveurs gagnées (sceau du jour et annonce).
+
+## Ferveurs de la Reine (v0.97.0)
+
+- **Objet** `ferveur_reine` (`data/items.js`, sprite `assets/sprites/items/ferveur_reine.svg`) : `keepsake: true`, `usableIn: []`, `effect: null` — s'empile dans Le Coffre, sans bouton « Utiliser » (`ConsumableService.canUseItem` le refuse ; `describeUsage` : « à garder »).
+- **Gain** (`QUEEN_COMBAT_CONFIG.ferveur`, `QueenCombatService.getFerveurReward`) : victoire au Combat de la Reine → `floor(étoiles adverses) × perFullStar` Ferveurs (`addItem`). Les étoiles sont celles affichées au moment du choix (`event.data.selectedStars`) ; `result.ferveurs` est enregistré et repris par la fin du combat et le carnet de bord. Les propositions d'adversaires affichent deniers et Ferveurs.
+
+## Les Expéditions ; le Bourg sans carrefour (v0.96.0)
+
+- **Bourg** (`data/boroughLayout.js`) : la rue du marché (x 8–9) est rendue à l'herbe ; seule la grande rue (y 6–7) reste, du chemin du Centre (haut-gauche) à celui des Expéditions (`bourg_path_south_east`, case 1 × 2 et poteau en bas, entre le Bûcheron et le Sénéchal).
+- **Les Expéditions** (lieu `EXPEDITIONS`, écran `expeditions`, bouton « Les Expéditions » du domaine) : `data/expeditionsLayout.js` (17 × 14 comme le Centre : marché au nord, rivière x 8–9 et pont au milieu, montagne au sud, camp du Capitaine 5 × 5), `expeditions/ExpeditionScene.js`, `expeditions/ExpeditionRenderer.js` (climat : sol, eau — `river.neverDry` : basse en été —, neige des pics, météo ; Capitaine plus grand avec halo doré et écu flottant, étiquette toujours visible), `ui/screens/ExpeditionsScreen.js` (Capitaine cliquable, zone ou étiquette : fenêtre de présentation — le dialogue viendra plus tard). Nouveau décor `mountain` (`render/propRenderers.js`), sprite `assets/sprites/expeditions/captain.svg` (`expedition_captain`). Ambiance : marché et vent des montagnes.
+
+## Téléphone : affectations par lieu, classement (v0.95.0)
+
+- **Affectations** (`src/ui/mobile/AssignBoard.js`, styles `.m-assign*`) : sur téléphone, `CentreScreen.renderPanels` remplace le tableau par `AssignBoard(screen)` — la cour puis une colonne par activité ; le combattant choisi s'affiche en haut (classe, étoiles, LUT / HAS / PER / END — compétence clé en or, plafonnée en rouge —, fatigue) ; `canSendTo()` marque les lieux possibles (`.is-target`) et grise les autres (complet, fermé pour la saison, épuisé, en étude) ; toucher un lieu appelle `screen.assign()`. Le volet « Affectations » monte presque en haut ; les configurations passent sous le tableau.
+- **Classement** (`LeagueScreen.renderMobile`) : divisions en onglets, encart « Votre compagnie » (place, points, écart à la montée ou avance sur la descente), lignes compactes (zones de montée / descente en liseré), ouverture sur la ligne de la compagnie et bouton « Ma ligne ».
+
+## Téléphone : fenêtres en haut, remplacement de talent (v0.94.0)
+
+- **Fenêtres** (`openModal`) : sur téléphone, le bouton principal reçoit le focus sans faire défiler (`preventScroll`), et la fenêtre s'ouvre en haut — le carnet de fin de saison ne s'ouvre plus sur sa fin.
+- **Bureau d'étude** (`ScriptoriumScreen.openSelection`, styles `.study-*` dans `css/mobile.css`) : combattants à gauche, résumé à droite (défilements séparés) ; le choix du talent à remplacer passe en tête du résumé, cerclé d'or et pulsant tant qu'il n'est pas fait (`.study-slot-picker.is-pending`).
+
+## Téléphone : glisser, appui long, vibrations (v0.93.0)
+
+- **Glisser pour fermer** (`src/ui/mobile/SwipeClose.js`) : `attachSwipeClose(panel, { direction, onClose, isActive })` — le volet suit le doigt et se ferme au-delà de 25 % (ou d'un geste vif), sinon revient. Vers le bas : volets des écrans à carte (poignée `.m-grip`) et tableau de la Coupe ; vers la droite : le menu. Le geste ne part pas d'une liste défilée.
+- **Fiche rapide** (`src/ui/mobile/QuickCard.js`) : `installQuickCards(document, getSession, { resolveAt })` — appui long (450 ms) sur un élément `[data-fighter-id]` ou `[data-candidate]` (recrues), ou sur un combattant de la carte du Centre (`renderer.pickFighter`) : bulle avec classe, étoiles, compétences, fatigue, potentiel, talents ; le clic qui suit est ignoré.
+- **Vibrations** (`src/ui/mobile/Haptics.js`, plugin `@capacitor/haptics`) : `haptic('tap' | 'select' | 'heavy' | 'success' | 'warning')` — cocher / refus dans l'effectif, lancer une manche, victoire, fiche rapide. Désactivées sur ordinateur.
+- **Au pouce** : le bouton principal du combat (`.mm-go`) reste collé en bas de sa colonne.
+
+## Téléphone : Lieux et Affectations, Compagnie (v0.92.0)
+
+- **Volet en parties** (`decorateMapPage(page, { label, parts })`, `src/ui/mobile/MobileHub.js`) : un bouton par partie à gauche de l'écran ; le volet n'affiche que les éléments `data-sheet-part` de la partie choisie (`sheet.dataset.part`, gardée quand le contenu se redessine). Centre : « Lieux » (`places` : les lieux) et « Affectations » (`assignments` : configurations et tableau des combattants).
+- **Bandeau** : le prochain événement passe dans le groupe de droite, à côté des deniers (cerclés d'or).
+- **Compagnie** (`src/ui/mobile/TeamMetric.js`) : bouton à icône à droite de « La Compagnie x / y » ; la liste montre la fatigue (par défaut), les mises à terre de la carrière (`fighter.takedowns`) ou le potentiel (flammes). Choix gardé le temps de la partie ouverte.
+
+## Téléphone : zoom des cartes (v0.91.0)
+
+- **Cadrage** (`src/render/IsoView.js`) : `userZoom` ({ scale, x, y }) s'applique par-dessus le cadrage de chaque scène (`fit`) ; `setUserZoom(zoom, { min, max })` borne l'échelle et le décalage (la carte reste à l'écran). Tous les rendus isométriques en profitent (toucher et survol restent justes).
+- **Gestes** (`src/ui/mobile/MapZoom.js`, réglages `src/data/mapZoom.js`) : `attachMapZoom(canvas, getRenderer)` — deux doigts pincent autour du point pincé, un doigt glisse la carte agrandie ; le « clic » qui suit un geste est ignoré ; bouton `.m-zoom-reset` « Vue d'ensemble ». Branché sur téléphone seulement : Centre, Bourg, Taverne, Scriptorium, Ma Lice, Gabarnac (pas sur la lice des combats).
+
+## Téléphone : menu en volet et Coupe de France (v0.90.0)
+
+- **Menu** (`src/ui/mobile/MenuDrawer.js`, styles `.m-drawer*`) : `openMenuDrawer({ session, onSave, items, exits })` ouvre un volet à droite (une fenêtre : retour d'Android et toucher à côté le referment). Domaine : Sauvegarder, Succès (x / y), L'Almanach, Options, Patch Notes, Menu principal. `describeSaveState()` donne la ligne d'état de la sauvegarde.
+- **Coupe de France** (`src/ui/mobile/MobileCup.js`, styles `.m-cup*`, `.m-board*`, `.m-bracket*`) : `FrenchCupScreen` délègue sur téléphone le bandeau (`CupHud` : Coupe + étape, état de la compagnie, ☰ avec Sauvegarder, Tableau, Options, Patch Notes, Menu principal, Abandonner / Quitter la Coupe), le tirage (`renderDrawMobile` : dernière tirée, 9 poules en blasons, `openGroupSheet` pour les noms), le château (`renderGabarnacMobile` : carte au-dessus du dock, prochain combat, dock Gabarnac · Tableau · Arbre · Résultats, « Combattre ») et le tableau (`openBoardMobile` : rubriques à gauche, poules en onglets, `MobileBracket` : tours en pastilles, colonnes à partir du tour choisi, parcours en or). La fenêtre « Assister aux combats » reste l'arbre animé.
+
+## Nom du jeu : Béhourd Management (v0.89.0)
+
+- `GAME_CONFIG.title` vaut « Béhourd Management » ; l'écran principal l'écrit sur deux lignes (`GameTitle`, `MainMenuScreen.js` : « Béhourd » en grand, « Management » dessous). Aussi dans `index.html` (onglet), `capacitor.config.json` (`appName`) et `android/app/src/main/res/values/strings.xml` (nom sous l'icône). L'identifiant de l'application ne change pas (`fr.behourd.jeu`) : la mise à jour s'installe par-dessus et garde les parties.
+
+## Téléphone : saisie, talents, air du démarrage (v0.88.0)
+
+- **Saisie** : `focusField()` (`src/ui/mobile/mobileLayout.js`) ne met plus le curseur d'office dans un champ sur téléphone (création de l'équipe et du capitaine, affectations enregistrées, équipes enregistrées, fenêtres de saisie ; `openModal` y vise un bouton) : le clavier ne s'ouvre qu'au toucher du champ. Sur ordinateur, rien ne change.
+- **Talents** (`src/ui/mobile/TalentTip.js`, styles `.talent-tip`) : toucher une étiquette `.talent-badge` ouvre une bulle (nom, famille, effet — le texte de son infobulle), sans actionner la carte qui la contient ; un autre toucher, un défilement ou 7 s la referment.
+- **Air du démarrage** : `assets/audio/splash/girls.m4a` (« Girls », 4,6 s), joué par `splashBoot.js` au volume général × musique des Options (rien si le son est coupé) ; l'écran dure 4,6 s ; la musique du jeu ne démarre qu'à sa fin (`globalThis.behourdSplash`).
+
+## Application Android : économie et arrière-plan (v0.87.0)
+
+- **Cadence** (`src/render/framePacing.js`) : `setFrameCap(30)` sur téléphone ; chaque boucle d'animation des scènes (Centre, Bourg, Taverne, Scriptorium, Ma Lice, lice du combat) passe par `createFramePacer()`, qui saute les images en trop et ne dessine rien quand la page est cachée. Sur ordinateur, pas de plafond.
+- **Effets** (`src/render/vfx/vfxLevel.js`) : `isLowEndDevice()` (4 cœurs ou moins, ou 3 Go de mémoire ou moins) ; sur un tel téléphone, « complets » devient « réduits ».
+- **Arrière-plan** (`src/ui/mobile/appLifecycle.js`) : à la pause d'Android (ou page cachée), sauvegarde de la partie si elle est modifiée et que la sauvegarde automatique est active, sauf sur l'écran de combat ; le son est suspendu (`AudioEngine.setBackground`) puis reprend au retour.
+- **Icône** : image source `android/icon-source/android_vignette.png` ; `tools/android/make-icons.ps1` produit les icônes `mipmap-*` (ancienne, ronde, adaptative sur fond `#09090A`).
+
+## Interface mobile : le combat (v0.86.0)
+
+- **Combat** (`src/ui/mobile/MobileMatch.js`, styles `.m-match` / `.mm-*` dans `css/mobile.css`) : sur téléphone, `MatchScreen` délègue quatre étapes. Effectif engagé et combattants de la manche : plein écran, bandeau (retour, titre, score, compteur), grille de cartes à gauche (classe, étoiles, 4 compétences, nom, fatigue ; coche ou KO), adversaire (blason, rang, étoiles, comportement) et actions à droite. Résultat de manche : une carte (titre, score, meilleur combattant, tableau mises à terre / dégâts / fatigue / état). Fin du combat (championnat) : victoire ou défaite en grand, points, recette, manches ; classement, autres combats et courbatures à droite. Les règles restent celles de l'écran d'ordinateur ; Coupe de France et Combat de la Reine gardent leur fin de combat.
+- **Encoche** : `html.is-android.is-mobile body` n'a plus de marge latérale (les écrans mobiles utilisent `--sl` / `--sr`, désormais égales au plus grand des deux côtés) : les pages ne sont plus décalées vers la droite.
+- **Bouton rond** `.m-advance` : 96 px, sans coupure de mot (« Combattre » sur une ligne).
+
+## Application Android : démarrage et lieux (v0.85.0)
+
+- **Écran de démarrage** (`src/ui/mobile/Splash.js`, styles `.splash` dans `css/mobile.css`) : dans l'application Android seulement. Un bassinet à bec de passereau (vers 1400, règne de Charles VI) avec son camail, posé dans l'herbe ; les brins poussent, une liane grimpe sur le timbre, les fleurs éclosent, puis « BZW » apparaît lettre par lettre. Environ 3,6 s, un toucher le passe ; il couvre le chargement du jeu. L'écran de lancement natif d'Android est un fond uni `#1A120A` (plus le logo Capacitor).
+- **Fin de combat** : sur téléphone, « Terminer la journée » ramène toujours au Centre (championnat et Combat de la Reine).
+- **Lieux** : tous les volets (Centre, Bourg, Taverne, Scriptorium, Ma Lice) sont fermés à l'arrivée ; la carte s'affiche d'abord.
+
+## Interface mobile : l'entrée en jeu (v0.84.0)
+
+Uniquement dans l'interface mobile (`is-mobile`) ; la version ordinateur est inchangée (vérifié par les tests).
+
+- **Écran principal** (`MainMenuScreen.renderMobile`) : titre et emblème à gauche, menu à droite, sans vitrine animée. « Continuer » charge la sauvegarde la plus récente (`saves.listSaves()`) et reprend au Centre ; son résumé (compagnie, jour, ligue) s'affiche sous le bouton. Puis « Nouvelle partie », « Charger », « Options » (« Quitter » : bouton retour du téléphone).
+- **Nouvelle partie** : un seul pays jouable → l'étape Europe est sautée, la carte des Terres s'affiche en plein écran, le panneau du lieu à droite. Étapes rappelées en bas à gauche (`src/ui/mobile/MobileSteps.js` : Terre · Blason · Capitaine).
+- **Blason, capitaine** : l'aperçu en grand à gauche, le formulaire défilant à droite, boutons de validation collés en bas.
+- **Carnet de bord** : le sceau du jour et le titre dans une colonne à gauche, le récit à droite.
+- **Coupe de France** : Gabarnac en plein écran, en-tête en bandeau, prochain combat et poule dans une colonne à droite.
+- **Ma Lice** : volet fermé à l'ouverture (la lice reste visible).
+
+## Interface mobile (v0.83.0)
+
+Téléphone en **paysage** (maquettes retenues : carte plein écran et dock flottant pour le domaine, liste et fiche pour la Compagnie, lice plein écran et main de cartes pour le combat).
+
+- **Activation** (`src/ui/mobile/mobileLayout.js`) : dans l'application Android, ou dans un navigateur avec `?mobile=1` (`?mobile=0` la coupe). La classe `is-mobile` sur `<html>` active `css/mobile.css` ; la version de bureau n'est pas touchée. L'application prend la largeur réelle du téléphone (`GAME_CONFIG.android.viewportWidth = null`).
+- **Écrans du domaine** (`HubScreen` + `src/ui/mobile/MobileHub.js`) : pas de colonne de droite ni de bandeau de calendrier. À la place :
+  - bandeau du haut : compagnie, jour et saison (→ le calendrier complet), prochain événement, deniers, menu (Sauvegarder, Succès, Options, L'Almanach, Menu principal) ;
+  - les cinq lieux à gauche (sur les écrans à carte) ; dock flottant : Compagnie · Domaine (le Centre) · Coffre · Ligue ;
+  - bouton rond de l'action du jour : « Jour suivant », « Combattre », « Combat de la Reine » ou « Coupe de France ».
+- **Écrans à carte** (`static mobileSheet = { label, open }` : Centre, Bourg, Taverne, Scriptorium, Ma Lice) : la scène en plein écran ; le reste de la page passe dans un volet qui remonte du bas (fermé par défaut, ouvert pour la Taverne et Ma Lice). Le bouton retour d'Android le referme.
+- **La Compagnie** : filtres par classe, liste à gauche, fiche complète à droite (`buildFighterSheet`, la même que la fenêtre de bureau) avec « Congédier ».
+- **Combat** : en-tête sur une ligne ; effectif en 3 colonnes ; placement en plein écran — vos combattants en main de cartes (étoiles, compétences LUT/HAS/PER/END, celle de la classe en doré, fatigue), la fiche du combattant à placer (`.placement-detail`), les actions à droite ; la manche en plein écran avec ses commandes.
+- **Taverne** : potentiel (flammes) sur la carte de chaque recrue (aussi sur PC) ; compétences en mobile.
+- **Tutoriel** : chaque bulle désigne aussi l'équivalent mobile (dock, bandeau, liste de la Compagnie) ; `sheet: true` ouvre le volet du lieu ; `mobileAction` adapte une consigne.
+- **Essais** : un Edge sans fenêtre de 914 × 411 px (`?mobile=1`), puis l'émulateur `Behourd_Pixel_8`.
+
+## Application Android (v0.82.0)
+
+Le jeu reste une page web autonome ; **Capacitor** l'emballe dans une application Android (identifiant `fr.behourd.jeu`). Cible : téléphone, **paysage imposé**. La refonte de l'interface pour le tactile viendra par étapes ; d'ici là, la mise en page est provisoire.
+
+- **Fichiers** : `package.json` (Capacitor 8 et scripts), `capacitor.config.json`, `tools/android/copy-web.mjs` (copie du jeu dans `www/` : `index.html`, `assets`, `css`, `data`, `src`), projet Android dans `android/`. `node_modules/` et `www/` ne sont pas versionnés.
+- **Construire** :
+  1. `npm install` (une fois) ;
+  2. `npm run android:sync` : copie le jeu dans `www/`, puis dans le projet Android ;
+  3. Android Studio : *Open* › `android/`, puis ▶ (émulateur ou téléphone en débogage USB). En ligne de commande : `android\gradlew.bat assembleDebug` → `android/app/build/outputs/apk/debug/app-debug.apk`.
+- **Java** : Gradle 8.14 (Capacitor 8) ne tourne pas sur Java 25, celui fourni par Android Studio. `android/gradle/gradle-daemon-jvm.properties` demande Java 21 (installé : Microsoft OpenJDK 21, `JAVA_HOME`).
+- **Écran** : paysage (`android:screenOrientation="sensorLandscape"`), plein écran immersif (`MainActivity` : barres système masquées, réaffichées d'un glissement), jusque sous l'encoche ; le jeu s'en écarte par `env(safe-area-inset-*)` (classe `is-android`, `viewport-fit=cover` dans `index.html`). Sur une vue web antérieure à la version 140, Capacitor garde une marge autour de la page (fond `#1A120A`).
+- **Mise en page provisoire** : `GAME_CONFIG.android.viewportWidth` (1280) : la page est mise en page comme sur un écran de 1280 pixels CSS, puis réduite à la largeur du téléphone (environ 914 pixels CSS en paysage). `null` : largeur réelle de l'appareil (pour l'interface mobile).
+- **Bouton retour** (`src/ui/navigation/backButton.js`, module natif `App` de Capacitor) : tutoriel en cours → rien ; fenêtre ouverte → fermée (une fenêtre qui exige un choix reste) ; lieu du domaine → Centre ; Centre → « Menu principal » (sauvegarde proposée) ; autre écran → son bouton « Retour » ; menu principal → fermeture de l'application. `platform.js` détecte l'application (`android`) et « Quitter le jeu » appelle `App.exitApp()`.
+- **Version de l'application** : `versionName` 0.82.0, `versionCode` 8200 (`android/app/build.gradle`).
 
 ## Tutoriel du tavernier (v0.81.0)
 
@@ -315,7 +469,8 @@ Les règles **pendant** la manche ne changent pas (gain tour par tour, malus au-
 - **Effets** (vrais enregistrements) : coups sur l'armure et le métal (6 variantes), gros coups (4), KO (3), fanfare de victoire (ouverture d'un thème médiéval, 8 s en fondu), cloche à l'annonce d'un exploit. Chaque son est tiré parmi ses variantes et légèrement transposé, pour éviter la répétition. Les coups et KO suivent le rejeu de la manche ; « Passer à la fin » ne déclenche pas d'avalanche, et une mêlée est limitée à 8 coups audibles par seconde.
 - **Crédits** (`AUDIO_CREDITS`, tous en licence **CC0** — utilisables sans condition, crédit facultatif) :
   - Joseph Sardin, BigSoundBank (bigsoundbank.com) : feu, forêt, marché, café, âtres, vent dans les arbres, foules, applaudissements (sons n° 0989, 2749, 2729, 0480, 2855, 0030, 0904, 2969, 2970, 3523, 0019, 0021) ;
-  - Kenney (kenney.nl), packs Impact Sounds et RPG Audio : coups, KO, cloche, mannequins, pages ;
+  - Freesound (CC0) : coups d’épées (loudernoises, Bird_man, JohnBuhr), gros coups (Christopherderp, ani_music), KO (leonelmail) — v1.1.5 ;
+  - Kenney (kenney.nl), packs Impact Sounds et RPG Audio : cloche, mannequins, pages ;
   - RandomMind (opengameart.org), « Medieval: Victory Theme » : la fanfare.
   - Préparation (découpe, raccord des boucles, volume harmonisé, MP3) faite avec ffmpeg ; fichiers dans `assets/audio/ambience/` et `assets/audio/sfx/`.
 - **Options** (Audio) : volume général, musique, ambiances, effets, durée du fondu, couper le son. Tout est enregistré avec les options.

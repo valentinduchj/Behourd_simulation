@@ -2,7 +2,7 @@ import { computeDamage } from '../CombatDamageCalculator.js';
 import { isActive, isInReach } from '../CombatMovementManager.js';
 import { effectBonusIds, strikeSituation, withSituation } from '../CombatSituation.js';
 import { selectTarget } from './TargetSelectionService.js';
-import { talentStrikeModifiers } from '../TalentCombat.js';
+import { talentStrikeModifiers, ignoresFatigue } from '../TalentCombat.js';
 import { applyStrikeFatigue } from '../RoundFatigue.js';
 
 // Engagement et attaques d'un tour (règles de dégâts : CombatDamageCalculator ; bonus de
@@ -55,6 +55,9 @@ export class CombatController {
     const defender = withSituation(target, fighters, arena, rules);
     // Talent Sang-froid : ses pénalités de fatigue commencent plus tard.
     if (unit.fatigueShift) attacker.fatigue = Math.max(0, attacker.fatigue - unit.fatigueShift);
+    // Talent Fureur du Nord : blessé, la fatigue ne le pénalise plus.
+    const furious = ignoresFatigue(unit, target, fighters);
+    if (furious) attacker.fatigue = 0;
     // Position : cible plaquée, Hastier à distance ou gêné, coup dans le dos, angle mort.
     const position = strikeSituation(unit, target, fighters, arena, rules, tick);
     // Talents : bonus de l'attaquant, malus des Tacticiens à son contact, réduction de la cible.
@@ -75,6 +78,9 @@ export class CombatController {
     // Intouchable (Immortel, juste après avoir survécu) : le coup ne lui fait rien.
     const untouchable = tick <= (target.invulnerableUntil ?? -1);
     if (untouchable) detail.damage = 0;
+    // Talent Feu follet : il esquive le coup (aucun dégât). Tirage seulement s'il a ce talent.
+    const dodged = !untouchable && (target.dodgeChance ?? 0) > 0 && rng() < target.dodgeChance;
+    if (dodged) detail.damage = 0;
     // Décomposition du bonus final (journal détaillé de Ma Lice d'entraînement) : les valeurs
     // réellement multipliées ci-dessus, sans aucun recalcul ; aucune influence sur le coup.
     detail.modifiers = {
@@ -91,7 +97,12 @@ export class CombatController {
       // Malus saisonnier de sa classe (« ☀ Chaleur »…), comme les autres modificateurs du coup.
       ...((unit.seasonFactor ?? 1) < 1 ? [`season:${unit.season}`] : []),
       ...(lucky ? unit.talentEffects.filter((e) => e.type === 'luckyRoll').map((e) => `talent:${e.talentId}`) : []),
+      ...(furious ? unit.talentEffects.filter((e) => e.type === 'fatigueIgnore').map((e) => `talent:${e.talentId}`) : []),
     ];
+    if (dodged) {
+      detail.dodged = true;
+      detail.dodgeTalentId = target.talentEffects.find((e) => e.type === 'dodgeChance')?.talentId ?? null;
+    }
     // Pour la présentation (effets visuels) : coup chanceux, rang du coup dans le combo, coup
     // avantagé par la position (dans le dos, angle mort, à distance).
     detail.lucky = Boolean(lucky);
@@ -114,6 +125,19 @@ export class CombatController {
       target.lastStand.used = true;
       if (target.lastStand.invulnerableTicks) target.invulnerableUntil = tick + target.lastStand.invulnerableTicks;
       events.push({ tick, type: 'lastStand', unitId: target.id, talentId: target.lastStand.talentId, per: target.lastStand.per });
+    }
+    // Talent Druide de Brocéliande : un allié debout qui tombe sous le seuil est soigné (une fois
+    // par manche et par druide ; le druide peut se soigner lui-même). Inscrit dans le coup (hpAfter).
+    if (target.hp > 0 && !dodged) {
+      const healer = fighters.find((ally) => ally.side === target.side && isActive(ally) && ally.allyHeal?.available
+        && target.hp < target.maxHp * ally.allyHeal.threshold);
+      if (healer) {
+        const amount = Math.min(healer.allyHeal.value, target.maxHp - target.hp);
+        target.hp += amount;
+        healer.allyHeal.available = false;
+        detail.heal = { unitId: healer.id, amount, talentId: healer.allyHeal.talentId };
+        events.push({ tick, type: 'heal', unitId: target.id, byId: healer.id, amount, talentId: healer.allyHeal.talentId });
+      }
     }
     unit.state = 'attacking';
     stats.get(unit.id).dealt += detail.damage;
