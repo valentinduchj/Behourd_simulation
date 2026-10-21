@@ -46,6 +46,7 @@ function conditionMet(effect, unit, target, fighters = []) {
     case 'targetHpBelow': return target.hp < target.maxHp * effect.threshold;
     case 'home': return unit.venue === 'home';
     case 'away': return unit.venue === 'away';
+    case 'queen': return unit.competition === 'queen';
     case 'vsClass': return target.classId === effect.classId;
     case 'withCaptain': return Boolean(unit.hasCaptainAlly);
     case 'perKnockout': return (unit.knockdowns ?? 0) > 0;

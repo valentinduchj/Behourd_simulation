@@ -13,6 +13,7 @@
 //   text      paragraphes ; {nom} est remplacé par une valeur du jeu (voir Tutorial.js)
 //   list      contenu tiré des données : 'specialties' (rôles) ou 'activities' (lieux du Centre)
 //   action    consigne mise en avant (étapes à cliquer) ; mobileAction : sa version téléphone
+//   mobileText / mobileAfter  (v1.1.8) version téléphone de text / after (« touchez », boutons du dock)
 //   sheet     interface mobile : la zone est dans le volet du lieu, ouvert pour cette bulle
 //             (sinon le volet est refermé) ; les cibles listent aussi leur équivalent mobile.
 //   watch     après le clic : { target, ms } — la bulle s'efface et l'on regarde la zone `target`
@@ -41,11 +42,15 @@ export const TUTORIAL_STEPS = Object.freeze([
     text: [
       'À droite, l’encart « Le domaine » : chaque lieu s’ouvre d’un clic. Sur les cartes, les chemins et les portes y mènent aussi.',
     ],
+    mobileText: [
+      'À gauche, les lieux du domaine : chacun s’ouvre d’une touche. Sur les cartes, les chemins et les portes y mènent aussi.',
+    ],
   },
   {
     id: 'company-button', chapter: 'centre', target: '[data-hub-item="team"]', advance: 'click',
     text: ['Faisons d’abord connaissance avec vos combattants.'],
     action: 'Cliquez sur « La Compagnie ».',
+    mobileAction: 'Touchez « Compagnie », en bas.',
   },
   {
     id: 'roles', chapter: 'centre', screen: 'team', target: { selectorAll: '.roster-group, .m-team-list' }, advance: 'next',
@@ -57,6 +62,9 @@ export const TUTORIAL_STEPS = Object.freeze([
     id: 'fighter-card', chapter: 'centre', screen: 'team', target: '.fighter-card, .m-team-sheet', advance: 'next',
     text: [
       'Les étoiles donnent le niveau d’un combattant. Un clic sur sa carte ouvre sa fiche : compétences, fatigue, talents.',
+    ],
+    mobileText: [
+      'Les étoiles donnent le niveau d’un combattant. Touchez-le dans la liste pour voir sa fiche : compétences, fatigue, talents.',
     ],
   },
   {
@@ -77,6 +85,7 @@ export const TUTORIAL_STEPS = Object.freeze([
     id: 'lice', chapter: 'centre', screen: 'centre', target: { activity: 'lice' }, advance: 'select',
     text: ['Essayons. La Petite lice, le ring de cordes du Pôle Combat, fait progresser la lutte.'],
     action: 'Cliquez sur la Petite lice.',
+    mobileAction: 'Touchez la Petite lice.',
   },
   {
     id: 'lice-plus', chapter: 'centre', screen: 'centre', target: '.quick-assign[data-activity="lice"] .quick-assign-plus', advance: 'click',
@@ -86,6 +95,7 @@ export const TUTORIAL_STEPS = Object.freeze([
       'Le bouton « + » y envoie d’un coup des combattants, dans les places libres. La roue ⚙ à côté règle lesquels il choisit.',
     ],
     action: 'Cliquez sur « + ».',
+    mobileAction: 'Touchez « + ».',
   },
   {
     id: 'assign-table', chapter: 'centre', screen: 'centre', target: '.assign-table', advance: 'next', sheet: true,
@@ -104,11 +114,15 @@ export const TUTORIAL_STEPS = Object.freeze([
     id: 'tavern-button', chapter: 'tavern', target: '[data-hub-item="tavern"]', advance: 'click',
     text: ['Tôt ou tard, il vous faudra du renfort. Passez donc à ma Taverne !'],
     action: 'Cliquez sur « La Taverne ».',
+    mobileAction: 'Touchez « La Taverne », à gauche.',
   },
   {
     id: 'recruits', chapter: 'tavern', screen: 'tavern', target: '.tavern-recruits', advance: 'next', sheet: true,
     text: [
       'Voici les recrues présentes. Leurs étoiles disent leur niveau, et leur prix est en deniers. Un clic sur l’une ouvre sa fiche, d’où vous pouvez l’engager.',
+    ],
+    mobileText: [
+      'Voici les recrues présentes. Leurs étoiles disent leur niveau, et leur prix est en deniers. Touchez-en une pour ouvrir sa fiche, d’où vous pouvez l’engager.',
     ],
   },
   {
@@ -141,6 +155,10 @@ export const TUTORIAL_STEPS = Object.freeze([
     text: [
       'Quand vos affectations sont prêtes, « Passer la journée » : les activités se déroulent, puis le carnet de bord raconte la journée.',
       'Un jour de combat, ce bouton devient « ⚔ COMBATTRE » : le Centre ferme et vous rejoignez la lice.',
+    ],
+    mobileText: [
+      'Quand vos affectations sont prêtes, touchez « Jour suivant » : les activités se déroulent, puis le carnet de bord raconte la journée.',
+      'Un jour de combat, ce bouton devient « Combattre » : le Centre ferme et vous rejoignez la lice.',
     ],
   },
   {

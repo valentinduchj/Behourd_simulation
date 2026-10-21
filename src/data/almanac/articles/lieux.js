@@ -17,7 +17,7 @@ export const LIEUX_ARTICLES = [
         'Un combattant garde son activité d’un jour à l’autre, tant que vous ne la changez pas.',
         'Le Centre est fermé les jours de combat.',
       ] },
-      { type: 'callout', tone: 'warning', title: 'Le repos', text: 'Un combattant sans activité se repose, mais sa fatigue ne baisse pas pour autant : seul le Banquet la fait redescendre.' },
+      { type: 'callout', tone: 'warning', title: 'Sans activité', text: 'Un combattant sans activité ne fait rien de sa journée, et sa fatigue ne baisse pas : seul le Banquet la fait redescendre.' },
       { type: 'h', text: 'Affecter plus vite' },
       { type: 'list', items: [
         'Survolez un lieu dans la scène : son encadré apparaît (effet, réussite, places, combattants présents). Cliquez dessus pour le garder ouvert ; cliquez sur un autre lieu, ou ailleurs, pour le refermer.',
@@ -59,7 +59,7 @@ export const LIEUX_ARTICLES = [
       { type: 'list', ordered: true, items: [
         'Cliquez sur le Bureau d’étude, puis choisissez un combattant : la durée de son étude s’affiche.',
         'Confirmez : l’étude commence le jour même.',
-        'À la fin de l’étude, un talent se révèle. Le carnet de bord l’annonce.',
+        'À la fin de l’étude, trois talents de la même famille se révèlent : vous en choisissez un, une seule fois. Le carnet de bord l’annonce, et la journée ne passe pas tant que le talent n’est pas choisi.',
       ] },
       { type: 'table', source: 'studyDurations' },
       { type: 'list', items: [
@@ -70,7 +70,7 @@ export const LIEUX_ARTICLES = [
         'L’étude avance avec les journées du calendrier, jamais avec le temps réel. Une partie chargée après la date de fin termine l’étude aussitôt.',
       ] },
       { type: 'h', text: 'Les chances de chaque famille' },
-      { type: 'p', text: 'À la révélation, la famille du talent est tirée selon l’artefact actif, puis un talent de cette famille. Le Bureau d’étude affiche les chances avant chaque étude.' },
+      { type: 'p', text: 'À la fin de l’étude, la famille est tirée selon l’artefact actif, puis trois talents différents de cette famille : trois ordinaires, trois rares ou trois épiques. Le talent qu’il garde n’est jamais proposé. Le Bureau d’étude affiche les chances avant chaque étude.' },
       { type: 'table', source: 'talentOdds' },
       { type: 'h', text: 'La Professeure Flavia' },
       { type: 'list', items: [

@@ -55,11 +55,11 @@ export const CLUB_LOCATIONS = Object.freeze({
   club_213: 'chateau-de-couzan', // Corvus Forezis
   club_211: 'chateau-comtal', // Carcas Sonne 2
   club_217: 'tour-de-montlhery', // Exactor Mortis 2
-  club_205: 'bois-de-cergy', // Martel La Hire
-  club_212: 'mont-saint-michel', // Auream Excubitores
+  club_205: 'mont-saint-michel', // Les Bâtards de la Duchesse (v1.1.6, ex-Martel La Hire)
+  club_212: 'chateau-de-caen', // Auream Excubitores (v1.1.6 : le Mont-Saint-Michel va aux Bâtards de la Duchesse)
   club_207: 'chateau-de-gien', // Red Stars
-  club_201: 'chateau-de-roquebrune', // Grimaldi Milites 2
-  club_202: 'porte-serpenoise', // Graoully 2
+  club_201: 'chateau-de-roquebrune', // Les Bâtards de la Loire (ex-Grimaldi Milites 2)
+  club_202: 'porte-serpenoise', // Les Sangliers d’Isar (ex-Graoully 2)
   club_215: 'port-de-barfleur', // Vassgard
   club_204: 'chateau-d-angers', // Arma Ligeris
 });

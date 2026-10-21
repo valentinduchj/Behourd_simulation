@@ -152,7 +152,7 @@
       "emblem": "croix",
       "colors": {"primary":"#000000","secondary":"#ff0000","tertiary":"#ff0000"},
       "fighters": [
-        {"id":"club_217_f01","name":"Mathieu","specialty":"hastier","sprite":"hastier_03","score":13,"captain":true},
+        {"id":"club_217_f01","name":"Mathieu","specialty":"hastier","sprite":"hastier_03","score":41,"captain":true},
         {"id":"club_217_f02","name":"Eudes de Provins","specialty":"hastier","sprite":"hastier_04","score":6},
         {"id":"club_217_f03","name":"Clément le Fort","specialty":"lutteur","sprite":"lutteur_01","score":5},
         {"id":"club_217_f04","name":"Pierre de Mantes","specialty":"runner","sprite":"runner_02","score":14},
@@ -164,9 +164,10 @@
     },
     {
       "id": "club_205",
-      "name": "Martel La Hire",
-      "emblem": "pal",
-      "colors": {"primary":"#000000","secondary":"#000000","tertiary":"#234fb1"},
+      "name": "Les Bâtards de la Duchesse",
+      "emblem": "chevron",
+      "colors": {"primary":"#ffffff","secondary":"#ff0000","tertiary":"#ffffff"},
+      "locationId": "mont-saint-michel",
       "fighters": [
         {"id":"club_205_f01","name":"Odon d’Eu","specialty":"runner","sprite":"runner_02","score":25},
         {"id":"club_205_f02","name":"Raymond de Mantes","specialty":"hastier","sprite":"hastier_01","score":34,"captain":true},
@@ -212,9 +213,9 @@
     },
     {
       "id": "club_201",
-      "name": "Grimaldi Milites 2",
+      "name": "Les Bâtards de la Loire",
       "emblem": "ecartele",
-      "colors": {"primary":"#ffffff","secondary":"#ff0000","tertiary":"#ffffff"},
+      "colors": {"primary":"#ffffff","secondary":"#ffffff","tertiary":"#ffffff"},
       "fighters": [
         {"id":"club_201_f01","name":"Aymeric le Rouge","specialty":"lutteur","sprite":"lutteur_02","score":28},
         {"id":"club_201_f02","name":"Évrard","specialty":"runner","sprite":"runner_01","score":38,"captain":true},
@@ -228,9 +229,9 @@
     },
     {
       "id": "club_202",
-      "name": "Graoully 2",
-      "emblem": "pal",
-      "colors": {"primary":"#0a0a0a","secondary":"#ffffff","tertiary":"#0a0a0a"},
+      "name": "Les Sangliers d'Isar",
+      "emblem": "bande",
+      "colors": {"primary":"#0a0a0a","secondary":"#e1bc56","tertiary":"#0a0a0a"},
       "fighters": [
         {"id":"club_202_f01","name":"Tristan","specialty":"lutteur","sprite":"lutteur_01","score":36,"captain":true},
         {"id":"club_202_f02","name":"Gauthier Cœur-de-Fer","specialty":"runner","sprite":"runner_02","score":26},

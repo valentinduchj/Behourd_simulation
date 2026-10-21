@@ -23,7 +23,9 @@ function svg(name, size = 18) {
 export const TEAM_METRICS = Object.freeze([
   {
     id: 'fatigue', label: 'Fatigue',
-    render: (fighter) => h('span', { class: `m-team-metric m-team-fatigue ${fatigueLevelClass(fighter)}`, title: 'Fatigue' }, String(Math.round(getStat(fighter, 'fatigue')))),
+    // v1.1.8 : « FAT » devant le nombre (seul, il ne disait pas ce qu'il comptait).
+    render: (fighter) => h('span', { class: `m-team-metric m-team-fatigue ${fatigueLevelClass(fighter)}`, title: 'Fatigue' },
+      h('span', { class: 'm-team-metric-label' }, 'FAT'), String(Math.round(getStat(fighter, 'fatigue')))),
   },
   {
     id: 'takedowns', label: 'Mises à terre',

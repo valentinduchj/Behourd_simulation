@@ -17,11 +17,14 @@ export function FighterSprite(fighter, { size = 60, team = null, colors = team?.
     src: getClubSpriteUrl(fighter.spriteId, colors) ?? spriteUrl(fighter.spriteId),
     alt: '', width: Math.round(size * 0.62), height: Math.round(size * 0.93), draggable: 'false',
   });
-  // Fichier source pas encore lu : sprite de base, puis tabard aux couleurs du club.
+  // Fichier source pas encore lu : l'image reste cachée jusqu'au tabard aux couleurs du club
+  // (v1.1.7 : plus de tabard d'origine affiché un instant) ; à défaut, le sprite de base.
   if (colors && !img.src.startsWith('data:')) {
+    img.style.visibility = 'hidden';
     loadSpriteSource(fighter.spriteId).then(() => {
       const url = getClubSpriteUrl(fighter.spriteId, colors);
       if (url) img.src = url;
+      img.style.visibility = '';
     });
   }
   return h(

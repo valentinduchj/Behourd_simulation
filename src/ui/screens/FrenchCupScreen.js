@@ -1,4 +1,5 @@
 import { h } from '../../utils/dom.js';
+import { TalentBadges } from '../components/TalentBadge.js';
 import { SCREENS } from '../../core/screenIds.js';
 import { FRENCH_CUP_RULES } from '../../data/frenchCup.js';
 import {
@@ -768,10 +769,13 @@ export class FrenchCupScreen extends BaseScreen {
         rows.length
           ? h('ol', { class: 'cup-leader-list' }, rows.map((row) => h('li', { class: row.teamId === cup.playerTeamId ? 'is-player' : '' },
             EmblemView(this.session.getTeam(row.teamId)?.emblem, { size: 18 }),
-            h('span', { class: 'cup-leader-name' }, row.name ?? this.session.getFighter(row.fighterId)?.name ?? '?', h('small', {}, this.name(row.teamId))),
-            h('strong', {}, String(row.value)))))
+            h('span', { class: 'cup-leader-name' }, row.name ?? this.session.getFighter(row.fighterId)?.name ?? '?',
+              // v1.2.1 : talents du combattant (clubs de l'IA compris).
+              this.session.getFighter(row.fighterId)?.talents?.length ? h('span', { class: 'cup-leader-talents' }, ...TalentBadges(this.session.getFighter(row.fighterId), this.session)) : null,
+              h('small', {}, this.name(row.teamId))),
+            h('strong', {}, String(row.value), h('small', { class: 'cup-leader-matches' }, ` · ${row.matchesPlayed} combat${row.matchesPlayed > 1 ? 's' : ''}`)))))
           : h('p', { class: 'muted' }, 'Pas encore de données.'),
-        h('p', { class: 'muted cup-leader-unit' }, board.unit));
+        h('p', { class: 'muted cup-leader-unit' }, `${board.unit}, sur toute la Coupe`));
     }));
   }
 

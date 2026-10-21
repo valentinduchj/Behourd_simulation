@@ -64,7 +64,7 @@ export const COMBATTANTS_ARTICLES = [
       { type: 'callout', tone: 'warning', title: 'Le repos seul ne suffit pas', text: 'Un combattant laissé sans activité ne récupère pas : envoyez-le au Banquet.' },
       { type: 'h', text: 'Ses trois états' },
       { type: 'list', items: [
-        '**Reposé** (sous {{fatigue.tiredFrom}}) : aucun malus.',
+        '**En forme** (sous {{fatigue.tiredFrom}}) : aucun malus.',
         '**Fatigué** (dès {{fatigue.tiredFrom}}) : ses coups faiblissent en combat, et sa réussite au Centre baisse de {{fatigue.tiredChanceLoss}} (entraînements et Forêt ; jamais au Banquet).',
         '**Épuisé** (dès {{fatigue.exhaustedFrom}}) : il frappe bien moins fort et refuse tout autre lieu que le Banquet. S’il était affecté ailleurs, il y est envoyé d’office.',
       ] },

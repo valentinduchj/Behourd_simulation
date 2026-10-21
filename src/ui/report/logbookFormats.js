@@ -82,7 +82,7 @@ export const LOGBOOK_FORMATS = {
       detail: [
         `${e.points > 0 ? '+' : ''}${plural(e.points, 'point')} au classement`,
         e.location === 'HOME' ? '🏠 à domicile' : e.location === 'AWAY' ? '⚔ à l’extérieur' : null,
-        e.homeReward ? `+${e.homeReward} deniers (victoire à domicile)` : null,
+        e.homeReward ? (e.location === 'AWAY' ? `+${e.homeReward} deniers (victoire à l’extérieur)` : `+${e.homeReward} deniers (victoire à domicile)`) : null,
         e.auto ? 'combat disputé automatiquement' : null,
       ].filter(Boolean).join(' · '),
     };
@@ -95,7 +95,7 @@ export const LOGBOOK_FORMATS = {
       section: 'other',
       tone: 'highlight',
       who: `${season?.icon ?? ''} ${capitalize(season?.article ?? 'la saison')} commence`.trim(),
-      text: `${season?.logbook ?? ''}${released.length ? ` ${released.join(', ')} ${released.length > 1 ? 'passent' : 'passe'} au repos.` : ''}`.trim(),
+      text: `${season?.logbook ?? ''}${released.length ? ` ${released.join(', ')} ${released.length > 1 ? 'se retrouvent' : 'se retrouve'} sans activité.` : ''}`.trim(),
     };
   },
   // Succès (v0.73) : obtenus pendant la journée.
@@ -132,6 +132,13 @@ export const LOGBOOK_FORMATS = {
     tone: 'good',
     who: `📜 Étude terminée : ${e.name}`,
     text: `a révélé ${e.second ? 'son second talent' : 'le talent'} ${e.talentName}.${!e.previousTalentName ? '' : e.previousTalentId === e.talentId ? ' C’est le même qu’avant.' : ` Il remplace ${e.previousTalentName}.`}`,
+  }),
+  // v1.2.3 : étude finie, trois talents au choix.
+  'talent.choice': (e) => ({
+    section: 'fighters',
+    tone: 'highlight',
+    who: `📜 Étude terminée : ${e.name}`,
+    text: `trois talents se révèlent (${e.choiceNames.join(', ')}). Choisissez-en un${e.previousTalentName ? ` (il remplacera ${e.previousTalentName})` : ''} avant de passer la journée.`,
   }),
   'ai.recruitment': (e, { session }) => ({
     section: 'league',
@@ -211,10 +218,13 @@ export const LOGBOOK_FORMATS = {
 
 /** Entraînement devenu inutile (compétence au plafond du potentiel, ActivityService.isTrainingUseless). */
 export const USELESS_TRAINING_MESSAGE = 'Entraînement inutile : ce combattant a atteint son potentiel maximal.';
+export const USELESS_AT_MAX_MESSAGE = 'Entraînement inutile : cette compétence est au maximum.';
 
 /** « Entraînement inutile : Guillaume de Caen a atteint son potentiel maximal en HAS (Mannequins) ; … » */
 export function uselessTrainingNote(session, e) {
   const def = e.statId ? getStatDefinition(e.statId) : null;
+  // v1.1.8 : compétence à 100 (le maximum), et non au plafond du potentiel.
+  if (e.atMax) return `Entraînement inutile : ${fighterName(session, e.fighterId)} est au maximum${def ? ` en ${def.short} (${def.max})` : ''} (${activityName(e.activityId)}) ; cet entraînement ne le fait plus progresser.`;
   return `Entraînement inutile : ${fighterName(session, e.fighterId)} a atteint son potentiel maximal${def ? ` en ${def.short}` : ''} (${activityName(e.activityId)}) ; cet entraînement ne le fait plus progresser.`;
 }
 
@@ -307,7 +317,7 @@ function statGainLabel(statId, amount) {
 /** Ce qui empêchait un combattant de progresser (« au mieux » : LUT au plafond, fatigue à 0…). */
 function blockedNote(e) {
   const def = e.statId ? getStatDefinition(e.statId) : null;
-  if (e.capped && def) return `${def.short} au plafond de son potentiel`;
+  if (e.capped && def) return e.atMax ? `${def.short} au maximum (${def.max})` : `${def.short} au plafond de son potentiel`;
   if (def) return def.polarity > 0 ? `${def.short} au maximum` : `${def.label.toLowerCase()} à ${def.min}`;
   return 'rien à gagner';
 }
@@ -372,7 +382,7 @@ export function buildLogbookView(report, ctx) {
 
   // Trésor : toutes les rentrées de la journée, une seule fois.
   const ledger = [];
-  for (const e of played) if (e.homeReward) ledger.push({ label: 'Recette à domicile', amount: e.homeReward });
+  for (const e of played) if (e.homeReward) ledger.push({ label: e.location === 'AWAY' ? 'Prime de victoire à l’extérieur' : 'Recette à domicile', amount: e.homeReward });
   for (const e of of('queen.result')) if (e.won && e.reward) ledger.push({ label: 'Récompense de la Reine', amount: e.reward });
   const byActivity = new Map();
   for (const e of of('activity.reward').filter((r) => r.reward.type === 'resource')) {
@@ -407,7 +417,7 @@ export function buildLogbookView(report, ctx) {
         ...failures.map((e) => ({ who: fighterName(session, e.fighterId), text: e.tired ? `${failureLabel(e.activityId)} (fatigué)` : failureLabel(e.activityId), tone: 'idle', hint: e.tired ? `${activityName(e.activityId)} : fatigué, il réussit moins souvent` : activityName(e.activityId) })),
         ...blocked.filter((e) => !e.capped).map((e) => ({ who: fighterName(session, e.fighterId), text: 'au mieux', tone: 'idle', hint: `${activityName(e.activityId)} : ${blockedNote(e)}` })),
         // Potentiel atteint : l'affectation reste visible, en gris foncé (information, pas alerte).
-        ...useless.map((e) => ({ who: fighterName(session, e.fighterId), text: 'entraînement inutile', tone: 'useless', hint: `${activityName(e.activityId)} : ${USELESS_TRAINING_MESSAGE} (${blockedNote(e)})` })),
+        ...useless.map((e) => ({ who: fighterName(session, e.fighterId), text: 'entraînement inutile', tone: 'useless', hint: `${activityName(e.activityId)} : ${e.atMax ? USELESS_AT_MAX_MESSAGE : USELESS_TRAINING_MESSAGE} (${blockedNote(e)})` })),
       ],
       // Une note explicite par combattant concerné, sous les pastilles.
       notes: useless.length || exhausted.length ? [...exhausted.map((e) => `${fighterName(session, e.fighterId)} ${format(e).text}`), ...useless.map((e) => uselessTrainingNote(session, e))] : null,

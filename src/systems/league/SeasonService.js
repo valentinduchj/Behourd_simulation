@@ -2,7 +2,8 @@ import { LEAGUE_CONFIG, SEASON_CONFIG } from '../../data/leagues.js';
 import { calculateClubLevel } from '../fighters/ratings.js';
 import { CHAMPIONSHIP_MATCH } from '../../data/calendar.js';
 import { randInt } from '../../utils/random.js';
-import { generateChampionshipDates, resolveCombatDayConflicts } from '../calendar/CalendarService.js';
+import { generateChampionshipDates, resolveCombatDayConflicts, postponeQueenCombats } from '../calendar/CalendarService.js';
+import { QUEEN_COMBAT_CONFIG } from '../../data/queenCombat.js';
 import { League } from '../../models/League.js';
 import { clubDatabase } from '../clubs/ClubDatabase.js';
 import { getLeagueDefinition, getLeagueName, listLeagueDefinitions } from './LeagueService.js';
@@ -13,6 +14,7 @@ import { playLeagueRound, completeMatchday } from '../match/MatchdayService.js';
 import { ageFighter } from '../fighters/PotentialService.js';
 import { ageAIFighters } from '../clubs/AIProgressionService.js';
 import { runAIRetirements } from '../clubs/AIRecruitmentService.js';
+import { reviewAITalents } from '../clubs/AITalentService.js';
 import { computePlayerMatchLocation, recordHomeTeam } from './MatchLocationService.js';
 import { awardLeagueTitle } from '../trophies/TrophyService.js';
 import { recordSeasonEnd } from '../achievements/AchievementService.js';
@@ -316,11 +318,18 @@ export function startNextSeason(session, rng = Math.random) {
   if (!isOffSeason(session)) throw new Error('La saison en cours n’est pas terminée.');
   const { summary, endedOnDay } = session.season;
   applyPromotionsAndRelegations(session, summary);
+  // Fin de la Coupe de France (v1.2.1) : retraites faites à la clôture de la saison ; chaque club
+  // de l'IA est ajusté à la règle de talents de sa (nouvelle) division.
+  reviewAITalents(session, rng);
   session.calendar.events = session.calendar.events.filter((e) => !(e.typeId === CHAMPIONSHIP_MATCH && e.status === 'scheduled'));
+  // Repos après la Coupe (v1.2.4) : aucun combat (championnat ni Combat de la Reine) dans les
+  // QUEEN_COMBAT_CONFIG.restAfterCupDays jours qui suivent le début de la nouvelle saison.
+  const firstFreeDay = session.calendar.currentDay + QUEEN_COMBAT_CONFIG.restAfterCupDays + 1;
   startSeason(session, {
     number: summary.season + 1,
-    firstMatchdayDay: Math.max(nextMatchdayAfter(endedOnDay, rng), session.calendar.currentDay + 1),
+    firstMatchdayDay: Math.max(nextMatchdayAfter(endedOnDay, rng), firstFreeDay),
   }, rng);
+  postponeQueenCombats(session.calendar, firstFreeDay);
   return { type: 'season.start', season: session.season.number, leagueId: session.playerLeague.id };
 }
 

@@ -15,6 +15,7 @@ import { ensureTrophies } from '../trophies/TrophyService.js';
 import { completeDueStudies } from '../talents/StudyService.js';
 import { ensureClimateState } from '../climate/ClimateService.js';
 import { checkAchievements } from '../achievements/AchievementService.js';
+import { seedAITalents } from '../clubs/AITalentService.js';
 
 /**
  * Complète l'état du monde d'une partie : divisions et saison, événements récurrents,
@@ -42,6 +43,8 @@ export function initializeWorld(session, rng = Math.random, { leagueId = DEFAULT
   const aiProfiled = ensureAIFighterProfiles(session, rng);
   // Sauvegarde contenant des combattants de l'IA déjà à l'âge de la retraite : ils partent.
   const retired = runAIRetirements(session, { rng }).length;
+  // Talents de combat des clubs de l'IA (v1.2.1) : tirés une fois (nouvelle partie, ou sauvegarde antérieure).
+  const aiTalents = seedAITalents(session);
   // Sauvegarde antérieure à la v0.32 : la compagnie reçoit un lieu de départ (sans tirage aléatoire).
   const located = ensurePlayerLocation(session);
   // Sauvegarde antérieure au domicile / extérieur : lieu des matchs de Ligue de la saison (règle, sans hasard).
@@ -60,5 +63,5 @@ export function initializeWorld(session, rng = Math.random, { leagueId = DEFAULT
   // Succès (v0.73) : ceux qui se lisent dans la partie sont accordés (ancienne sauvegarde) et
   // annoncés au premier écran ; les compteurs partent de 0.
   const achieved = checkAchievements(session).length;
-  session.dirty = dirtyBefore || profiled > 0 || backfilled || captained || unassigned > 0 || unseasoned > 0 || aiProfiled > 0 || retired > 0 || located || venues > 0 || cancelledCup || cupHistory > 0 || trophies > 0 || studiesClosed > 0 || achieved > 0;
+  session.dirty = dirtyBefore || profiled > 0 || backfilled || captained || unassigned > 0 || unseasoned > 0 || aiProfiled > 0 || retired > 0 || aiTalents > 0 || located || venues > 0 || cancelledCup || cupHistory > 0 || trophies > 0 || studiesClosed > 0 || achieved > 0;
 }

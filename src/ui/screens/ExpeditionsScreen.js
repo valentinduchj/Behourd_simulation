@@ -9,7 +9,7 @@ import { openModal } from '../components/Modal.js';
 import { openExpeditionBoard } from '../components/ExpeditionBoard.js';
 import { canTalkExpeditions } from '../../systems/expeditions/ExpeditionService.js';
 import { spectatorUrl } from '../../render/spectators.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
 import { SCREENS } from '../../core/screenIds.js';
@@ -24,7 +24,7 @@ const HINT = 'Cliquez sur le Baron (ou son camp, au-delà du pont). Le chemin du
 export class ExpeditionsScreen extends HubScreen {
   static hubLocationId = 'expeditions';
   // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
-  static mobileSheet = { label: 'Le Baron' };
+  static mobileSheet = { label: 'Le Baron', tall: true };
 
   renderContent() {
     this.scene = new ExpeditionScene();
@@ -74,7 +74,7 @@ export class ExpeditionsScreen extends HubScreen {
       }
       if (captain) this.openCaptain();
     });
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) this.renderer.render(now / 1000);
       this.frameId = requestAnimationFrame(frame);

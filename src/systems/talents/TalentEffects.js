@@ -118,6 +118,23 @@ export function homeWinBonus(participants) {
   return participants.reduce((sum, fighter) => sum + sumEffect(fighter, 'homeWinDeniers'), 0);
 }
 
+/** Quêteur (v1.2) : deniers en plus d'une victoire de championnat à l'extérieur. */
+export function awayWinBonus(participants) {
+  return participants.reduce((sum, fighter) => sum + sumEffect(fighter, 'awayWinDeniers'), 0);
+}
+
+/** Économe (v1.2) : réduction du prix des améliorations du Bourg (compagnie, non cumulable). */
+export function upgradeDiscount(session) {
+  const values = companyEffects(session, 'upgradeDiscount').map(({ effect }) => effect.value);
+  return values.length ? Math.max(...values) : 0;
+}
+
+/** Endurci / Increvable (v1.2) : facteur de ses courbatures de fin de combat (le plus fort ; 1 sinon). */
+export function sorenessFactor(fighter) {
+  const factors = effectsOf(fighter, 'sorenessFactor').map((e) => e.factor);
+  return factors.length ? Math.min(...factors) : 1;
+}
+
 /** Bonus (fraction) de la récompense d'un Combat de la Reine gagné, selon ceux qui y ont combattu. */
 export function queenRewardBonus(participants) {
   return participants.reduce((sum, fighter) => sum + sumEffect(fighter, 'queenReward'), 0);
@@ -176,7 +193,9 @@ export function canPotentialDrop(fighter, age) {
  * { value, anyAge }.
  */
 export function potentialBoost(fighter, age) {
-  const effects = effectsOf(fighter, 'potentialBoost').filter((e) => e.maxAge === null || e.maxAge === undefined || age <= e.maxAge);
+  // Tranche d'âge de l'effet : jusqu'à maxAge (Précoce), à partir de minAge (Tardif, v1.2).
+  const effects = effectsOf(fighter, 'potentialBoost').filter((e) => (e.maxAge === null || e.maxAge === undefined || age <= e.maxAge)
+    && (e.minAge === null || e.minAge === undefined || age >= e.minAge));
   return { value: effects.reduce((sum, e) => sum + e.value, 0), anyAge: effects.some((e) => e.anyAge) };
 }
 
@@ -191,7 +210,7 @@ export function skillCapSteps(fighter) {
  * Effets de combat d'un combattant, copiés dans son unité de manche. Avec la saison du combat
  * (`{ season }`), les effets saisonniers actifs y sont ; le moteur ne voit que des effets valides.
  */
-const COMBAT_TYPES = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance'];
+export const COMBAT_TYPES = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance'];
 export function combatEffectsOf(fighter, context = {}) {
   return COMBAT_TYPES.flatMap((type) => effectsOf(fighter, type, context));
 }

@@ -1,5 +1,18 @@
 import { gridToScreen, screenToGrid } from './IsoMath.js';
 
+// Densité de pixels des canvas (v1.1.9, batterie) : plafonnée sur téléphone (main.js) — au-delà de
+// 2, l'écran ne montre pas de différence sur ce dessin, mais chaque image coûte bien plus.
+let pixelRatioCap = 0; // 0 : aucun plafond
+
+export function setPixelRatioCap(value) {
+  pixelRatioCap = Math.max(0, Number(value) || 0);
+}
+
+export function canvasPixelRatio() {
+  const dpr = globalThis.window?.devicePixelRatio || 1;
+  return pixelRatioCap ? Math.min(dpr, pixelRatioCap) : dpr;
+}
+
 /**
  * Base commune des rendus isométriques (La Lice, Centre) : taille du canvas,
  * ajustement de la grille à l'écran, conversions et sélection de case.
@@ -20,7 +33,7 @@ export class IsoView {
 
   resize() {
     const rect = this.canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = canvasPixelRatio();
     this.view = { w: rect.width, h: rect.height };
     this.canvas.width = Math.round(rect.width * dpr);
     this.canvas.height = Math.round(rect.height * dpr);
@@ -88,6 +101,36 @@ export class IsoView {
 
   clear() {
     this.ctx.clearRect(0, 0, this.view.w, this.view.h);
+  }
+
+  /**
+   * Couche fixe gardée en mémoire (v1.1.9) : `draw()` n'est rejoué que si le cadrage (taille,
+   * zoom, décalage) ou `key` (saison…) change ; sinon l'image gardée est recopiée d'un coup.
+   * Seulement pour ce qui ne bouge jamais (sol sans eau ni effet animé).
+   */
+  drawCachedLayer(name, key, draw) {
+    this.layerCache ??= new Map();
+    const full = `${this.canvas.width}x${this.canvas.height}:${this.tile.w}:${this.origin.x},${this.origin.y}:${key}`;
+    let entry = this.layerCache.get(name);
+    if (!entry || entry.key !== full) {
+      const canvas = entry?.canvas ?? document.createElement('canvas');
+      if (canvas.width !== this.canvas.width) canvas.width = this.canvas.width;
+      if (canvas.height !== this.canvas.height) canvas.height = this.canvas.height;
+      const layerCtx = canvas.getContext('2d');
+      layerCtx.setTransform(1, 0, 0, 1, 0, 0);
+      layerCtx.clearRect(0, 0, canvas.width, canvas.height);
+      layerCtx.setTransform(this.ctx.getTransform());
+      const mainCtx = this.ctx;
+      this.ctx = layerCtx;
+      try {
+        draw();
+      } finally {
+        this.ctx = mainCtx;
+      }
+      entry = { key: full, canvas };
+      this.layerCache.set(name, entry);
+    }
+    this.ctx.drawImage(entry.canvas, 0, 0, this.view.w, this.view.h);
   }
 
   tracePolygon(points) {

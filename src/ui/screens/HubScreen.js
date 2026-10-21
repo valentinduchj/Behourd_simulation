@@ -1,4 +1,6 @@
 import { h } from '../../utils/dom.js';
+import { getPendingTalentChoices } from '../../systems/talents/StudyService.js';
+import { openTalentChoice } from '../components/TalentChoiceModal.js';
 import { getSingularRun } from '../../systems/expeditions/SingularRunService.js';
 import { formatDateTime } from '../../utils/format.js';
 import { SCREENS } from '../../core/screenIds.js';
@@ -302,6 +304,11 @@ export class HubScreen extends BaseScreen {
     // Expédition singulière en cours (v1.1) : le temps est arrêté ; on y retourne.
     if (getSingularRun(this.session)) {
       this.navigate(SCREENS.SINGULAR);
+      return;
+    }
+    // Étude finie (v1.2.3) : le talent doit être choisi avant que la journée (ou le combat) passe.
+    if (getPendingTalentChoices(this.session).length) {
+      openTalentChoice(this.session, { onChosen: () => this.navigate(this.id) });
       return;
     }
     // Un jour de combat (championnat ou Combat de la Reine) se termine par le combat, jamais en passant.

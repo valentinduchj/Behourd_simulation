@@ -16,7 +16,8 @@
 //                           envoyé d'office (fin du combat, puis chaque jour au besoin).
 export const FATIGUE_RULES = Object.freeze({
   states: Object.freeze([
-    Object.freeze({ id: 'rested', label: 'Reposé', from: 0 }),
+    // v1.1.8 : « En forme » (et non plus « Reposé ») — il s'applique jusqu'à 49 de fatigue.
+    Object.freeze({ id: 'rested', label: 'En forme', from: 0 }),
     Object.freeze({ id: 'tired', label: 'Fatigué', from: 50 }),
     Object.freeze({ id: 'exhausted', label: 'Épuisé', from: 70 }),
   ]),

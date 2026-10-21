@@ -19,9 +19,12 @@ import { describeUsage } from '../../systems/items/ConsumableService.js';
 import { ItemImage } from '../components/ChestModal.js';
 import { queueSceneEffect } from '../hub/pendingVfx.js';
 import { currentLocale } from '../../i18n/i18n.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
+
+/** Téléphone : hauteur du bandeau du haut et du dock, que les étiquettes des artisans évitent. */
+export const BOROUGH_MOBILE_LABEL_INSETS = Object.freeze({ top: 58, bottom: 72 });
 
 const HINT = 'Cliquez sur un artisan (ou sa zone) pour voir ses améliorations. Le chemin en haut à gauche ramène au Centre.';
 const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1 ? 's' : ''}`;
@@ -45,7 +48,7 @@ function currentValue(session, upgrade) {
 export class BoroughScreen extends HubScreen {
   static hubLocationId = 'borough';
   // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
-  static mobileSheet = { label: 'Les artisans' };
+  static mobileSheet = { label: 'Les artisans', tall: true };
 
   renderContent() {
     this.scene = new BoroughScene();
@@ -93,6 +96,8 @@ export class BoroughScreen extends HubScreen {
     // Téléphone (v0.91) : pincer pour zoomer, glisser pour se déplacer sur la carte.
     if (isMobileLayout()) this.mapZoom = attachMapZoom(this.canvas, () => this.renderer);
     this.renderer = new BoroughRenderer(this.canvas, this.scene);
+    // Téléphone : les étiquettes restent entre le bandeau du haut et le dock (v1.1.8).
+    if (isMobileLayout()) this.renderer.labelInsets = { ...BOROUGH_MOBILE_LABEL_INSETS };
     // Saison de l'année (v0.70) : habillage du Bourg (sol, arbres, toits, feux, météo).
     this.renderer.season = getCurrentSeason(this.session).id;
     // Sorties : le chemin haut-gauche ramène au Centre (data/locations.js).
@@ -118,7 +123,7 @@ export class BoroughScreen extends HubScreen {
       }
       if (zone) this.openArtisan(zone.artisanId);
     });
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) this.renderer.render(now / 1000);
       this.frameId = requestAnimationFrame(frame);

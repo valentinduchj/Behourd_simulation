@@ -3,6 +3,7 @@ import { ACTIVITIES } from '../../data/activities.js';
 import { canAfford, getResource, spendResource } from '../economy/wallet.js';
 import { getUpgradeEffectType } from './upgradeEffects.js';
 import { checkAchievements } from '../achievements/AchievementService.js';
+import { upgradeDiscount } from '../talents/TalentEffects.js';
 
 // Améliorations du Bourg : coûts, achats et effets. Seul le nombre d'achats de chaque
 // amélioration est enregistré (session.upgrades[id]) ; le coût, les effets et les places
@@ -56,7 +57,10 @@ export function isAtMaxLevel(session, upgradeId) {
 
 export function getCurrentCost(session, upgradeId) {
   const upgrade = getUpgrade(upgradeId);
-  return getUpgradeCost(upgrade, getPurchaseCount(session, upgradeId));
+  const cost = getUpgradeCost(upgrade, getPurchaseCount(session, upgradeId));
+  // Économe (v1.2) : réduction de la compagnie, non cumulable.
+  const discount = upgradeDiscount(session);
+  return discount ? Math.round(cost * (1 - discount)) : cost;
 }
 
 /**

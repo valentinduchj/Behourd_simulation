@@ -40,7 +40,7 @@ export function rollAIEndurance(fighter, rng = Math.random, rules = COMBAT_RULES
  */
 export function createCombatUnit({
   fighter, side, tile, fatigue, endurance = null, isCaptain = false, effects = [], rules = COMBAT_RULES,
-  talentEffects = [], venue = null, decisive = false, lastStandUsed = false, fatigueGain = 1, season = null,
+  talentEffects = [], venue = null, decisive = false, lastStandUsed = false, fatigueGain = 1, season = null, competition = null,
 }) {
   const productOf = (type) => talentEffects.filter((e) => e.type === type).reduce((factor, e) => factor * (e.factor ?? 1), 1);
   const caps = talentEffects.filter((e) => e.type === 'fatigueCap').map((e) => e.value);
@@ -87,6 +87,8 @@ export function createCombatUnit({
     // et adversaires mis KO dans la manche, réductions et bonus propres.
     talentEffects: talentEffects.map((effect) => ({ ...effect })),
     venue,
+    // Nature du combat (v1.2, Écuyer de la Reine) : 'combat' (championnat) ou 'queen'.
+    competition,
     strikes: 0,
     knockdowns: 0,
     damageTakenReduction: sumOf('damageTaken'),

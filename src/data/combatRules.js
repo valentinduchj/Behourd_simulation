@@ -64,6 +64,11 @@ export const COMBAT_RULES = Object.freeze({
   // du seuil retire `perPoint` des dégâts (50 → 100 %, 75 → 50 %, 100 → 0 %, puis le minimum de 1).
   // v0.66 : c'est la fatigue DU MOMENT qui compte (elle évolue pendant la manche).
   fatigueDamage: Object.freeze({ threshold: 50, perPoint: 0.02 }),
+  // Mises à terre comptées (v1.1.7) : au plus `maxPerRound` par combattant et par manche, et
+  // `maxPerMatch` sur tout le combat (simulateRound : knockoutsBefore). Au-delà,
+  // le KO est compté au coéquipier qui a le plus frappé la victime dans la manche (une aide) ; le
+  // combat lui-même n'en est pas changé (seules les statistiques et les mises à terre de carrière).
+  knockoutCredit: Object.freeze({ maxPerRound: 3, maxPerMatch: 6 }),
 
   // Fatigue pendant la manche (v0.66, béhourd réel), tour par tour. Valeurs « à valider » :
   //   debout        + effortPerTick × (1 + tour ÷ escalationTicks) : plus la manche dure, plus

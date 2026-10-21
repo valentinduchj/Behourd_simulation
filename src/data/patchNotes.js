@@ -30,6 +30,21 @@ export const PATCH_NOTE_SECTIONS = Object.freeze([
 // majeure qui la contient.
 export const PATCH_MILESTONES = Object.freeze([
   {
+    version: '1.2',
+    title: 'Les talents montent en grade',
+    newFeatures: [
+      '41 nouveaux talents : 115 en tout (60 ordinaires, 30 rares, 15 épiques, 10 exotiques).',
+      'Des talents qui montent en grade : Briseur de garde, puis Briseur de bouclier (rare), puis Briseur de rêve (épique) ; de même contre le Hastier et le Runner, pour la Lutte, l’arme d’hast, la Percussion, l’Endurance, l’esquive, le capitaine…',
+      'De nouveaux effets : prime de victoire à l’extérieur, rabais au Bourg, courbatures réduites, bonus pendant les Combats de la Reine.',
+      'Les adversaires ont aussi des talents de combat, selon leur division : ordinaires en Ligue 3, rares et épiques en Ligue 1 ; visibles sur la fiche des clubs et au placement.',
+      'Trois comportements d’élite pour les meilleurs clubs : le Marteau d’élite, le Tacticien d’élite et le Stratège d’élite.',
+      'Au Scriptorium, une étude finie propose trois talents de la même famille : vous choisissez celui que garde votre combattant.',
+    ],
+    improvements: [
+      'Quatre couleurs d’étiquettes seulement, une par famille de talents.',
+    ],
+  },
+  {
     version: '1.1',
     title: 'Le Sentier des pins',
     newFeatures: [
@@ -39,6 +54,10 @@ export const PATCH_MILESTONES = Object.freeze([
       'Quatre succès pour les expéditions singulières : Le Sentier des pins, Trois debout, Loup solitaire, Seigneur des cimes.',
       'Sur téléphone, l’expédition singulière se joue en plein écran dans la forêt, commandes sous les pouces.',
       'De nouveaux bruitages de combat : des lames d’acier qui s’entrechoquent et la lourde chute d’un combattant mis KO.',
+    ],
+    improvements: [
+      'Sur téléphone, des écrans plus lisibles : Combat de la Reine sur une ligne, lice dégagée au placement, volets plus hauts, affectations sans noms coupés.',
+      'Un jeu plus léger et plus économe : application Android allégée d’environ 13 Mo, scènes ralenties quand un volet ou une fenêtre les couvre.',
     ],
   },
   {
@@ -162,6 +181,136 @@ export const PATCH_MILESTONES = Object.freeze([
 ]);
 
 export const PATCH_NOTES = Object.freeze([
+  {
+    version: '1.2.4',
+    date: '2026-10-21',
+    title: 'Repos après la Coupe',
+    fixes: [
+      'Après la Coupe de France, trois jours de repos : aucun Combat de la Reine ni journée de championnat ne tombe dans les trois jours qui suivent le début de la nouvelle saison (un Combat de la Reine prévu plus tôt est repoussé).',
+    ],
+  },
+  {
+    version: '1.2.3',
+    date: '2026-10-21',
+    title: 'Trois talents au choix',
+    newFeatures: [
+      'Scriptorium : à la fin d’une étude, trois talents de la même famille se révèlent (trois ordinaires, trois rares ou trois épiques) ; vous en choisissez un, une seule fois. Le talent que le combattant garde n’est jamais proposé.',
+      'Tant que le talent n’est pas choisi, la journée ne passe pas : le bouton du jour devient « Choisir un talent » et ouvre le choix ; le Scriptorium le propose aussi.',
+    ],
+  },
+  {
+    version: '1.2.2',
+    date: '2026-10-21',
+    title: 'L’élite',
+    newFeatures: [
+      'Trois comportements d’élite, réservés aux clubs de 4,5 étoiles et plus : le Marteau d’élite (implacable), le Tacticien d’élite (magistral) et le Stratège d’élite (visionnaire). Mis à l’épreuve contre tous les autres comportements, ils gagnent environ 7 combats sur 10, contre 5,5 pour leurs versions d’origine.',
+      'Ils alignent leurs meilleurs combattants pour les duels à venir, sans s’imposer 2 Lutteurs, 2 Hastiers et 1 Runner ; en lice, ils réagissent plus vite, ne reculent ni ne soufflent, et se répartissent les cibles.',
+    ],
+    improvements: [
+      'Les adversaires tiennent compte des talents (les leurs et les vôtres) pour choisir qui aligner, où le placer et qui frapper ; vos combattants aussi, pour choisir leur cible.',
+    ],
+  },
+  {
+    version: '1.2.1',
+    date: '2026-10-21',
+    title: 'Les adversaires aussi',
+    newFeatures: [
+      'Les combattants des clubs de l’IA ont des talents de combat, tirés parmi leurs cinq meilleurs : Ligue 3, 0 à 2 ordinaires ; Ligue 2, 1 à 3 ordinaires et 0 à 1 rare ; Ligue 1 et clubs hors championnat, 1 à 3 rares et 1 à 2 épiques. Deux talents au plus par combattant.',
+      'Après chaque Coupe de France (retraites passées, montées et descentes faites), la règle est réappliquée au plus juste : complétée ou réduite ; un combattant sorti des cinq meilleurs garde son talent.',
+      'Au placement, les cartes adverses montrent leurs compétences et leurs talents ; sur téléphone, bouton « Adversaires », et toucher un adversaire dans la lice ouvre sa fiche.',
+    ],
+    improvements: [
+      'Talents des adversaires visibles sur la fiche des clubs, la fiche rapide, les bonus de début de manche et le classement des meilleurs de la Coupe.',
+    ],
+    fixes: [
+      'Les compétences d’un combattant de l’IA affichées sur sa carte sont celles qu’il a vraiment en combat (sa note), et non plus 25 partout.',
+    ],
+  },
+  {
+    version: '1.2.0',
+    date: '2026-10-21',
+    title: 'Les talents montent en grade',
+    newFeatures: [
+      '21 nouveaux talents ordinaires (60 en tout) : Poigne de fer, Bras long, Main lourde, Achèveur, Esquiveur, Dernier carré, Coriace, Gêneur, Ivre de victoire, Tambour, Bonne haleine, Endurci, Pisteur, Quêteur, Économe, Gars du coin, Écuyer de la Reine, Tardif, Fourrure, Bourgeon, Porteur.',
+      '13 nouveaux talents rares (30 en tout) : Briseur de bouclier, Brise-hampe, Coupe-jarret, Étau, Allonge, Marteau, Roc, Insaisissable, Loyal, Increvable, Fierté du pays, Globe-trotter, Négociant.',
+      '7 nouveaux talents épiques (15 en tout) : Briseur de rêve, Fléau des lances, Faucheur de coureurs, Titan, Frère d’armes, Chevalier de la Reine, Sage.',
+      'Des échelles de talents : contre le Lutteur, Briseur de garde (+5 %), Briseur de bouclier (+8 %), Briseur de rêve (+12 %) ; de même contre le Hastier et le Runner. Aussi pour la Lutte, l’arme d’hast, la Percussion, l’Endurance, l’esquive, l’aura de manche, le capitaine, le domicile, l’extérieur, les courbatures, les recrues, les études et la Reine.',
+      'Nouveaux effets : Quêteur (deniers par victoire à l’extérieur), Économe (améliorations du Bourg moins chères), Endurci et Increvable (courbatures réduites), Écuyer de la Reine (bonus pendant les Combats de la Reine), Tardif (potentiel de 28 à 31 ans).',
+    ],
+    improvements: [
+      'Quatre couleurs d’étiquettes de talents seulement (ordinaire, rare, épique, exotique) : un talent saisonnier hors de sa saison garde sa couleur, avec une bordure en pointillés.',
+      'Une victoire à l’extérieur qui rapporte des deniers (Quêteur) l’annonce comme telle, au carnet et en fin de combat.',
+    ],
+    fixes: [
+      'Collecteur : sa description dit « même sans activité » (et non plus « au repos »).',
+    ],
+  },
+  {
+    version: '1.1.9',
+    date: '2026-10-21',
+    title: 'Plus léger',
+    improvements: [
+      'Musique et ambiances réencodées (Opus) : l’audio pèse deux fois moins (25 → 13 Mo), et l’application Android environ 13 Mo de moins, sans différence à l’oreille.',
+      'Sur téléphone, une scène presque entièrement couverte (fenêtre, carnet, volet de la Taverne, du Bourg ou du Baron, affectations) ne se redessine plus que deux fois par seconde au lieu de trente : moins de batterie.',
+      'Sur téléphone, les scènes sont dessinées à la densité d’écran 2 au plus (au-delà, aucune différence visible, mais bien plus de calcul).',
+      'Le sol du Bourg et les planchers de la Taverne et du Scriptorium sont dessinés une fois, puis recopiés à chaque image.',
+    ],
+  },
+  {
+    version: '1.1.8',
+    date: '2026-10-20',
+    title: 'Sous les pouces',
+    balanceChanges: [
+      'Taverne : les recrues de la Taverne de départ (jusqu’à 2★) coûtent deux fois plus cher.',
+    ],
+    improvements: [
+      'Sur téléphone, le Combat de la Reine tient sur un écran : les cinq adversaires sur une ligne, récompenses et « Affronter » visibles sans défiler.',
+      'Sur téléphone, au placement, les combattants déjà posés ne sont plus que de petites cartes : la lice est dégagée ; la fiche du combattant à placer est plus étroite.',
+      'Sur téléphone, les volets de la Taverne, du Bourg et du Baron s’ouvrent plus haut, sans le paragraphe d’introduction.',
+      'Sur téléphone, les affectations ne coupent plus les noms (deux lignes) et un lieu fermé pour la saison n’est plus qu’une colonne étroite.',
+      'Sur téléphone, la Compagnie indique « FAT » devant la fatigue (affichage Fatigue), et la page défile sous le bandeau du haut.',
+      '« Sans activité » remplace « Au repos » : un combattant sans activité ne récupère pas de fatigue.',
+      'L’état de fatigue le plus bas s’appelle « En forme » (et non plus « Reposé ») : il vaut jusqu’à 49.',
+      'Carnet de bord : une compétence à 100 est signalée « entraînement inutile », avec une note, comme un potentiel atteint.',
+      'Expédition singulière : toucher un combattant dans la liste affiche sa fiche — compétences, potentiel, fatigue et talents.',
+      'Création d’une compagnie sur téléphone : la carte des Terres tient entre le titre et les boutons ; le Sud et la Corse ne passent plus dessous.',
+    ],
+    fixes: [
+      'Sur téléphone, le bouton « Continuer : le capitaine » de l’étape Blason était coupé en bas de l’écran.',
+      'Sur téléphone, les annonces « Exploit accompli » s’affichent en haut au centre : elles ne couvrent plus le classement, la croix des volets ni le haut des fiches.',
+      'Sur téléphone, le tutoriel dit « Touchez » et nomme les boutons comme à l’écran (« Compagnie », « Jour suivant », les lieux à gauche).',
+      'Sur téléphone, la Compagnie ne passe plus sous les pastilles du bandeau, et les étiquettes du Bourg ne sont plus cachées par le bandeau ni par le dock.',
+    ],
+  },
+  {
+    version: '1.1.7',
+    date: '2026-10-20',
+    title: 'Les plaies ne se referment pas',
+    gameplayChanges: [
+      'Expéditions singulières : ce sont désormais les points de vie qui ne se récupèrent pas d’un combat à l’autre ; la fatigue, elle, se récupère. L’adversaire qui bat un combattant garde ses PV pour le suivant. Les bonus soignent : Repos au camp +50 PV, Feu de camp +20 PV pour les trois, Bénédiction du druide +20 PV après chaque victoire, Remise sur pied : retour avec 50 PV.',
+      'Coupe de France : les huit combattants sont choisis au premier combat et emmenés pour toute la Coupe ; ensuite, seuls les cinq de chaque manche sont à choisir.',
+    ],
+    balanceChanges: [
+      'Expéditions singulières : une récompense de fin n’est proposée qu’après les combats 3, 6 et 9 (trois au plus), et ses montants dépendent de la tranche (Grosse bourse : 300, 700 ou 1 100 deniers ; Leçon du maître d’armes : +1, +2 ou +3) ; Flamme nouvelle et Parchemin ancien ne sont plus proposés dans la plus petite tranche ; Offrande rendue rend un tiers du coût.',
+      'Mises à terre : au plus 3 par combattant et par manche, et 6 sur un combat ; au-delà, elles comptent pour le coéquipier qui a le plus frappé l’adversaire. Les dégâts comptés ne dépassent plus les PV qui restaient à la victime.',
+    ],
+    improvements: [
+      'Sur téléphone : le nom d’un combattant se modifie avec le stylo ✎ à côté de son nom (le même bouton ✓ valide) ; le bouton « Jour suivant » n’apparaît plus sur les onglets Compagnie et Ligue.',
+      'Expédition singulière gagnée : chaque récompense peut aller à n’importe lequel des trois, même s’il a déjà deux talents (il remplace alors celui de votre choix), ou ne pas être attribuée.',
+      'Coupe de France : les meilleurs combattants indiquent le nombre de combats disputés (totaux de toute la Coupe).',
+    ],
+    fixes: [
+      'Tabards : les combattants ne montrent plus un instant un tabard d’une autre couleur ; au Scriptorium, sur la fiche rapide (appui long) et dans la liste des adversaires d’une expédition, ils portent les couleurs de leur compagnie.',
+    ],
+  },
+  {
+    version: '1.1.6',
+    date: '2026-10-19',
+    title: 'Nouveaux blasons en Ligue 3',
+    gameplayChanges: [
+      'Ligue 3 : trois clubs changent de nom et de couleurs (les Bâtards de la Duchesse, les Bâtards de la Loire, les Sangliers d’Isar). La réserve accueille quatre nouveaux clubs : Norsemen, Masanada, Ferreus Lupus et Half Ton. Les Bâtards de la Duchesse s’installent au Mont-Saint-Michel ; Auream Excubitores part au Château de Caen. Ces clubs sont les mêmes sur ordinateur et sur Android, pour toute nouvelle partie.',
+    ],
+  },
   {
     version: '1.1.5',
     date: '2026-10-19',

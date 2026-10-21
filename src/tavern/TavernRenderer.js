@@ -88,7 +88,8 @@ export class TavernRenderer extends IsoView {
     // Porte survolée : elle s'entrouvre (invitation à sortir).
     if (this.hover?.type === 'exit') this.doorOpen = Math.max(this.doorOpen, 0.3);
     this.clear();
-    this.#drawFloor();
+    // Plancher fixe : gardé en mémoire (v1.1.9) ; les murs (porte qui s'ouvre) restent dessinés.
+    this.drawCachedLayer('floor', '-', () => this.#drawFloor());
     this.#drawWalls();
     for (const prop of scene.groundProps) PROPS[prop.type]?.(this, prop, { time, teamColors: {} });
 

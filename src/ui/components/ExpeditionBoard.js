@@ -18,10 +18,44 @@ import { FighterName } from './CaptainCrown.js';
 import { TalentBadge, TalentBadges } from './TalentBadge.js';
 import { spectatorUrl } from '../../render/spectators.js';
 import { FighterClassTags } from './SpecialtyBadge.js';
-import { SINGULAR_RULES } from '../../data/singularExpedition.js';
+import { SINGULAR_RULES, SINGULAR_OPPONENT_COLORS } from '../../data/singularExpedition.js';
+import { Emblem } from '../../models/Emblem.js';
+
+const OPPONENT_COLORS = new Emblem({ colors: SINGULAR_OPPONENT_COLORS }).resolvedColors();
 import { canJoinSingular, getSingularRun } from '../../systems/expeditions/SingularRunService.js';
 import { Fighter } from '../../models/Fighter.js';
-import { getStat } from '../../systems/fighters/stats.js';
+import { getStat, isStatMaxed } from '../../systems/fighters/stats.js';
+import { STAT_DEFINITIONS } from '../../data/stats.js';
+import { getFatigueState, fatigueLevelClass } from '../../systems/fighters/FatigueService.js';
+
+// Expédition singulière (v1.1.8) : la fiche du combattant touché dans la liste — compétences,
+// potentiel, fatigue, talents — pour choisir les trois en connaissance de cause.
+const SQUAD_SKILLS = STAT_DEFINITIONS.filter((def) => def.kind === 'skill');
+const SQUAD_KEY_SKILL = Object.freeze({ lutteur: 'wrestling', hastier: 'polearm', runner: 'percussion' });
+
+export function SquadFighterDetail(session, fighter) {
+  if (!fighter) return h('p', { class: 'muted xp-squad-empty' }, 'Touchez un combattant pour voir sa fiche.');
+  const key = SQUAD_KEY_SKILL[fighter.specialtyId] ?? null;
+  const fatigue = Math.round(getStat(fighter, 'fatigue'));
+  return h('div', { class: 'xp-squad-sheet', 'data-fighter-id': fighter.id },
+    h('div', { class: 'xp-squad-head' },
+      FighterSprite(fighter, { size: 48, team: session.playerTeam }),
+      h('span', { class: 'xp-squad-id' },
+        h('strong', {}, FighterName(fighter, { session })),
+        h('span', { class: 'xp-squad-tags' }, ...FighterClassTags(fighter, session), FighterStars(calculateFighterLevel(fighter))))),
+    h('p', { class: 'xp-squad-pot' }, h('span', { class: 'muted' }, 'Potentiel'), PotentialFlames(fighter)),
+    h('div', { class: 'xp-squad-skills', 'aria-label': 'Compétences' }, SQUAD_SKILLS.map((def) => {
+      const value = Math.round(getStat(fighter, def.id));
+      return h('div', { class: `xp-squad-skill ${def.id === key ? 'is-key' : ''} ${isStatMaxed(fighter, def.id) ? 'is-maxed' : ''}`.replace(/\s+/g, ' ').trim(), 'data-stat': def.id },
+        h('span', {}, def.label),
+        h('span', { class: 'xp-squad-bar' }, h('span', { style: { width: `${Math.max(0, Math.min(100, (value / (def.max || 100)) * 100))}%` } })),
+        h('b', {}, String(value)));
+    })),
+    h('p', { class: `xp-squad-fatigue ${fatigueLevelClass(fighter)}` }, `Fatigue ${fatigue} / 100 · ${getFatigueState(fighter).label}`),
+    getFighterTalents(session, fighter).length
+      ? h('ul', { class: 'xp-squad-talents' }, getFighterTalents(session, fighter).map((talent) => h('li', {}, TalentBadge(talent, session), h('span', { class: 'muted' }, ` ${talent.description}`))))
+      : h('p', { class: 'muted xp-squad-notalent' }, 'Aucun talent.'));
+}
 
 // Les expéditions proposées par le Baron (v0.98 ; récompenses v0.99) : trois cartes
 // illustrées — un lieu sauvage ou médiéval d'Europe chacune — avec leur nature (Pérégrination,
@@ -228,6 +262,8 @@ export function openExpeditionBoard(session, { onChange, onStartSingular } = {})
     const cost = getOfferCost(session, offer);
     const selected = new Set();
     let picker = null;
+    // v1.1.8 : la fiche du dernier combattant touché, à côté de la liste.
+    const detailHost = h('aside', { class: 'xp-squad-detail', 'aria-live': 'polite' }, SquadFighterDetail(session, null));
     const refreshConfirm = () => {
       const confirm = picker.element.querySelector('.modal-actions .btn-primary');
       confirm.disabled = selected.size !== SINGULAR_RULES.squadSize;
@@ -241,6 +277,8 @@ export function openExpeditionBoard(session, { onChange, onStartSingular } = {})
           if (selected.has(fighter.id)) selected.delete(fighter.id);
           else if (selected.size < SINGULAR_RULES.squadSize) selected.add(fighter.id);
           event.currentTarget.setAttribute('aria-pressed', String(selected.has(fighter.id)));
+          detailHost.replaceChildren(SquadFighterDetail(session, fighter));
+          for (const b of list.querySelectorAll('.xp-fighter')) b.classList.toggle('is-viewed', b === event.currentTarget);
           refreshConfirm();
         },
       },
@@ -255,8 +293,8 @@ export function openExpeditionBoard(session, { onChange, onStartSingular } = {})
       title: `⚜ ${place.name} — trois combattants`,
       className: 'xp-picker-modal xp-squad-modal',
       body: h('div', {},
-        h('p', { class: 'muted' }, `Expédition singulière : ${SINGULAR_RULES.fights} duels d’affilée, une manche gagnante, dans une lice de forêt. Avant chaque combat, vous choisissez qui entre en lice ; la fatigue se garde ; un combattant battu est KO jusqu’à la fin. Les jours ne passent pas. Récompense : ${describeReward(offer.reward)}. Coût : ${plural(cost, 'Ferveur')}.`),
-        list),
+        h('p', { class: 'muted' }, `Expédition singulière : ${SINGULAR_RULES.fights} duels d’affilée, une manche gagnante, dans une lice de forêt. Avant chaque combat, vous choisissez qui entre en lice ; les points de vie ne se récupèrent pas d’un combat à l’autre (la fatigue, si) ; un combattant battu est KO jusqu’à la fin. Les jours ne passent pas. Récompense : ${describeReward(offer.reward)}. Coût : ${plural(cost, 'Ferveur')}.`),
+        h('div', { class: 'xp-squad-layout' }, list, detailHost)),
       actions: [
         { label: 'Annuler', value: null },
         {
@@ -305,7 +343,7 @@ export function openOpponents(session, offer) {
       fighter.talents = [...(entry.talents ?? [])];
       return h('li', { class: `xp-opponent ${entry.boss ? 'is-boss' : ''}`.trim() },
         h('span', { class: 'xp-opponent-number' }, entry.boss ? '👑' : String(index + 1)),
-        FighterSprite(fighter, { size: 30 }),
+        FighterSprite(fighter, { size: 30, colors: OPPONENT_COLORS }),
         h('span', { class: 'xp-fighter-who' },
           h('strong', {}, fighter.name),
           h('span', { class: 'xp-opponent-tags' }, ...FighterClassTags(fighter, session), FighterStars(calculateFighterLevel(fighter)))),

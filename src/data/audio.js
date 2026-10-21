@@ -6,9 +6,9 @@
 
 /** Musiques (fichiers MP3, jouées en boucle). */
 export const MUSIC_TRACKS = Object.freeze({
-  taverne: Object.freeze({ id: 'taverne', title: 'Tableau de la Taverne', file: 'assets/audio/music/tableau-de-la-taverne.mp3', volume: 0.85 }),
-  combat: Object.freeze({ id: 'combat', title: 'Warlike Pulse', file: 'assets/audio/music/warlike-pulse.mp3', volume: 0.8 }),
-  scriptorium: Object.freeze({ id: 'scriptorium', title: 'Wistful Dawn', file: 'assets/audio/music/wistful-dawn.mp3', volume: 0.9 }),
+  taverne: Object.freeze({ id: 'taverne', title: 'Tableau de la Taverne', file: 'assets/audio/music/tableau-de-la-taverne.ogg', volume: 0.85 }),
+  combat: Object.freeze({ id: 'combat', title: 'Warlike Pulse', file: 'assets/audio/music/warlike-pulse.ogg', volume: 0.8 }),
+  scriptorium: Object.freeze({ id: 'scriptorium', title: 'Wistful Dawn', file: 'assets/audio/music/wistful-dawn.ogg', volume: 0.9 }),
 });
 
 /**
@@ -39,10 +39,13 @@ export const MOMENT_MUSIC = Object.freeze({
   roundStart: 'combat',
 });
 
-const A = (name) => `assets/audio/ambience/${name}.mp3`;
-const S = (name) => `assets/audio/sfx/${name}.mp3`;
+// v1.1.9 : musique et ambiances en Opus (.ogg) — musique 96 kb/s, ambiances 48 kb/s mono (audio
+// deux fois plus léger) ; les bruitages courts restent en MP3.
+const EXTENSION = Object.freeze({ music: 'ogg', ambience: 'ogg', sfx: 'mp3' });
+const A = (name) => `assets/audio/ambience/${name}.${EXTENSION.ambience}`;
+const S = (name) => `assets/audio/sfx/${name}.${EXTENSION.sfx}`;
 // Variantes numérotées d'un même son : « hit-steel-1.mp3 », « hit-steel-2.mp3 »…
-const variants = (folder, base, count) => Array.from({ length: count }, (_, i) => `assets/audio/${folder}/${base}-${i + 1}.mp3`);
+const variants = (folder, base, count) => Array.from({ length: count }, (_, i) => `assets/audio/${folder}/${base}-${i + 1}.${EXTENSION[folder] ?? 'mp3'}`);
 
 /**
  * Ambiances (v0.74.1 : de vrais enregistrements, plus aucun son synthétisé). Par lieu :

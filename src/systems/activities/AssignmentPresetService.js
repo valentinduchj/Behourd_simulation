@@ -190,7 +190,7 @@ export function describePresetIssues(issues) {
   if (exhausted.length) parts.push(`épuisé${exhausted.length > 1 ? 's' : ''}, envoyé${exhausted.length > 1 ? 's' : ''} au ${getActivity(EXHAUSTED_REFUGE)?.name ?? 'Banquet'} : ${exhausted.map((i) => i.fighter.name).join(', ')}`);
   const full = issues.filter((i) => i.kind === 'full');
   for (const activityId of new Set(full.map((i) => i.activityId))) {
-    parts.push(`${getActivity(activityId)?.name ?? 'lieu'} complet : ${full.filter((i) => i.activityId === activityId).map((i) => i.fighter.name).join(', ')} au repos`);
+    parts.push(`${getActivity(activityId)?.name ?? 'lieu'} complet : ${full.filter((i) => i.activityId === activityId).map((i) => i.fighter.name).join(', ')} sans activité`);
   }
   return parts.join(' ; ');
 }

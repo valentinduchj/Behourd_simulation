@@ -18,6 +18,7 @@ import { calculateFighterLevel } from '../../systems/fighters/ratings.js';
 import { getNextMedal, getUnlockedMedals } from '../../systems/fighters/CareerStatsService.js';
 import { getActiveStudy, getStudyProgress } from '../../systems/talents/StudyService.js';
 import { TalentBadges } from './TalentBadge.js';
+import { isMobileLayout } from '../mobile/mobileLayout.js';
 
 /**
  * Carrière : mises à terre (adversaires mis KO par son coup fatal) et médailles obtenues,
@@ -121,6 +122,58 @@ export function buildFighterSheet(session, fighter, { onChange } = {}) {
   );
   nameInput.addEventListener('input', () => { nameError.textContent = ''; });
 
+  // Téléphone (v1.1.7) : le nom n'est plus un champ toujours ouvert. Le stylo ✎, à côté du nom,
+  // le rend modifiable ; le même bouton (✓) valide. Échap annule, Entrée valide.
+  const mobile = isMobileLayout();
+  if (mobile) {
+    const editBtn = h('button', { type: 'button', class: 'rename-pencil', 'aria-label': `Renommer ${fighter.name}`, title: 'Renommer' }, '✎');
+    const inlineInput = h('input', {
+      id: 'fighter-name', class: 'input rename-inline-input', type: 'text', value: fighter.name,
+      maxlength: GAME_CONFIG.fighter.nameMaxLength, autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Nom du combattant',
+    });
+    let editing = false;
+    const stop = () => {
+      editing = false;
+      inlineInput.replaceWith(titleName);
+      editBtn.textContent = '✎';
+      editBtn.setAttribute('aria-label', `Renommer ${fighter.name}`);
+      editBtn.title = 'Renommer';
+      title.classList.remove('is-renaming');
+      nameError.textContent = '';
+    };
+    const validate = () => {
+      if (inlineInput.value.trim() === fighter.name) { stop(); return; }
+      const problem = renameFighter(session, fighter.id, inlineInput.value);
+      if (problem) {
+        nameError.textContent = problem;
+        inlineInput.focus();
+        return;
+      }
+      titleName.textContent = fighter.name;
+      stop();
+      showToast('Nom modifié.', 'success');
+      onChange?.();
+    };
+    editBtn.addEventListener('click', () => {
+      if (editing) { validate(); return; }
+      editing = true;
+      inlineInput.value = fighter.name;
+      titleName.replaceWith(inlineInput);
+      editBtn.textContent = '✓';
+      editBtn.setAttribute('aria-label', 'Valider le nom');
+      editBtn.title = 'Valider';
+      title.classList.add('is-renaming');
+      inlineInput.focus();
+      inlineInput.select();
+    });
+    inlineInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); validate(); }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); stop(); }
+    });
+    inlineInput.addEventListener('input', () => { nameError.textContent = ''; });
+    title.append(editBtn);
+  }
+
   // --- Activité ---
   const activityInfo = h('p', { class: 'muted activity-info' });
   const updateActivityInfo = () => {
@@ -159,7 +212,7 @@ export function buildFighterSheet(session, fighter, { onChange } = {}) {
       h(
         'div',
         { class: 'fighter-sheet-identity' },
-        nameForm,
+        mobile ? nameError : nameForm,
         h(
           'div',
           { class: 'fighter-sheet-specialty' },

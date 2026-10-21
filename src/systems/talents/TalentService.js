@@ -1,4 +1,4 @@
-import { TALENTS, TALENT_RARITIES, TALENT_RULES, TALENT_UNRANKED_STYLE } from '../../data/talents.js';
+import { TALENTS, TALENT_RARITIES, TALENT_RULES } from '../../data/talents.js';
 import { createRng } from '../../utils/random.js';
 import { BASE_RARITY_ODDS } from '../../data/scriptorium.js';
 
@@ -25,9 +25,9 @@ export function getTalentRarity(talent) {
   return talent?.rarity ? TALENT_RARITIES[talent.rarity] ?? null : null;
 }
 
-/** Couleurs de l'étiquette d'un talent : celles de sa famille, sinon le style neutre. */
+/** Couleurs de l'étiquette d'un talent : celles de sa famille (v1.2 : quatre couleurs seulement ; à défaut, ordinaire). */
 export function getTalentStyle(talent) {
-  return getTalentRarity(talent) ?? TALENT_UNRANKED_STYLE;
+  return getTalentRarity(talent) ?? TALENT_RARITIES.common;
 }
 
 /**
@@ -40,10 +40,12 @@ export function canHaveTalents(session, fighter) {
   return Boolean(session?.player) && fighter.teamId === session.player.teamId;
 }
 
-/** Talents révélés d'un combattant (définitions du catalogue, identifiants inconnus ignorés). */
+/**
+ * Talents révélés d'un combattant (définitions du catalogue, identifiants inconnus ignorés).
+ * v1.2.1 : aussi ceux des combattants de l'IA (talents de combat, AITalentService).
+ */
 export function getFighterTalents(session, fighter) {
-  if (!canHaveTalents(session, fighter)) return [];
-  return (fighter.talents ?? []).map(getTalent).filter(Boolean);
+  return (fighter?.talents ?? []).map(getTalent).filter(Boolean);
 }
 
 export function hasTalent(session, fighter) {

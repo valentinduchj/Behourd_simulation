@@ -28,7 +28,7 @@ import { listTrophies } from '../../systems/trophies/TrophyService.js';
 import { TROPHY_CABINET } from '../../data/trophies.js';
 import { openFighterStatsBoard, openTrophyCabinet } from '../components/TavernBoards.js';
 import { currentLocale } from '../../i18n/i18n.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
 
@@ -45,7 +45,7 @@ const formatDeniers = (n) => `${n.toLocaleString(currentLocale())} denier${n > 1
 export class TavernScreen extends HubScreen {
   static hubLocationId = 'tavern';
   // Interface mobile : carte en plein écran, le reste de la page dans ce volet.
-  static mobileSheet = { label: 'Les recrues' };
+  static mobileSheet = { label: 'Les recrues', tall: true };
 
   renderContent() {
     this.canvas = h('canvas', { class: 'centre-canvas tavern-canvas', 'aria-label': 'L’intérieur de la Taverne en vue isométrique' });
@@ -97,7 +97,7 @@ export class TavernScreen extends HubScreen {
     this.listen(this.canvas, 'mouseleave', () => { this.renderer.hover = null; this.hint.textContent = HINT; });
     this.listen(this.canvas, 'click', (event) => this.activate(this.interaction.targetAt(event.clientX, event.clientY)));
     let last = performance.now();
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) {
         this.scene.update((now - last) / 1000);

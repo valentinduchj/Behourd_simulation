@@ -25,7 +25,7 @@ export function hideQuickCard() {
 }
 
 /** La bulle d'un combattant, près du point (x, y) de l'écran. */
-export function showQuickCard(session, fighter, { x, y, team = session?.playerTeam } = {}) {
+export function showQuickCard(session, fighter, { x, y, team = session?.getTeam?.(fighter?.teamId) ?? null } = {}) {
   hideQuickCard();
   if (!fighter) return null;
   const fatigue = Math.round(getStat(fighter, 'fatigue'));

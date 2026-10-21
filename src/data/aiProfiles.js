@@ -145,6 +145,72 @@ export const AI_PROFILES = Object.freeze([
   }),
 ]);
 
+// Comportements d'ÉLITE (v1.2.2) : versions optimisées au banc d'essai du Marteau, du Tacticien et
+// du Stratège, réservées aux meilleurs clubs (AI_PROFILE_BY_CLUB_STARS). Mesuré sur des effectifs
+// à talents de Ligue 1, contre les 8 comportements : ≈ 74–78 % de victoires (≈ 55 % pour les
+// versions d'origine). Ce qui paie :
+//   composition    les 5 meilleurs en duel, sans quotas de classes (≈ +9 points) ;
+//   en manche      décisions plus fréquentes (tous les 2 tours, et dès 10 % de PV perdus),
+//                  jamais de recul ni de souffle (la manche est courte), repositionnement
+//                  fréquent ; au plus 1 ou 2 attaquants par cible (le surnombre se paie ailleurs).
+const ELITE_COMBAT = Object.freeze({
+  decisionInterval: 2,
+  damageTrigger: 0.1,
+  retreat: { maxPerRound: 0 },
+  reposition: { probability: 0.7 },
+  breathe: { minFatigue: 101 },
+  approach: { exposureWeight: 0.6, bonusTileWeight: 0.8 },
+});
+
+export const AI_ELITE_PROFILES = Object.freeze([
+  Object.freeze({
+    id: 'marteau-elite',
+    name: 'Le Marteau d’élite',
+    behavior: 'implacable',
+    elite: true,
+    summary: 'Marteau optimisé : composition sans quotas (les meilleurs en duel), flanc surchargé, deux attaquants par cible jusqu’au KO ; décide tous les 2 tours, ne recule ni ne souffle.',
+    flavor: 'Ses meilleurs, sans souci de formation, tous sur un même flanc. Deux par deux, ils abattent leurs cibles sans jamais reculer.',
+    lineup: 'eliteDuel',
+    formation: null,
+    placement: placement('formation', { overloadWeight: 2.2, sharedBarrierPenalty: 0.5, frontWeight: 0.8 }),
+    fighterAI: fighterAI({
+      ...ELITE_COMBAT,
+      target: { focusWeight: 1.6, finishWeight: 2.5, crowdLimit: 2, crowdWeight: 1.5, dangerWeight: 0.3, strengthWeight: 1.2 },
+    }),
+  }),
+  Object.freeze({
+    id: 'tacticien-elite',
+    name: 'Le Tacticien d’élite',
+    behavior: 'magistral',
+    elite: true,
+    summary: 'Tacticien optimisé : aligne les 5 qui gagnent le mieux leurs duels (talents compris), les place face à l’adversaire qu’ils battent ; un attaquant par cible ; décide tous les 2 tours, ne recule ni ne souffle.',
+    flavor: 'Aligne et place chaque combattant face à celui qu’il bat le mieux. Chacun son duel, sans jamais lâcher prise.',
+    lineup: 'eliteDuel',
+    formation: null,
+    placement: placement('duel', { duelWeight: 2 }),
+    fighterAI: fighterAI({
+      ...ELITE_COMBAT,
+      target: { strengthWeight: 2.2, finishWeight: 1.5, focusWeight: 1.6, crowdLimit: 1, crowdWeight: 1.5, dangerWeight: 0.5 },
+    }),
+  }),
+  Object.freeze({
+    id: 'stratege-elite',
+    name: 'Le Stratège d’élite',
+    behavior: 'visionnaire',
+    elite: true,
+    summary: 'Stratège optimisé : prévoit votre composition (vos plus forts contre lui), s’y oppose et ménage ses fatigués, sans quotas ; formation classique ; un attaquant par cible, secourt ses blessés ; décide tous les 2 tours, ne recule ni ne souffle.',
+    flavor: 'Prévoit qui vous alignerez et lui oppose ses meilleures réponses, en ménageant ses fatigués. En lice, il secourt ses blessés et ne recule jamais.',
+    lineup: 'eliteStrategist',
+    formation: null,
+    placement: placement('formation'),
+    fighterAI: fighterAI({
+      ...ELITE_COMBAT,
+      target: { finishWeight: 1.5, focusWeight: 0.8, protectWeight: 1.5, crowdLimit: 1, crowdWeight: 1.5, strengthWeight: 1.76, dangerWeight: 0.5 },
+      approach: { ...ELITE_COMBAT.approach, exposureByClass: { hastier: 2 } },
+    }),
+  }),
+]);
+
 export const DEFAULT_AI_PROFILE_ID = 'ordonnance';
 
 // Anciens profils (avant la v0.67), pour les combats sauvegardés : vers leur équivalent actuel.
@@ -153,14 +219,17 @@ export const LEGACY_AI_PROFILE_IDS = Object.freeze({
   tacticien2: 'tacticien', stratege2: 'stratege',
 });
 
-// Comportement des clubs adverses, tiré à chaque combat (systems/ai/OpponentAIService.js) : tous
-// les profils sont intelligents, chacun a la même chance quel que soit le niveau du club (la
-// force du club tient à ses combattants). Première tranche dont maxStars est atteint ; poids en %.
+// Comportement des clubs adverses, tiré à chaque combat (systems/ai/OpponentAIService.js).
+// Première tranche dont maxStars est atteint ; poids relatifs. v1.2.2 : jusqu'à 4 étoiles, les
+// 8 comportements, même chance ; les meilleurs clubs (4,5 étoiles et plus) jouent les 3
+// comportements d'élite, même chance.
 export const AI_PROFILE_BY_CLUB_STARS = Object.freeze([
-  Object.freeze({ maxStars: 5, weights: Object.freeze(Object.fromEntries(AI_PROFILES.map((profile) => [profile.id, 1]))) }),
+  Object.freeze({ maxStars: 4, weights: Object.freeze(Object.fromEntries(AI_PROFILES.map((profile) => [profile.id, 1]))) }),
+  Object.freeze({ maxStars: 5, weights: Object.freeze(Object.fromEntries(AI_ELITE_PROFILES.map((profile) => [profile.id, 1]))) }),
 ]);
 
 export function getAIProfile(id) {
   const known = LEGACY_AI_PROFILE_IDS[id] ?? id;
-  return AI_PROFILES.find((profile) => profile.id === known) ?? AI_PROFILES.find((profile) => profile.id === DEFAULT_AI_PROFILE_ID);
+  return AI_PROFILES.find((profile) => profile.id === known) ?? AI_ELITE_PROFILES.find((profile) => profile.id === known)
+    ?? AI_PROFILES.find((profile) => profile.id === DEFAULT_AI_PROFILE_ID);
 }

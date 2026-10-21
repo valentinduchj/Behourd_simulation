@@ -2,6 +2,7 @@ import { computeDamage } from '../CombatDamageCalculator.js';
 import { withSituation } from '../CombatSituation.js';
 import { isInReach } from '../CombatMovementManager.js';
 import { chebyshev } from './PathfindingService.js';
+import { talentDamageFactor } from './duelEstimate.js';
 
 // Choix de la cible : chaque adversaire perçu (casques fermés) reçoit un score de priorité
 // (coefficients dans FIGHTER_AI_CONFIG.target). La distance compte, mais aussi l'accessibilité,
@@ -15,8 +16,9 @@ import { chebyshev } from './PathfindingService.js';
 export function estimateDuel(unit, enemy, { fighters, arena, rules }) {
   const me = withSituation(unit, fighters, arena, rules);
   const them = withSituation(enemy, fighters, arena, rules);
-  const dealt = computeDamage(me, them, { roll: 0.5, comboHits: 1 }, rules).damage;
-  const taken = computeDamage(them, me, { roll: 0.5, comboHits: 1 }, rules).damage;
+  // v1.2.2 : les talents comptent (bonus, réductions, esquive), comme au moment du coup.
+  const dealt = Math.max(1, computeDamage(me, them, { roll: 0.5, comboHits: 1 }, rules).damage * talentDamageFactor(unit, enemy, fighters, rules));
+  const taken = Math.max(1, computeDamage(them, me, { roll: 0.5, comboHits: 1 }, rules).damage * talentDamageFactor(enemy, unit, fighters, rules));
   return { dealt, taken, ticksToKill: Math.ceil(enemy.hp / dealt), ticksToDie: Math.ceil(unit.hp / taken) };
 }
 

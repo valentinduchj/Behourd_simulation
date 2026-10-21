@@ -3,7 +3,7 @@ export const GAME_CONFIG = Object.freeze({
   // Nom du jeu (v0.89) : « Béhourd Management » ; l'écran principal l'écrit sur deux lignes.
   title: 'Béhourd Management',
   subtitle: 'Gestion de compagnie médiévale',
-  version: '1.1.5',
+  version: '1.2.4',
 
   roster: Object.freeze({
     size: 8,

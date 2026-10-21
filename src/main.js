@@ -20,6 +20,7 @@ import { setupMobileLayout } from './ui/mobile/mobileLayout.js';
 import { installAppLifecycle } from './ui/mobile/appLifecycle.js';
 import { installTalentTips } from './ui/mobile/TalentTip.js';
 import { setFrameCap } from './render/framePacing.js';
+import { setPixelRatioCap } from './render/IsoView.js';
 import { setLowEndDevice, isLowEndDevice } from './render/vfx/vfxLevel.js';
 import { audio } from './audio/AudioEngine.js';
 import { audioDirector } from './audio/AudioDirector.js';
@@ -44,6 +45,8 @@ async function boot() {
   // Téléphone (v0.87) : scènes à 30 images par seconde, effets réduits sur un petit appareil.
   if (mobile) {
     setFrameCap(30);
+    // v1.1.9 (batterie) : canvas dessinés à la densité 2 au plus.
+    setPixelRatioCap(2);
     setLowEndDevice(isLowEndDevice());
   }
   // Langue (v0.79) : français par défaut ; anglais ou espagnol traduits à l'affichage.

@@ -99,6 +99,8 @@ export class GameSession {
     // Succès (systems/achievements/AchievementService.js) : obtenus une seule fois, et compteurs
     // (partis de 0 pour une ancienne sauvegarde). { unlocked: { [id]: { day, … } }, counters }.
     this.achievements = data.achievements ? structuredClone(data.achievements) : { unlocked: {}, counters: {} };
+    // Talents de combat des clubs de l'IA déjà tirés (v1.2.1, AITalentService.seedAITalents).
+    this.aiTalentsSeeded = data.aiTalentsSeeded === true;
     this.createdAt = data.createdAt ?? Date.now();
     this.lastSavedAt = data.lastSavedAt ?? null;
 
@@ -165,6 +167,8 @@ export class GameSession {
     const state = this.aiFighterStates[fighterId];
     view.fighter.score = Math.max(0, Math.min(100, (base.score ?? 0) + (state?.levelDelta ?? 0)));
     view.fighter.age = typeof state?.age === 'number' ? state.age : null;
+    // Talents de combat (v1.2.1) : propres à la partie, rangés avec son évolution.
+    view.fighter.talents = Array.isArray(state?.talents) ? [...state.talents] : [];
     return view.fighter;
   }
 
@@ -221,7 +225,8 @@ export class GameSession {
       aiRosters: Object.fromEntries(Object.entries(this.aiRosters).map(([id, ids]) => [id, [...ids]])),
       aiFighters: this.aiFighters.map((fighter) => fighter.toJSON()),
       aiCaptains: { ...this.aiCaptains },
-      aiFighterStates: Object.fromEntries(Object.entries(this.aiFighterStates).map(([id, state]) => [id, { ...state }])),
+      aiFighterStates: Object.fromEntries(Object.entries(this.aiFighterStates).map(([id, state]) => [id, { ...state, ...(state.talents ? { talents: [...state.talents] } : {}) }])),
+      aiTalentsSeeded: this.aiTalentsSeeded,
       aiProgressionEvents: this.aiProgressionEvents.map((event) => ({ ...event })),
       aiProgressionDay: this.aiProgressionDay,
       clubRosterEvents: Object.fromEntries(Object.entries(this.clubRosterEvents).map(([id, events]) => [id, events.map((e) => ({ ...e, metadata: { ...e.metadata } }))])),

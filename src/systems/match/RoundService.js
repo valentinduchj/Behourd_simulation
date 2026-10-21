@@ -132,10 +132,12 @@ export function resolveCombatRound(session, match, lineup, rng = Math.random) {
   // Saison de l'année : efficacité des classes et talents saisonniers actifs (ClimateService).
   const season = getCurrentSeason(session).id;
   const talentsOf = (fighter) => ({
-    talentEffects: canHaveTalents(session, fighter) ? combatEffectsOf(fighter, { season, daysSinceReturn: daysSinceReturn(session, fighter) }) : [],
+    // v1.2.1 : les combattants de l'IA ont aussi leurs talents de combat.
+    talentEffects: combatEffectsOf(fighter, { season, daysSinceReturn: canHaveTalents(session, fighter) ? daysSinceReturn(session, fighter) : null }),
     season,
     decisive,
     lastStandUsed: match.talentUses?.[fighter.id]?.lastStand === true,
+    competition: match.kind ?? 'combat',
   });
   // Légende vivante : toute la compagnie (son effectif du combat) gagne moins de fatigue.
   const squadA = (match.squadIds?.length ? match.squadIds : fightersA.map((f) => f.id)).map((id) => session.getFighter(id)).filter(Boolean);
@@ -167,7 +169,10 @@ export function resolveCombatRound(session, match, lineup, rng = Math.random) {
   };
   // Comportement de l'équipe adverse tiré pour ce combat (camp B) ; le joueur garde l'IA habituelle.
   const profile = match.aiProfileId ? getAIProfile(match.aiProfileId) : null;
-  const simulation = simulateRound({ arena: lineup.arena ?? createArena(), units, rng, onKnockout, aiConfigBySide: profile ? { B: profile.fighterAI } : null });
+  // Mises à terre déjà comptées dans le combat (plafond par combat, COMBAT_RULES.knockoutCredit).
+  const knockoutsBefore = {};
+  for (const r of match.rounds ?? []) for (const [id, s] of Object.entries(r.simulation?.stats ?? {})) knockoutsBefore[id] = (knockoutsBefore[id] ?? 0) + (s.knockouts ?? 0);
+  const simulation = simulateRound({ arena: lineup.arena ?? createArena(), units, rng, onKnockout, knockoutsBefore, aiConfigBySide: profile ? { B: profile.fighterAI } : null });
   // Inébranlable : sa survie à 1 PV ne vaut qu'une fois par combat.
   for (const { unitId, per } of simulation.lastStands ?? []) {
     if (per !== 'match') continue;

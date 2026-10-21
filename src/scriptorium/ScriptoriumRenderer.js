@@ -105,7 +105,8 @@ export class ScriptoriumRenderer extends IsoView {
     this.doorOpen = this.effects.doorOpenAmount(time);
     if (this.hover?.type === 'exit') this.doorOpen = Math.max(this.doorOpen, 0.3);
     this.clear();
-    this.#drawFloor();
+    // Dallage fixe : gardé en mémoire (v1.1.9).
+    this.drawCachedLayer('floor', '-', () => this.#drawFloor());
     this.#drawWalls(time);
     this.#drawLightShaft(time);
     for (const prop of scene.groundProps) PROPS[prop.type]?.(this, prop, { time, teamColors: {} });
@@ -194,7 +195,7 @@ export class ScriptoriumRenderer extends IsoView {
         draw: () => {
           const p = this.toScreen(x, y);
           drawSpriteFigure(this.ctx, p.x, p.y, {
-            spriteId: fighter.spriteId, height: h, ringColor: fighter.specialty?.color ?? '#6b4521', highlighted: deskHovered, time, phase: 0.7,
+            spriteId: fighter.spriteId, height: h, clubColors: this.teamColors ?? null, ringColor: fighter.specialty?.color ?? '#6b4521', highlighted: deskHovered, time, phase: 0.7,
             pose: frame.pose,
             fallback: { size: this.tile.w * 0.16, colors: { primary: '#6b4521', secondary: '#c9a26a' }, specialtyId: fighter.specialtyId, time, phase: 0.7 },
           });

@@ -1,4 +1,4 @@
-import { SINGULAR_RULES, SINGULAR_BOONS, SINGULAR_REWARDS, getSingularBoon, getSingularReward } from '../../data/singularExpedition.js';
+import { SINGULAR_RULES, SINGULAR_BOONS, SINGULAR_REWARDS, getSingularBoon, getSingularReward, singularRewardValue } from '../../data/singularExpedition.js';
 import { EXPEDITION_RULES, getExpeditionPlace } from '../../data/expeditions.js';
 import { TALENTS, TALENT_RULES } from '../../data/talents.js';
 import { SPECIALTY_IDS } from '../../data/specialties.js';
@@ -28,7 +28,8 @@ import { getActiveJourney } from './journeys.js';
 // Les dix adversaires sont tirés avec la proposition (offer.opponents, visibles avant de partir).
 // L'expédition en cours vit dans session.expeditions.run (sauvegardée) :
 //   { id, offerId, placeId, band, cost, reward, fighterIds: [3], ko: [ids], stage (0 → 10),
-//     opponents, opponentFatigue (adversaire du combat en cours, s'il a déjà battu quelqu'un),
+//     opponents, opponentHp (PV de l'adversaire du combat en cours, s'il a déjà battu quelqu'un),
+//     hp / maxHp / startFatigue (v1.1.7 : PV gardés d'un combat à l'autre, fatigue du départ),
 //     nextOpponentFatigue (Fumée des pins), boons: [{ id, fighterId, fightsLeft }], used: { [fighterId]: [boonId] },
 //     rewards: [{ id, talentId? }], phase: 'fight' | 'choice' | 'victory' | 'defeat', options, history: [{ stage, fighterId, won }] }
 // Aucun jour ne passe tant qu'elle dure (HubScreen.advanceDay y ramène).
@@ -84,6 +85,23 @@ export function generateSingularOpponents(bandIndex, rng = Math.random, rules = 
 
 // --- Départ ---
 
+/** PV du combattant dans l'expédition (ils ne se récupèrent pas d'un combat à l'autre). */
+export function runHp(session, run, fighterId) {
+  const kept = run.hp?.[fighterId];
+  if (typeof kept === 'number') return kept;
+  return getStat(session.getFighter(fighterId), 'hp');
+}
+
+/** PV au plus (ceux du combattant au départ). */
+export function runMaxHp(session, run, fighterId) {
+  return run.maxHp?.[fighterId] ?? getStat(session.getFighter(fighterId), 'hp');
+}
+
+function setRunHp(session, run, fighterId, value) {
+  run.hp ??= {};
+  run.hp[fighterId] = Math.max(0, Math.min(runMaxHp(session, run, fighterId), Math.round(value)));
+}
+
 /** Ce combattant peut-il partir en expédition singulière ? { ok, reason } */
 export function canJoinSingular(session, fighterOrId, rules = SINGULAR_RULES) {
   const id = typeof fighterOrId === 'string' ? fighterOrId : fighterOrId?.id;
@@ -112,8 +130,14 @@ export function createSingularRun(session, offer, fighterIds, { cost, rules = SI
   const run = {
     id: createId('singular'), status: 'active', offerId: offer.id, placeId: offer.placeId, band: offer.band ?? 0, cost,
     reward: offer.reward ? { ...offer.reward } : null, fighterIds: ids, ko: [], stage: 0,
-    opponents: JSON.parse(JSON.stringify(offer.opponents ?? [])), opponentFatigue: null, nextOpponentFatigue: 0,
+    opponents: JSON.parse(JSON.stringify(offer.opponents ?? [])), nextOpponentFatigue: 0,
     boons: [], used: {}, rewards: [], phase: 'fight', options: [], history: [], fights: 0,
+    // v1.1.7 : PV de chacun (ne se récupèrent pas), PV au plus et fatigue du départ (récupérée
+    // avant chaque combat) ; PV de l'adversaire du combat en cours s'il a déjà battu quelqu'un.
+    hp: Object.fromEntries(ids.map((id) => [id, getStat(session.getFighter(id), 'hp')])),
+    maxHp: Object.fromEntries(ids.map((id) => [id, getStat(session.getFighter(id), 'hp')])),
+    startFatigue: Object.fromEntries(ids.map((id) => [id, getStat(session.getFighter(id), 'fatigue')])),
+    opponentHp: null,
   };
   const state = stateOf(session);
   state.run = run;
@@ -130,7 +154,7 @@ export function canFightNext(session, fighterId, rules = SINGULAR_RULES) {
   const run = getSingularRun(session);
   if (!run || run.phase !== 'fight') return { ok: false, reason: 'Aucun combat à livrer.' };
   if (!run.fighterIds.includes(fighterId)) return { ok: false, reason: 'Ne fait pas partie de l’expédition.' };
-  if (run.ko.includes(fighterId)) return { ok: false, reason: 'KO jusqu’à la fin de l’expédition.' };
+  if (run.ko.includes(fighterId) || runHp(session, run, fighterId) <= 0) return { ok: false, reason: 'KO jusqu’à la fin de l’expédition.' };
   if (getStat(session.getFighter(fighterId), 'fatigue') >= rules.exhaustedFatigue) return { ok: false, reason: 'Épuisé (fatigue 100).' };
   return { ok: true, reason: null };
 }
@@ -138,16 +162,20 @@ export function canFightNext(session, fighterId, rules = SINGULAR_RULES) {
 /** Combattants encore en état de combattre. */
 export function fightersAbleToFight(session, run = getSingularRun(session), rules = SINGULAR_RULES) {
   if (!run) return [];
-  return run.fighterIds.filter((id) => !run.ko.includes(id) && getStat(session.getFighter(id), 'fatigue') < rules.exhaustedFatigue);
+  return run.fighterIds.filter((id) => !run.ko.includes(id) && runHp(session, run, id) > 0 && getStat(session.getFighter(id), 'fatigue') < rules.exhaustedFatigue);
 }
 
-/** Adversaire du combat en cours (Fighter) et sa fatigue de départ. */
+/**
+ * Adversaire du combat en cours (Fighter), sa fatigue de départ (Fumée des pins) et ses PV (gardés
+ * s'il a déjà battu un combattant : v1.1.7).
+ */
 export function currentOpponent(run) {
   const entry = run.opponents[run.stage];
   if (!entry) return null;
   const fighter = Fighter.fromJSON(entry.fighter);
   fighter.talents = [...(entry.talents ?? [])];
-  return { entry, fighter, fatigue: run.opponentFatigue ?? Math.min(100, run.nextOpponentFatigue ?? 0) };
+  const maxHp = getStat(fighter, 'hp');
+  return { entry, fighter, fatigue: Math.min(100, run.nextOpponentFatigue ?? 0), hp: run.opponentHp ?? maxHp, maxHp };
 }
 
 /** Bonus en cours d'un combattant (les « pour les trois » compris). */
@@ -164,8 +192,9 @@ function boonEffects(run, fighterId) {
 }
 
 /**
- * Livre le combat en cours avec ce combattant : simulation (une manche, un contre un), fatigue
- * gardée, KO, étape suivante. Renvoie { ok, reason, simulation, won, fighterId, opponent, run }.
+ * Livre le combat en cours avec ce combattant : simulation (une manche, un contre un), PV gardés
+ * (v1.1.7 : la fatigue repart de celle du départ), KO, étape suivante.
+ * Renvoie { ok, reason, simulation, won, fighterId, opponent, run }.
  */
 export function fightNext(session, fighterId, { rng = Math.random, rules = SINGULAR_RULES } = {}) {
   const check = canFightNext(session, fighterId, rules);
@@ -178,14 +207,17 @@ export function fightNext(session, fighterId, { rng = Math.random, rules = SINGU
   const [slotA] = arena.getDefaultTiles(0, 1);
   const [slotB] = arena.getDefaultTiles(1, 1);
   const talentEffects = [...(canHaveTalents(session, fighter) ? combatEffectsOf(fighter, { season }) : []), ...boonEffects(run, fighterId)];
+  // Fatigue récupérée entre deux combats : chacun repart de sa fatigue du départ.
+  const startFatigue = run.startFatigue?.[fighterId] ?? getStat(fighter, 'fatigue');
   const units = [
-    createCombatUnit({ fighter, side: 'A', tile: slotA, fatigue: getStat(fighter, 'fatigue'), isCaptain: isCaptain(session, fighter), talentEffects, season }),
-    createCombatUnit({ fighter: opponent.fighter, side: 'B', tile: slotB, fatigue: opponent.fatigue, talentEffects: combatEffectsOf(opponent.fighter, { season }), season }),
+    { ...createCombatUnit({ fighter, side: 'A', tile: slotA, fatigue: startFatigue, isCaptain: isCaptain(session, fighter), talentEffects, season }), hp: runHp(session, run, fighterId) },
+    { ...createCombatUnit({ fighter: opponent.fighter, side: 'B', tile: slotB, fatigue: opponent.fatigue, talentEffects: combatEffectsOf(opponent.fighter, { season }), season }), hp: opponent.hp },
   ];
   const simulation = simulateRound({ arena, units, rng });
   const won = simulation.winnerSide === 'A';
   const finalOf = (id) => simulation.final.find((unit) => unit.id === id);
-  setStat(fighter, 'fatigue', Math.round(finalOf(fighter.id)?.fatigue ?? getStat(fighter, 'fatigue')));
+  // PV gardés jusqu'à la fin de l'expédition ; la fatigue du combattant ne change pas.
+  setRunHp(session, run, fighterId, won ? Math.max(1, finalOf(fighter.id)?.hp ?? 1) : 0);
   // Amulette de l'ours : une seule survie dans l'expédition.
   if ((simulation.lastStands ?? []).some((stand) => stand.unitId === fighterId)) {
     const amulet = boonsOf(run, fighterId).find((b) => b.def.once);
@@ -197,9 +229,9 @@ export function fightNext(session, fighterId, { rng = Math.random, rules = SINGU
   for (const b of run.boons) if (b.fightsLeft && (b.fighterId === fighterId || b.fighterId === null)) b.fightsLeft -= 1;
   run.boons = run.boons.filter((b) => b.fightsLeft === null || b.fightsLeft === undefined || b.fightsLeft > 0);
   if (won) {
-    for (const b of boonsOf(run, fighterId)) if (b.def.afterWin?.fatigue) setStat(fighter, 'fatigue', Math.max(0, getStat(fighter, 'fatigue') + b.def.afterWin.fatigue));
+    for (const b of boonsOf(run, fighterId)) if (b.def.afterWin?.hp) setRunHp(session, run, fighterId, runHp(session, run, fighterId) + b.def.afterWin.hp);
     run.stage += 1;
-    run.opponentFatigue = null;
+    run.opponentHp = null;
     run.nextOpponentFatigue = 0;
     if (run.stage >= rules.fights) {
       run.phase = 'victory';
@@ -209,7 +241,8 @@ export function fightNext(session, fighterId, { rng = Math.random, rules = SINGU
     }
   } else {
     run.ko.push(fighterId);
-    run.opponentFatigue = Math.round(finalOf(opponent.fighter.id)?.fatigue ?? opponent.fatigue);
+    // L'adversaire garde ses PV pour le combattant suivant.
+    run.opponentHp = Math.max(1, Math.round(finalOf(opponent.fighter.id)?.hp ?? opponent.hp));
     if (!fightersAbleToFight(session, run, rules).length) endRun(session, run, 'defeat');
   }
   session.markDirty();
@@ -239,8 +272,11 @@ export function rollOptions(session, run, rng = Math.random, rules = SINGULAR_RU
       left = left.filter((other) => other.id !== entry.id);
     }
   };
-  take(boons, 'boon', rules.choice.boons);
-  take(SINGULAR_REWARDS, 'reward', rules.choice.rewards);
+  // Récompense de fin seulement après certains combats (3 au plus) ; sinon trois bonus.
+  const withReward = (rules.choice.rewardAfter ?? []).includes(run.stage);
+  const rewards = SINGULAR_REWARDS.filter((r) => !r.bands || r.bands.includes(run.band ?? 0));
+  take(boons, 'boon', withReward ? rules.choice.boons : rules.choice.boons + rules.choice.rewards);
+  if (withReward) take(rewards, 'reward', rules.choice.rewards);
   return out;
 }
 
@@ -270,13 +306,9 @@ export function chooseOption(session, index, targetId = null, { rules = SINGULAR
     const fighterIds = def.target === 'all' ? run.fighterIds.filter((id) => !run.ko.includes(id)) : targetId ? [targetId] : [];
     if (now.revive) {
       run.ko = run.ko.filter((id) => id !== targetId);
-      const f = session.getFighter(targetId);
-      setStat(f, 'fatigue', Math.max(getStat(f, 'fatigue'), now.fatigue ?? 0));
-    } else if (now.fatigue) {
-      for (const id of fighterIds) {
-        const f = session.getFighter(id);
-        setStat(f, 'fatigue', Math.max(0, getStat(f, 'fatigue') + now.fatigue));
-      }
+      setRunHp(session, run, targetId, now.hp ?? 1);
+    } else if (now.hp) {
+      for (const id of fighterIds) setRunHp(session, run, id, runHp(session, run, id) + now.hp);
     }
     if (now.opponentFatigue) run.nextOpponentFatigue = Math.min(100, (run.nextOpponentFatigue ?? 0) + now.opponentFatigue);
     if (def.effects || def.afterWin) run.boons.push({ id: def.id, fighterId: def.target === 'all' ? null : targetId, fightsLeft: def.fights ?? null });
@@ -326,6 +358,8 @@ export function getVictoryClaims(session, run = session.expeditions?.run) {
   if (!run || run.phase !== 'victory') return [];
   const claims = [];
   const all = run.fighterIds;
+  // Talent : à l'un des trois qui peut avoir des talents et ne l'a pas déjà (v1.1.7 : même s'il en a
+  // deux — il remplace alors celui de son choix).
   const talentClaim = (key, talentId, source) => ({
     key, kind: 'talent', talentId, source,
     eligible: all.filter((id) => canHaveTalents(session, session.getFighter(id)) && !(session.getFighter(id).talents ?? []).includes(talentId)),
@@ -336,7 +370,7 @@ export function getVictoryClaims(session, run = session.expeditions?.run) {
     const def = getSingularReward(entry.id);
     if (def?.talentRarity) claims.push(talentClaim(`reward-${index}`, entry.talentId, def.id));
     if (def?.potential) claims.push({ key: `reward-${index}`, kind: 'potential', value: def.potential, source: def.id, eligible: all.filter((id) => getPotential(session.getFighter(id)) < EXPEDITION_RULES.peregrination.potentialMax) });
-    if (def?.skills) claims.push({ key: `reward-${index}`, kind: 'skills', value: def.skills, source: def.id, eligible: [...all] });
+    if (def?.skills) claims.push({ key: `reward-${index}`, kind: 'skills', value: singularRewardValue(def.skills, run.band), source: def.id, eligible: [...all] });
   });
   return claims;
 }
@@ -344,6 +378,37 @@ export function getVictoryClaims(session, run = session.expeditions?.run) {
 /** Le combattant a-t-il besoin de remplacer un talent pour recevoir celui-ci ? */
 export function claimNeedsSlot(session, fighterId) {
   return (session.getFighter(fighterId)?.talents ?? []).filter((id) => getTalent(id)).length >= TALENT_RULES.maxPerFighter;
+}
+
+/**
+ * Plan des talents attribués (v1.1.7), dans l'ordre des récompenses : chaque combattant peut en
+ * recevoir plusieurs, en remplaçant à chaque fois le talent de son choix (une place une seule fois).
+ * `assignments[key]` : { fighterId | null (non attribué), slot }. Renvoie { ok, reason, steps } —
+ * steps[key] : { needsSlot, talents (ses talents à ce moment, pour choisir la place) }.
+ */
+export function planTalentClaims(session, claims, assignments = {}) {
+  const virtual = new Map();
+  const replaced = new Map();
+  const steps = {};
+  let reason = null;
+  for (const claim of claims.filter((c) => c.kind === 'talent')) {
+    const id = assignments[claim.key]?.fighterId;
+    if (!id) continue;
+    if (!virtual.has(id)) virtual.set(id, (session.getFighter(id)?.talents ?? []).filter((t) => getTalent(t)));
+    const talents = virtual.get(id);
+    const needsSlot = talents.length >= TALENT_RULES.maxPerFighter;
+    steps[claim.key] = { needsSlot, talents: [...talents] };
+    if (talents.includes(claim.talentId)) { reason ??= 'Ce combattant a déjà ce talent.'; continue; }
+    if (!needsSlot) { talents.push(claim.talentId); continue; }
+    const slot = assignments[claim.key]?.slot;
+    const used = replaced.get(id) ?? new Set();
+    if (![0, 1].includes(slot)) { reason ??= 'Choisissez le talent remplacé.'; continue; }
+    if (used.has(slot)) { reason ??= 'Ce talent vient déjà d’être remplacé : choisissez l’autre.'; continue; }
+    used.add(slot);
+    replaced.set(id, used);
+    talents[slot] = claim.talentId;
+  }
+  return { ok: !reason, reason, steps };
 }
 
 /**
@@ -355,9 +420,9 @@ export function claimVictory(session, assignments = {}, { grantCardReward, rules
   const run = session.expeditions?.run;
   if (!run || run.phase !== 'victory') return { ok: false, reason: 'L’expédition n’est pas gagnée.' };
   const claims = getVictoryClaims(session, run);
-  // Un seul talent reçu par combattant à la victoire (le choix du talent remplacé reste simple).
-  const talentPicks = claims.filter((claim) => claim.kind === 'talent').map((claim) => assignments[claim.key]?.fighterId).filter(Boolean);
-  if (new Set(talentPicks).size !== talentPicks.length) return { ok: false, reason: 'Un seul nouveau talent par combattant.' };
+  // Talents : un combattant peut en recevoir plusieurs (place remplacée au choix) ; v1.1.7.
+  const plan = planTalentClaims(session, claims, assignments);
+  if (!plan.ok) return { ok: false, reason: plan.reason };
   // Potentiel : pas plus de flammes que la place qui reste (3 au plus).
   const flames = {};
   for (const claim of claims.filter((c) => c.kind === 'potential')) {
@@ -365,10 +430,11 @@ export function claimVictory(session, assignments = {}, { grantCardReward, rules
     if (id) flames[id] = (flames[id] ?? 0) + claim.value;
   }
   if (Object.entries(flames).some(([id, n]) => getPotential(session.getFighter(id)) + n > rules.peregrination.potentialMax)) return { ok: false, reason: 'Ce combattant ne peut pas recevoir autant de potentiel (3 flammes au plus).' };
+  // Chaque récompense : un combattant, ou « ne pas attribuer » (choix du joueur, v1.1.7).
   for (const claim of claims) {
     const pickOf = assignments[claim.key];
-    if (claim.eligible.length && !claim.eligible.includes(pickOf?.fighterId)) return { ok: false, reason: 'Choisissez qui reçoit chaque récompense.' };
-    if (claim.kind === 'talent' && pickOf && claimNeedsSlot(session, pickOf.fighterId) && ![0, 1].includes(pickOf.slot)) return { ok: false, reason: 'Choisissez le talent remplacé.' };
+    if (claim.eligible.length && !pickOf) return { ok: false, reason: 'Choisissez qui reçoit chaque récompense (ou de ne pas l’attribuer).' };
+    if (pickOf?.fighterId && !claim.eligible.includes(pickOf.fighterId)) return { ok: false, reason: 'Ce combattant ne peut pas recevoir cette récompense.' };
   }
   const summary = [];
   // Récompense de la carte (deniers, recrue : comme au retour d'une pérégrination).
@@ -379,7 +445,7 @@ export function claimVictory(session, assignments = {}, { grantCardReward, rules
     const fighter = pickOf ? session.getFighter(pickOf.fighterId) : null;
     if (!fighter) return;
     if (claim.kind === 'talent') {
-      const slot = claimNeedsSlot(session, fighter.id) ? pickOf.slot : null;
+      const slot = plan.steps[claim.key]?.needsSlot ? pickOf.slot : null;
       const previous = slot === null ? null : fighter.talents[slot];
       if (setFighterTalentAt(session, fighter, claim.talentId, slot)) {
         recordTalentDiscovered(session, claim.talentId);
@@ -399,10 +465,11 @@ export function claimVictory(session, assignments = {}, { grantCardReward, rules
   run.rewards.forEach((entry, index) => {
     const def = getSingularReward(entry.id);
     if (!def) return;
-    if (def.deniers) { addResource(session, 'deniers', def.deniers); summary.push({ type: 'deniers', amount: def.deniers, source: def.id }); }
-    if (def.ferveurs) { addItem(session, rules.currencyItemId, def.ferveurs); summary.push({ type: 'ferveurs', amount: def.ferveurs }); }
+    const band = run.band ?? 0;
+    if (def.deniers) { const n = singularRewardValue(def.deniers, band); addResource(session, 'deniers', n); summary.push({ type: 'deniers', amount: n, source: def.id }); }
+    if (def.ferveurs) { const n = singularRewardValue(def.ferveurs, band); addItem(session, rules.currencyItemId, n); summary.push({ type: 'ferveurs', amount: n }); }
     if (def.refund) { const n = Math.floor(run.cost * def.refund); if (n) addItem(session, rules.currencyItemId, n); summary.push({ type: 'ferveurs', amount: n }); }
-    if (def.item) { addItem(session, def.item.id, def.item.quantity); summary.push({ type: 'item', itemId: def.item.id, quantity: def.item.quantity }); }
+    if (def.item) { const n = singularRewardValue(def.item.quantity, band); addItem(session, def.item.id, n); summary.push({ type: 'item', itemId: def.item.id, quantity: n }); }
     if (def.recruit) summary.push(grantCardReward({ type: 'recruit', minPotential: def.recruit.minPotential }, `${run.id}:recrue:${index}`));
     if (byKey.has(`reward-${index}`)) applyClaim(byKey.get(`reward-${index}`));
   });

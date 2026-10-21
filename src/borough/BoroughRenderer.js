@@ -58,6 +58,8 @@ export class BoroughRenderer extends IsoView {
     this.eventCycles = new Map();
     // Étiquettes des artisans (masquées dans la vitrine de l'écran principal).
     this.showLabels = true;
+    // Bandes où les étiquettes ne vont pas (v1.1.8, téléphone : bandeau du haut, dock du bas).
+    this.labelInsets = { top: 0, bottom: 0 };
     this.exits = [];
     this.exitDecor = [];
     this.hoverExitId = null;
@@ -113,8 +115,11 @@ export class BoroughRenderer extends IsoView {
     this.ambience.season = this.season;
     this.ambience.update(time);
     this.clear();
-    this.#drawSlab();
-    this.#drawTiles();
+    // Socle et cases : fixes (saison comprise) — gardés en mémoire (v1.1.9).
+    this.drawCachedLayer('ground', this.season ?? '-', () => {
+      this.#drawSlab();
+      this.#drawTiles();
+    });
     this.#drawZones();
     for (const prop of scene.groundProps) PROP_RENDERERS[prop.type]?.(this, prop, { time, teamColors: {} });
     if (this.arrival && this.arrival.start === null) this.arrival.start = time;
@@ -327,7 +332,7 @@ export class BoroughRenderer extends IsoView {
       const height = 42;
       const margin = 6;
       const left = Math.min(Math.max(anchor.x - width / 2, margin), this.view.w - width - margin);
-      const top = Math.min(Math.max(anchor.y - height - 8, margin), this.view.h - height - margin);
+      const top = Math.min(Math.max(anchor.y - height - 8, margin + this.labelInsets.top), this.view.h - height - margin - this.labelInsets.bottom);
       this.labelBoxes.set(zone, { left, top, width, height });
       const hovered = this.hoverZone === zone;
       roundRect(ctx, left, top, width, height, 6);

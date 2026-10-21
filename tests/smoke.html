@@ -123,7 +123,7 @@
       const format18 = getSeasonFormat();
       check(format18.matchdays === 17 && format18.matchesPerMatchday === 9 && format18.matchesPerTeam === 17 && format18.totalMatches === 153, 'format dérivé : 17 journées de 9 combats, 153 combats par ligue');
       check(['league_1', 'league_2', 'league_3'].map((id) => clubDatabase.getClubIdsOfLeague(id).length).join() === '18,18,17', 'base de clubs : 18 / 18 / 17 clubs IA chargés depuis data/leagues/');
-      check(clubDatabase.getClubIdsOfLeague('reserve').length === 14 && clubDatabase.getExpectedClubCount('reserve') === null, 'base de clubs : 14 clubs hors championnat (réserve)');
+      check(clubDatabase.getClubIdsOfLeague('reserve').length === 18 && clubDatabase.getExpectedClubCount('reserve') === null, 'base de clubs : 18 clubs hors championnat (réserve)');
       check(clubDatabase.validateCompositions().length === 0, 'base de clubs : compositions conformes');
       // Répartition des clubs de l'IA par niveau dans une nouvelle partie.
       const { distributeClubsByLevel } = await import('../src/systems/league/SeasonService.js');
@@ -181,10 +181,11 @@
         && validateClubLocations(clubDatabase, ['league_1', 'league_2', 'league_3']).length === 0,
         'clubs : les 53 clubs des ligues ont une Terre et un lieu propres (aucun doublon)');
       check(clubDatabase.getTeam('club_102').locationId === 'chateau-de-vincennes' && clubDatabase.getTeam('club_102').landId === 'NORD'
-        && clubDatabase.getTeam('club_205').locationId === 'bois-de-cergy' && clubDatabase.getTeam('club_205').landId === 'NORD',
-        'clubs : Martel → Nord, Château de Vincennes ; Martel La Hire → Nord, Bois de Cergy');
+        && clubDatabase.getTeam('club_205').locationId === 'mont-saint-michel' && clubDatabase.getTeam('club_205').landId === 'OUEST'
+        && clubDatabase.getTeam('club_212').locationId === 'chateau-de-caen' && clubDatabase.getTeam('club_212').landId === 'OUEST',
+        'clubs : Martel → Nord, Château de Vincennes ; Bâtards de la Duchesse → Ouest, Mont-Saint-Michel ; Auream Excubitores → Ouest, Château de Caen');
       check(clubDatabase.getClubIdsOfLeague('reserve').every((id) => clubDatabase.getTeam(id).landId === 'LOINTAINE'), 'clubs hors championnat : Terre lointaine');
-      check(sameLand(clubDatabase.getTeam('club_102'), clubDatabase.getTeam('club_205')) && !sameLocation(clubDatabase.getTeam('club_102'), clubDatabase.getTeam('club_205'))
+      check(sameLand(clubDatabase.getTeam('club_212'), clubDatabase.getTeam('club_205')) && !sameLocation(clubDatabase.getTeam('club_212'), clubDatabase.getTeam('club_205'))
         && !sameLand(clubDatabase.getTeam('club_102'), clubDatabase.getTeam('club_107')), 'géographie : même Terre / même lieu entre deux clubs (préparation domicile / extérieur)');
       const crecyGame = createNewGame({ teamName: 'Les Archers', emblem: new Emblem(), rng: createRng('crecy'), locationId: 'champ-de-crecy' });
       check(crecyGame.playerTeam.locationId === 'champ-de-crecy' && crecyGame.playerTeam.landId === 'NORD' && getTeamLocation(crecyGame.playerTeam).land.color === '#2f5ea0'
@@ -738,7 +739,9 @@
       const { getProfileTier, drawProfileId, assignMatchAIProfile, describeBehavior } = await import('../src/systems/ai/OpponentAIService.js');
       const { Match: BehaviorMatch } = await import('../src/models/Match.js');
       const { getClubLevel: getClubLevelFor } = await import('../src/systems/league/LeagueService.js');
-      check([0, 2, 3.5, 5].every((s) => getProfileTier(s).maxStars === 5), 'comportement IA : une seule tranche, quel que soit le niveau du club');
+      check([0, 2, 3.5, 4].every((s) => getProfileTier(s).maxStars === 4) && [4.5, 5].every((s) => getProfileTier(s).maxStars === 5)
+        && Object.keys(getProfileTier(5).weights).join() === 'marteau-elite,tacticien-elite,stratege-elite',
+        'comportement IA (v1.2.2) : jusqu’à 4 étoiles les 8 comportements ; à 4,5 étoiles et plus, les 3 comportements d’élite');
       const profileDrawRng = createRng('tirage');
       const drawCounts = {};
       for (let i = 0; i < 24000; i++) { const id = drawProfileId(3, profileDrawRng); drawCounts[id] = (drawCounts[id] ?? 0) + 1; }
@@ -749,7 +752,7 @@
         'comportement IA : « Comportement défensif », « … écrasant », « … impitoyable »…');
       const { AI_PROFILE_BY_CLUB_STARS: flavorTiers } = await import('../src/data/aiProfiles.js');
       const inGameProfiles = [...new Set(flavorTiers.flatMap((tier) => Object.keys(tier.weights)))].map((id) => getAIProfile(id));
-      check(inGameProfiles.length === 8 && inGameProfiles.every((p) => p.flavor && p.flavor !== p.summary && !/\bIA\b|profil|stratégie|banc/i.test(p.flavor)),
+      check(inGameProfiles.length === 11 && inGameProfiles.every((p) => p.flavor && p.flavor !== p.summary && !/\bIA\b|profil|stratégie|banc/i.test(p.flavor)),
         'comportement IA : chaque comportement du jeu a sa bulle immersive (ton de chronique, sans parler d’IA)');
       const bhGame = createRandomGame({ rng: createRng('comportement') });
       const bhOpp = bhGame.playerLeague.teamIds.find((id) => id !== bhGame.player.teamId);
@@ -786,6 +789,8 @@
       const talService = await import('../src/systems/talents/TalentService.js');
       const studyService = await import('../src/systems/talents/StudyService.js');
       const { getActiveStudy: getActiveStudyOf } = studyService;
+      // v1.2.3 : une étude finie propose 3 talents ; ces tests choisissent le premier.
+      const chooseFirst = (s) => studyService.getPendingTalentChoices(s).map((st) => studyService.chooseStudyTalent(s, st.id, st.choices[0]).event).filter(Boolean);
       const { artisanFrame: artisanFrameOf } = await import('../src/borough/artisanAnimations.js');
       const { Fighter: TalFighter } = await import('../src/models/Fighter.js');
       const { assignActivity: talAssign, quickAssign: talQuick } = await import('../src/systems/activities/ActivityService.js');
@@ -797,20 +802,20 @@
       const { recruit: talRecruit, generateRecruitmentPool: talGenPool } = await import('../src/systems/tavern/TavernService.js');
       const { isCombatDay: talIsCombatDay } = await import('../src/systems/calendar/CalendarService.js');
       const fourbe = talService.getTalent('fourbe');
-      const talKnownTypes = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'squadFatigue', 'activityChance', 'activityReward', 'allyActivityChance', 'dailyDeniers', 'foresterDeniers', 'homeRewardMultiplier', 'homeWinDeniers', 'queenReward', 'recruitDiscount', 'studyDays', 'studyFactor', 'potentialFloor', 'potentialBoost', 'skillCapSteps', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance', 'expeditionDays', 'expeditionDiscount', 'expeditionTraining', 'expeditionBonusReward', 'queenFerveur'];
+      const talKnownTypes = ['finalDamage', 'damageTaken', 'aura', 'enemyContact', 'guardCaptain', 'combatStats', 'fatigueThreshold', 'comboHits', 'luckyRoll', 'moveSpeed', 'lastStand', 'fatigueEffort', 'fatigueRecovery', 'fatigueCap', 'squadFatigue', 'activityChance', 'activityReward', 'allyActivityChance', 'dailyDeniers', 'foresterDeniers', 'homeRewardMultiplier', 'homeWinDeniers', 'queenReward', 'recruitDiscount', 'studyDays', 'studyFactor', 'potentialFloor', 'potentialBoost', 'skillCapSteps', 'seasonImmune', 'fatigueIgnore', 'allyHeal', 'preferWounded', 'auraGuard', 'dodgeChance', 'expeditionDays', 'expeditionDiscount', 'expeditionTraining', 'expeditionBonusReward', 'queenFerveur', 'awayWinDeniers', 'upgradeDiscount', 'sorenessFactor'];
       const talCount = (r) => talCatalog.filter((x) => x.rarity === r).length;
-      check(talCatalog.length === 74 && talCount('common') === 39 && talCount('rare') === 17 && talCount('epic') === 8 && talCount('exotic') === 10 && new Set(talCatalog.map((x) => x.id)).size === 74
+      check(talCatalog.length === 115 && talCount('common') === 60 && talCount('rare') === 30 && talCount('epic') === 15 && talCount('exotic') === 10 && new Set(talCatalog.map((x) => x.id)).size === 115
         && talCatalog.every((x) => x.effects.length && x.effects.every((e) => talKnownTypes.includes(e.type)) && x.description && x.domain && (x.rarity === 'exotic' ? x.sources.join() === 'expedition' : x.sources.includes('tavern') && x.sources.includes('study')))
         && fourbe?.rarity === 'common' && fourbe.effects[0].type === 'finalDamage' && fourbe.effects[0].value === 0.05
         && Object.keys(talRarities).join() === 'common,rare,epic,exotic' && talRarities.common.color === '#9fd3f2' && talRarities.rare.color === '#ec8a2c' && talRarities.epic.color === '#141416'
         && talService.getTalentStyle(fourbe).color === talRarities.common.color && talRules.maxPerFighter === 2 && talRules.tavernChance === 0.1,
-        'talents : catalogue centralisé de 74 talents (39 ordinaires, 17 rares, 8 épiques, 10 exotiques ; dont 8 saisonniers), chacun avec ses effets typés ; couleurs des familles ; 1 talent par combattant, 10 % à la Taverne');
+        'talents : catalogue centralisé de 115 talents (60 ordinaires, 30 rares, 15 épiques, 10 exotiques ; dont 10 saisonniers), chacun avec ses effets typés ; couleurs des familles ; 1 talent par combattant, 10 % à la Taverne');
       const talGame = createNewGame({ teamName: 'Les Copistes', emblem: new Emblem(), rng: createRng('talents'), locationId: 'cite-de-locronan' });
       const talAIFighter = talGame.getFightersOfTeam(talGame.leagues[0].teamIds.find((id) => id !== talGame.player.teamId))[0];
       check(talGame.playerFighters.every((f) => Array.isArray(f.talents) && f.talents.length === 0 && !talService.hasTalent(talGame, f))
-        && !talService.canHaveTalents(talGame, talAIFighter) && talService.grantTalent(talGame, talAIFighter, 'fourbe') === null && !(talAIFighter.talents ?? []).length
-        && talService.getFighterTalents(talGame, new TalFighter({ teamId: talAIFighter.teamId, talents: ['fourbe'] })).length === 0,
-        'talents : aucun talent par défaut pour la compagnie ; un combattant de l’IA n’en a jamais (ni attribution, ni affichage)');
+        && !talService.canHaveTalents(talGame, talAIFighter) && talService.grantTalent(talGame, talAIFighter, 'fourbe') === null && !(talAIFighter.talents ?? []).includes('fourbe')
+        && talService.getFighterTalents(talGame, new TalFighter({ teamId: talAIFighter.teamId, talents: ['fourbe'] })).length === 1,
+        'talents : aucun talent par défaut pour la compagnie ; un combattant de l’IA ne reçoit jamais un talent du joueur (v1.2.1 : ses talents de combat viennent de la règle des clubs, et s’affichent)');
       // Taverne : 10 % des recrues, tirage fait une fois (graine propre), conservé.
       let talHits = 0;
       const talTries = 3000;
@@ -881,8 +886,9 @@
       const talEve = advanceDay(talGame, { rng: createRng('eve') });
       const talStillStudying = studyService.isStudying(talGame, talStudent) && !talEve.ofType('talent.revealed').length;
       const talDay = advanceDay(talGame, { rng: createRng('jour-j') });
-      const talReveal = talDay.ofType('talent.revealed')[0];
-      check(talStillStudying && talGame.calendar.currentDay === talStudy.endDay && talReveal?.fighterId === talStudent.id && talReveal.talentName === talService.getTalent(talStudy.talentId)?.name
+      const talChoiceEv = talDay.ofType('talent.choice')[0];
+      const talReveal = chooseFirst(talGame)[0];
+      check(talChoiceEv?.choices.length === 3 && new Set(talChoiceEv.choices.map((id) => talService.getTalent(id).rarity)).size === 1 && talStillStudying && talGame.calendar.currentDay === talStudy.endDay && talReveal?.fighterId === talStudent.id && talReveal.talentName === talService.getTalent(talStudy.talentId)?.name
         && talStudent.talents.length === 1 && talStudent.talents[0] === talStudy.talentId && talStudy.status === 'completed' && studyService.isFighterAvailable(talGame, talStudent)
         && talCanSelect(talGame, talStudent).ok,
         'Scriptorium : fin de l’étude au jour prévu (calendrier du jeu) — Fourbe révélé, annoncé au carnet de bord, combattant de nouveau disponible');
@@ -894,10 +900,11 @@
       talLate.data.calendar.currentDay = getActiveStudyOf(talMid).endDay + 3;
       const talLateLoaded = deserializeSession(talLate);
       initializeGeoWorld(talLateLoaded, createRng('late'));
-      const talLateReveals = studyService.takeUnnotifiedReveals(talLateLoaded);
+      const talLatePending = studyService.getPendingTalentChoices(talLateLoaded).length;
+      const talLateReveals = chooseFirst(talLateLoaded);
       const talLateAgain = deserializeSession(JSON.parse(JSON.stringify(serializeSession(talLateLoaded, Date.now()))));
       initializeGeoWorld(talLateAgain, createRng('late-2'));
-      check(talLateLoaded.getFighter(talStudent.id).talents.length === 1 && !studyService.isStudying(talLateLoaded, talStudent.id)
+      check(talLatePending === 1 && talLateLoaded.getFighter(talStudent.id).talents.length === 1 && !studyService.isStudying(talLateLoaded, talStudent.id)
         && talLateReveals.length === 1 && talLateReveals[0].talentName === talService.getTalent(talLateLoaded.getFighter(talStudent.id).talents[0])?.name && studyService.takeUnnotifiedReveals(talLateLoaded).length === 0
         && talLateAgain.getFighter(talStudent.id).talents.length === 1 && studyService.takeUnnotifiedReveals(talLateAgain).length === 0,
         'sauvegarde : chargée après la date de fin, l’étude se termine sans rejouer de journée — talent révélé et annoncé une seule fois');
@@ -1164,6 +1171,7 @@
       const flGrand = flUp.buyArtifact(flGame, 'grand');
       flGame.calendar.currentDay = flStudyC.endDay;
       const flReveal = studyService.completeDueStudies(flGame);
+      chooseFirst(flGame);
       check(flGrand.ok && getDeniers(flGame) === 10000 && flUp.getNextArtifact(flGame) === null && flReveal.length === 1 && flStudyC.status === 'completed' && flOdds(flStudyC.odds) === '0.2/0.6/0.2' && ['common', 'rare', 'epic'].includes(flStudyC.rarity)
         && flC.talents.length === 1 && flStudyC.talentId === flC.talents[0],
         `révélation : famille tirée à la fin de l’étude (lancée sans artefact) avec le Traité de Poliorcétique acquis entre-temps (tiré : ${flStudyC.rarity}) ; un seul talent`);
@@ -1182,7 +1190,8 @@
       const flFirstTalent = flC.talents[0];
       const flRe = studyService.startStudy(flGame, flC.id);
       flGame.calendar.currentDay = flRe.study.endDay;
-      const flReEvent = studyService.completeDueStudies(flGame)[0];
+      studyService.completeDueStudies(flGame);
+      const flReEvent = chooseFirst(flGame)[0];
       check(flRe.ok && flRe.study.cost === 0 && flRe.study.mode === 'second' && getDeniers(flGame) === 600 && flC.talents.length === 2 && flC.talents[0] === flFirstTalent
         && flC.talents[1] !== flFirstTalent && flReEvent?.second === true && flReEvent.slot === 1 && flReEvent.previousTalentId === null && flRe.study.talentId === flC.talents[1],
         'Scriptorium : second talent — étude gratuite, il s’ajoute au premier (jamais le même) ; le carnet l’annonce comme second talent');
@@ -1190,7 +1199,8 @@
       const flSecond = flC.talents[1];
       const flRe2 = studyService.startStudy(flGame, flC.id, { slot: 1 });
       flGame.calendar.currentDay = flRe2.study.endDay;
-      const flRe2Event = studyService.completeDueStudies(flGame)[0];
+      studyService.completeDueStudies(flGame);
+      const flRe2Event = chooseFirst(flGame)[0];
       check(flRe2.ok && getDeniers(flGame) === 100 && flC.talents.length === 2 && flC.talents[0] === flFirstTalent && flC.talents[1] !== flFirstTalent
         && flRe2Event?.previousTalentId === flSecond && flRe2Event.slot === 1 && !flRe2Event.second && flRe2.study.previousTalentId === flSecond,
         'Scriptorium : remplacement abouti — le nouveau talent prend la place choisie (le second), le premier reste acquis, jamais en double');
@@ -1199,6 +1209,7 @@
       flB.talents = ['fourbe'];
       flGame.studies.push(flLegacy);
       studyService.completeDueStudies(flGame);
+      chooseFirst(flGame);
       check(flLegacy.status === 'completed' && flB.talents.length === 1 && flB.talents[0] === flLegacy.talentId,
         'sauvegarde : une étude de remplacement lancée avant la v0.72 remplace toujours le talent unique (aucun second talent offert)');
       // Tirage des familles : conforme aux chances.
@@ -2134,7 +2145,7 @@
         // sinon le jeu désigne le 1er ou le 2e (pickAICaptainIndex).
         return caps.length === 1;
       });
-      check(aiCaptainsOk && allClubIds.length === 67, 'clubs de l’IA : exactement un capitaine par club (67 clubs)');
+      check(aiCaptainsOk && allClubIds.length === 71, 'clubs de l’IA : exactement un capitaine par club (71 clubs)');
       const { pickAICaptainIndex: autoCaptainIndex } = await import('../src/systems/roster/CaptainService.js');
       const autoIndexes = Array.from({ length: 60 }, (_, i) => autoCaptainIndex(`club_test_${i}`, 8));
       check(autoIndexes.every((i) => i === 0 || i === 1) && autoIndexes.includes(0) && autoIndexes.includes(1) && autoCaptainIndex('club_vide', 0) < 0,
@@ -2387,8 +2398,15 @@
       const anL2Middle = s1.leagues.league_2.find((row) => row.position === 9).teamId;
       check(sz.clubHistory[anL1Relegated][0].movement === 'RELEGATED' && sz.clubHistory[anL1Relegated][0].finalPosition === 18 && sz.clubHistory[anL2Middle][0].movement === 'NONE', 'historique : relégué (18e de Ligue 1) et maintien (9e de Ligue 2)');
       const finalFrozen = JSON.stringify(s1.leagues);
+      // v1.2.4 : un Combat de la Reine prévu juste après la Coupe est repoussé (3 jours de repos).
+      const queenAfterCup = sz.calendar.events.find((e) => e.typeId === 'queen' && e.status === 'scheduled');
+      if (queenAfterCup) queenAfterCup.day = sz.calendar.currentDay + 1;
+      const cupEndDay = sz.calendar.currentDay;
       startNextSeason(sz, createRng('saison2'));
       check(!isOffSeason(sz) && sz.season.status === 'active' && JSON.stringify(sz.seasonHistory[0].leagues) === finalFrozen, 'nouvelle saison : lancée par le joueur ; classement final de la saison 1 inchangé');
+      check(Boolean(queenAfterCup) && queenAfterCup.day >= cupEndDay + 4 && !sz.calendar.events.some((e) => e.typeId === 'combat' && e.status === 'scheduled' && e.day === queenAfterCup.day)
+        && sz.calendar.events.filter((e) => e.status === 'scheduled' && ['queen', 'combat'].includes(e.typeId)).every((e) => e.day >= cupEndDay + 4),
+        `nouvelle saison : 3 jours de repos après la Coupe — le Combat de la Reine prévu le lendemain est repoussé au jour ${queenAfterCup?.day} (fin de Coupe : jour ${cupEndDay}), aucun combat avant`);
       check(!sz.calendar.events.some((e) => e.typeId === 'combat' && e.data.season === 1 && e.data.matchday > 17), 'fin de saison : jamais de journée 18');
       check(Object.values(s1.leagues).every((table) => table.length === 18 && table.every((row) => row.played === 17)), 'classement final : 18 équipes ayant disputé 17 combats chacune');
       check(s1.movements.length === 12 && s1.movements.every((m) => m.ruleId !== 'rebalance' && m.ruleId !== 'withdrawal'), 'fin de saison : 12 mouvements (3 montées, 3 descentes par frontière), aucun ajustement');
@@ -2419,7 +2437,7 @@
       // ---------- Taverne : rotation hebdomadaire et prix ----------
       const tv = createRandomGame({ rng: createRng('taverne') });
       const firstPool = tv.recruitment.candidates.map((c) => c.id).join();
-      check(tv.recruitment.candidates.every((c) => Math.abs(c.cost - Math.round(computeFighterLevel(c.fighter))) <= 10), 'taverne : prix = niveau ± 10 deniers');
+      check(tv.recruitment.candidates.every((c) => c.cost === 1 || Math.abs(c.cost / 2 - Math.round(computeFighterLevel(c.fighter))) <= 10), 'taverne : prix = (niveau ± 10) × 2 deniers (v1.1.8)');
       check(tv.calendar.events.filter((e) => e.typeId === 'tavern').map((e) => e.day).slice(0, 4).join() === '7,14,21,28', 'taverne : rotation les jours 7, 14, 21, 28');
       check(!Object.keys(EVENT_TYPES).includes('tournament') && !tv.calendar.events.some((e) => e.typeId === 'tournament'), 'calendrier : plus de tournoi');
       check(getUpcomingHighlights(tv.calendar).length === 2 && tv.calendar.getUpcoming().length > 2, 'calendrier : 2 actualités affichées, tous les événements conservés');
@@ -2463,14 +2481,14 @@
       check(tvNew.recruitment.candidates.length === 4 && tvNew.recruitment.candidates.every((c) => tvStars(c.fighter) >= 1 && tvStars(c.fighter) <= 2.5) && !tvNew.recruitment.candidates.some((c) => tvBefore.includes(c.id)),
         `Taverne : à la rotation suivante, recrues du niveau 2 (${tvNew.recruitment.candidates.map((c) => tvStars(c.fighter)).join(' · ')})`);
       const { computeRecruitPrice: priceOf, getRecruitPriceForStars, getRecruitPriceTable } = await import('../src/systems/tavern/TavernRotationService.js');
-      const tvPriceOk = (c) => (tvStars(c.fighter) === 2.5 ? c.cost === 150 : c.cost >= 1 && c.cost <= Math.round(computeFighterLevel(c.fighter)) + 10);
+      const tvPriceOk = (c) => (tvStars(c.fighter) === 2.5 ? c.cost === 150 : c.cost >= 1 && c.cost <= 2 * (Math.round(computeFighterLevel(c.fighter)) + 10));
       check([1, 1.5, 2, 2.5, 3, 3.5, 4].map(getRecruitPriceForStars).join() === ',,,150,350,600,1250' && tvNew.recruitment.candidates.every(tvPriceOk)
         && getRecruitPriceTable({ minStars: 1, maxStars: 3 }).map((r) => `${r.stars}:${r.price ?? 'v'}`).join() === '1:v,1.5:v,2:v,2.5:150,3:350',
         `Taverne : prix selon les étoiles (jusqu’à 2★ selon sa valeur ; 2,5★ 150, 3★ 350, 3,5★ 600, 4★ 1 250 deniers) — niveau 2 : ${tvNew.recruitment.candidates.map((c) => `${tvStars(c.fighter)}★ ${c.cost}`).join(' · ')}`);
       // Le niveau de la Taverne ne change pas le prix : une recrue à 1★ reste bon marché au niveau 5.
       const tvCheap = generateTavernRecruit({ specialtyId: 'lutteur', name: { firstName: 'Test', epithet: null }, starRange: { minStars: 1, maxStars: 1 }, rng: createRng('cheap'), day: 1 });
       const tvTop = generateTavernRecruit({ specialtyId: 'lutteur', name: { firstName: 'Test', epithet: null }, starRange: { minStars: 4, maxStars: 4 }, rng: createRng('top'), day: 1 });
-      check(priceOf(tvCheap, createRng('p')) <= 26 && priceOf(tvTop, createRng('p')) === 1250,
+      check(priceOf(tvCheap, createRng('p')) <= 2 * (Math.round(computeFighterLevel(tvCheap)) + 10) && priceOf(tvTop, createRng('p')) === 1250,
         `Taverne : une recrue à 1★ coûte ${priceOf(tvCheap, createRng('p'))} deniers, une à 4★ 1 250, quel que soit le niveau de la Taverne`);
       // (Deniers relevés juste avant : un combat joué automatiquement pendant l'avance des jours peut rapporter une recette à domicile.)
       const tvPurse = getDeniers(tvNew);
@@ -3420,10 +3438,10 @@
       const tmAttacksB = tmRound.simulation.events.filter((e) => e.type === 'attack' && pvB.some((f) => f.id === e.unitId));
       const tmStood = (tmRound.simulation.lastStands ?? []).some((s) => s.unitId === pvA[1].id);
       check(tmRound.simulation.startBonuses[pvA[0].id].includes('talent:seigneur-de-guerre') && tmAttacksA.length > 0
-        && tmAttacksA.every((e) => e.detail.bonuses.includes('talent:seigneur-de-guerre')) && tmAttacksB.every((e) => !e.detail.bonuses.some((b) => b.startsWith('talent:')))
+        && tmAttacksA.every((e) => e.detail.bonuses.includes('talent:seigneur-de-guerre')) && tmAttacksB.every((e) => e.detail.bonuses.filter((b) => b.startsWith('talent:')).every((b) => pv.getFighter(e.unitId).talents.includes(b.slice(7)) || pvB.some((f) => f.talents.includes(b.slice(7)))))
         && tmAttacksA.filter((e) => e.unitId === pvA[2].id).every((e) => e.detail.bonuses.includes('talent:enfant-du-pays'))
         && (!tmStood || tmMatch.talentUses[pvA[1].id]?.lastStand === true),
-        `talents dans une vraie manche : aura du Seigneur de guerre sur tous les coups du joueur (${tmAttacksA.length}), Enfant du pays à domicile, rien pour l’IA ; Inébranlable ${tmStood ? 'a survécu et ne le pourra plus dans ce combat' : 'n’a pas eu à servir'}`);
+        `talents dans une vraie manche : aura du Seigneur de guerre sur tous les coups du joueur (${tmAttacksA.length}), Enfant du pays à domicile, l’IA seulement ses propres talents (v1.2.1) ; Inébranlable ${tmStood ? 'a survécu et ne le pourra plus dans ce combat' : 'n’a pas eu à servir'}`);
       pvA.forEach((f, i) => { f.talents = tmSaved[i]; });
       const { getFirstPlacingSide } = await import('../src/systems/match/MatchService.js');
       const { calculateClubLevel: lvlOfClub } = await import('../src/systems/rating/RatingService.js');
@@ -3515,6 +3533,9 @@
         && computeDamage(cu('hastier', { has: 40 }), cu('hastier', { has: 40 }), { roll: 0, finalMultiplier: 2.2 }).damage === 22, 'dégâts finaux : 20 → 22 avec +10 % (appliqué au résultat, avant l’arrondi)');
       const csPm = new PlacementManager({ arena: liceArena, fighters: { A: csA.map((f) => f.id), B: cs.getFightersOfTeam(csOpp).slice(0, 5).map((f) => f.id) } });
       while (!csPm.isComplete) placeAutomatically({ manager: csPm, side: csPm.currentSide, classOf: (id) => cs.getFighter(id).specialtyId, rng: createRng('cspm') });
+      // (v1.2.1 : sans les talents de l'adversaire, pour mesurer l'Hypocras seul.)
+      const { setAIFighterTalents: csNoTalents } = await import('../src/systems/clubs/AITalentService.js');
+      cs.getFightersOfTeam(csOpp).forEach((f) => csNoTalents(cs, f, []));
       const csRound = resolvePlayerRound(cs, csMatch, { fightersA: csA.map((f) => f.id), fightersB: cs.getFightersOfTeam(csOpp).slice(0, 5).map((f) => f.id), ...csPm.toLineup(), arena: liceArena }, createRng('csr'));
       const boosted = csRound.simulation.initial.find((u) => u.id === csA[0].id);
       const plain = csRound.simulation.initial.find((u) => u.id === csA[3].id);
@@ -4013,8 +4034,8 @@
         && venueTag.style.getPropertyValue('--land-color') === getClubLocationInfo(services.gameState.session.playerTeam).landColor,
         'placement : le lieu du match (nom du lieu du joueur, couleur de sa Terre) en haut du score');
       const enemyItems = [...app.querySelectorAll('.placement-enemies li')];
-      check(enemyItems.length === 5 && enemyItems.every((li) => li.querySelector('.fighter-sprite') && li.querySelector('.specialty-badge') && li.querySelector('.star-rating')) && !/\b\d{1,3}\s*\/\s*100\b|LUT|HAS|END|PER\b/.test(app.querySelector('.placement-enemies').textContent.replace(/Fatigue \d+ \/ 100/g, '')) && enemyItems.every((li) => /^Fatigue \d+ \/ 100$/.test(li.querySelector('.placement-fatigue')?.textContent ?? '')),
-        'placement : les 5 adversaires visibles (sprite, classe, étoiles, fatigue), sans leurs statistiques de combat');
+      check(enemyItems.length === 5 && enemyItems.every((li) => li.querySelector('.fighter-sprite') && li.querySelector('.specialty-badge') && li.querySelector('.star-rating') && li.querySelectorAll('.pfc-skill').length === 4) && enemyItems.every((li) => /^Fatigue \d+ \/ 100$/.test(li.querySelector('.placement-fatigue')?.textContent ?? '')),
+        'placement : les 5 adversaires visibles (sprite, classe, étoiles, fatigue) et, v1.2.1, leurs 4 compétences de combat');
       // Qui place en premier : l'équipe au niveau de club le plus élevé (égalité : le joueur).
       const { calculateClubLevel: clubLevelOf } = await import('../src/systems/rating/RatingService.js');
       const uiSession = services.gameState.session;
@@ -4134,7 +4155,8 @@
         await wait(40);
         const shown = [...app.querySelectorAll('.placement-enemies li')].map((li) => ({ id: li.dataset.fighterId, text: li.querySelector('.placement-fatigue')?.textContent }));
         check(matchScreen.firstPlacing.side !== startSide && matchScreen.firstPlacing.reason === 'alternate' && /chacun son tour/.test(app.querySelector('.placement-status').textContent), 'placement (manche 2) : l’autre équipe place en premier (alternance)');
-        check(shown.length > 0 && shown.every(({ id, text }) => text === `Fatigue ${Math.round(matchScreen.match.localFatigue[id] ?? 0)} / 100`) && shown.some(({ id }) => (matchScreen.match.localFatigue[id] ?? 0) > 0)
+        // (v1.2.1 : avec leurs talents de récupération, les adversaires peuvent repartir reposés.)
+        check(shown.length > 0 && shown.every(({ id, text }) => (text ?? '').startsWith(`Fatigue ${Math.round(matchScreen.match.localFatigue[id] ?? 0)} / 100`))
           && app.querySelector('.match-body .class-roles-inline')?.textContent.includes('Hastier'), 'placement (manche 2) : fatigue des adversaires visible, rappel de la formation (sur une ligne)');
       }
       while (app.querySelector('.match-steps') && rounds < 4) {
@@ -5042,8 +5064,13 @@
         && window.behourd.screens.current.presentation.decoration.id === 'lice_gabarnac', 'Château de Gabarnac : la Lice est cliquable → préparation du combat, dans la Lice de Gabarnac');
       button('Sélection de l’équipe Type', app).click();
       await wait(10);
-      button('Valider l’effectif', app).click();
+      // v1.1.7 : les huit combattants sont emmenés pour toute la Coupe.
+      const cdfSquadText = app.textContent;
+      button('Emmener ces combattants', app).click();
       await wait(10);
+      const cdfKept = [...(cdfUi.frenchCup.playerSquad ?? [])];
+      check(cdfKept.length === Math.min(8, cdfUi.playerFighters.length) && /pour toute la Coupe/.test(cdfSquadText),
+        `Coupe : ${cdfKept.length} combattants emmenés au premier combat, gardés pour toute la Coupe`);
       for (let r = 0; app.querySelector('.match-steps') && r < 4; r++) {
         await playUiRound();
         (button('Préparer la manche', app) ?? button('Voir le résultat du combat', app)).click();
@@ -5073,6 +5100,15 @@
       await wait(30);
       check(window.behourd.screens.currentId === 'french-cup' && app.querySelector('.cup-step')?.textContent.includes('journée 2') && button('Entrer dans la Lice', app) && button('Abandonner la Coupe', app),
         'Coupe : bloquante — le domaine ramène au Château, là où on en était');
+      // v1.1.7 : au combat suivant, pas de nouvel effectif — directement les cinq de la manche.
+      button('Entrer dans la Lice', app).click();
+      await wait(30);
+      const cdfNext = window.behourd.screens.current;
+      check(window.behourd.screens.currentId === 'match' && cdfNext.step === 'lineup' && cdfNext.squad.every((id) => cdfKept.includes(id)) && cdfNext.squad.length > 0
+        && !button('Modifier l’effectif', app),
+        'Coupe : au combat suivant, l’effectif emmené est repris — seuls les cinq de la manche sont à choisir');
+      window.behourd.screens.show(SCREENS.FRENCH_CUP);
+      await wait(30);
 
       // Après l'élimination : « Assister aux prochains combats » (arbre final animé).
       const cdfSpec = createRandomGame({ rng: createRng('coupe-spectateur') });
@@ -5276,7 +5312,7 @@
       leagueSelect.value = 'reserve';
       leagueSelect.dispatchEvent(new Event('change'));
       await wait(10);
-      check(app.querySelectorAll('#admin-club-select option').length === 14 && app.querySelector('.club-count').textContent === '14 clubs hors championnat' && !app.querySelector('.club-count.is-wrong'), 'admin clubs : 14 clubs hors championnat, effectif libre');
+      check(app.querySelectorAll('#admin-club-select option').length === 18 && app.querySelector('.club-count').textContent === '18 clubs hors championnat' && !app.querySelector('.club-count.is-wrong'), 'admin clubs : 18 clubs hors championnat, effectif libre');
       app.querySelector('#admin-league-select').value = 'league_3';
       app.querySelector('#admin-league-select').dispatchEvent(new Event('change'));
       await wait(10);
@@ -5475,7 +5511,7 @@
         const targetOf = (id) => crowdedPlan.changes.find((c) => c.fighter.id === id)?.to;
         check(f3.activityId === 'forest' && targetOf(f0.id) === 'forest' && targetOf(f1.id) === undefined && targetOf(f2.id) === undefined
           && crowdedPlan.issues.filter((i) => i.kind === 'full').map((i) => i.fighterId).join() === [f1.id, f2.id].join()
-          && P.describePresetIssues(crowdedPlan.issues) === `Forêt complet : ${f1.name}, ${f2.name} au repos`,
+          && P.describePresetIssues(crowdedPlan.issues) === `Forêt complet : ${f1.name}, ${f2.name} sans activité`,
           'Centre : places respectées — le combattant hors configuration garde la Forêt, les suivants passent au repos (signalé)');
         // Éléments devenus invalides, absents remis au repos, plan sans écriture.
         f2.activityId = 'hay';
@@ -5638,12 +5674,12 @@
         check(Math.abs(lineupS([hast], { season: 'summer' }) - levelS(hast) * 0.9) < 1e-9 && lineupS([hast]) === levelS(hast) && lineupS([hast], { season: 'winter' }) === levelS(hast),
           'saisons (combats simulés) : même pénalité appliquée au niveau effectif');
 
-        // Talents saisonniers : 3 ordinaires, 3 rares, 2 épiques ; actifs seulement dans leur saison.
+        // Talents saisonniers : 5 ordinaires (v1.2 : Fourrure, Bourgeon), 3 rares, 2 épiques ; actifs seulement dans leur saison.
         const { TALENTS: TS } = await import('../src/data/talents.js');
         const { effectsOf: effS, combatEffectsOf: combatS } = await import('../src/systems/talents/TalentEffects.js');
         const seasonal = TS.filter((t) => t.season);
         const withTalent = (id) => ({ talents: [id] });
-        check(seasonal.length === 8 && seasonal.filter((t) => t.rarity === 'common').length === 3 && seasonal.filter((t) => t.rarity === 'rare').length === 3 && seasonal.filter((t) => t.rarity === 'epic').length === 2
+        check(seasonal.length === 10 && seasonal.filter((t) => t.rarity === 'common').length === 5 && seasonal.filter((t) => t.rarity === 'rare').length === 3 && seasonal.filter((t) => t.rarity === 'epic').length === 2
           && effS(withTalent('peau-tannee'), 'finalDamage', { season: 'summer' }).length === 1 && effS(withTalent('peau-tannee'), 'finalDamage', { season: 'winter' }).length === 0
           && effS(withTalent('peau-tannee'), 'finalDamage').length === 0
           && combatS(withTalent('sang-chaud'), { season: 'winter' }).map((e) => e.type).sort().join() === 'combatStats,damageTaken' && combatS(withTalent('sang-chaud'), { season: 'autumn' }).length === 0
@@ -5663,7 +5699,7 @@
         const sReport = new ReportS(51);
         sReport.add({ type: 'climate.season', seasonId: 'winter', day: 51, year: 1, released: [{ fighterId: s1.id, activityId: 'forest' }] });
         const sView = viewS(sReport, { session: sGame });
-        check(sView.notices.length === 1 && sView.notices[0].who === '❄ L’hiver commence' && sView.notices[0].text.startsWith('L’hiver commence. La forêt devient inaccessible') && sView.notices[0].text.includes(`${s1.name} passe au repos`)
+        check(sView.notices.length === 1 && sView.notices[0].who === '❄ L’hiver commence' && sView.notices[0].text.startsWith('L’hiver commence. La forêt devient inaccessible') && sView.notices[0].text.includes(`${s1.name} se retrouve sans activité`)
           && sView.seal.title === '❄ L’hiver commence',
           'carnet : « L’hiver commence. La forêt devient inaccessible… », combattants libérés nommés, titre du jour');
 
@@ -6478,8 +6514,8 @@
         const expectKey = { lutteur: 'LUT', hastier: 'HAS', runner: 'PER' }[firstOwn?.specialtyId];
         check(ms.step === 'placement' && ownCards.length === 5 && [...ownCards].every((c) => c.querySelectorAll('.pfc-skill').length === 4) && keySkill === expectKey
           && !detail.hidden && detail.querySelectorAll('.pd-skill').length === 4 && detail.querySelector('.pd-role') && !/\bnull\b/.test(detail.textContent)
-          && !app.querySelector('.placement-enemy .pfc-skill'),
-          `mobile : placement — main de cartes (étoiles, 4 compétences, la clé de la classe en avant : ${keySkill}), fiche du combattant à placer ; jamais les statistiques adverses`);
+          && app.querySelectorAll('.placement-enemy .pfc-skill').length === 20 && app.querySelector('.enemies-button'),
+          `mobile : placement — main de cartes (étoiles, 4 compétences, la clé de la classe en avant : ${keySkill}), fiche du combattant à placer ; v1.2.1 : bouton « Adversaires » et leurs compétences`);
         ML.setMobileLayout(false);
         sc.show('main-menu', {});
         await wait(20);
@@ -6594,13 +6630,16 @@
         run1.opponents.forEach(strong);
         const lost1 = SR1.fightNext(g1, a1.id, { rng: createRng('perdu') });
         const afterLoss = SR1.getSingularRun(g1);
-        const koOk = !lost1.won && afterLoss.ko.includes(a1.id) && afterLoss.stage === 0 && afterLoss.opponentFatigue === Math.round(lost1.simulation.final.find((u) => u.side === 'B').fatigue)
-          && !SR1.canFightNext(g1, a1.id).ok && gs1(a1, 'fatigue') === Math.round(lost1.simulation.final.find((u) => u.side === 'A').fatigue);
+        // v1.1.7 : ce sont les PV qui ne se récupèrent pas ; la fatigue repart de celle du départ.
+        const oppFinal = lost1.simulation.final.find((u) => u.side === 'B');
+        const koOk = !lost1.won && afterLoss.ko.includes(a1.id) && afterLoss.stage === 0 && afterLoss.opponentHp === Math.max(1, Math.round(oppFinal.hp))
+          && SR1.currentOpponent(afterLoss).hp === afterLoss.opponentHp && SR1.currentOpponent(afterLoss).hp < SR1.currentOpponent(afterLoss).maxHp
+          && !SR1.canFightNext(g1, a1.id).ok && SR1.runHp(g1, afterLoss, a1.id) === 0 && gs1(a1, 'fatigue') === afterLoss.startFatigue[a1.id];
         // Abandon possible à tout moment : perdue, Ferveurs comprises.
         const ferveursBefore = INV1.getItemQuantity(g1, 'ferveur_reine');
         SR1.abandonRun(g1);
         check(koOk && !SR1.getSingularRun(g1) && g1.expeditions.lastRun.outcome === 'abandoned' && INV1.getItemQuantity(g1, 'ferveur_reine') === ferveursBefore && !away1(g1, a1),
-          `défaite : ${a1.name} KO jusqu’à la fin, même combat à reprendre, l’adversaire garde sa fatigue (${afterLoss.opponentFatigue}) ; abandon : expédition perdue, sans remboursement`);
+          `défaite : ${a1.name} KO jusqu’à la fin, même combat à reprendre, l’adversaire garde ses PV (${afterLoss.opponentHp}), la fatigue n’est pas gardée ; abandon : expédition perdue, sans remboursement`);
         // Trois KO : expédition perdue.
         const g2 = createRandomGame({ rng: createRng('singuliere-perdue') });
         services.gameState.setSession(g2);
@@ -6637,7 +6676,8 @@
           if (run.phase === 'choice') {
             choices++;
             const kinds = run.options.map((o) => o.kind).sort().join();
-            if (run.options.length !== 3 || kinds !== 'boon,boon,reward') mixOk = false;
+            // v1.1.7 : une récompense de fin seulement après les combats 3, 6 et 9 ; sinon trois bonus.
+            if (run.options.length !== 3 || kinds !== ([3, 6, 9].includes(run.stage) ? 'boon,boon,reward' : 'boon,boon,boon')) mixOk = false;
             if (choices === 1) {
               run.options[0] = { kind: 'boon', id: 'gourde-d-hypocras' };
               SR1.chooseOption(g3, 0, team3[1].id);
@@ -6667,9 +6707,9 @@
         const assignments = Object.fromEntries(claims3.map((c, i) => [c.key, { fighterId: c.kind === 'talent' && c.key === 'card' ? team3[0].id : c.eligible.find((id) => id !== team3[0].id) ?? c.eligible[0], slot: 1 }]));
         const won3 = XS1.claimSingularVictory(g3, assignments);
         check(run3?.phase === 'victory' && choices === 9 && mixOk && hypocrasOk && smokeOk && !noSlot.ok
-          && won3.ok && team3[0].talents.join() === 'fourbe,bourreau' && res1(g3, 'deniers') >= purse3 + 1000 && !g3.expeditions.run && g3.expeditions.lastRun.outcome === 'won'
+          && won3.ok && team3[0].talents.join() === 'fourbe,bourreau' && res1(g3, 'deniers') >= purse3 + 300 && !g3.expeditions.run && g3.expeditions.lastRun.outcome === 'won'
           && unl1(g3, 'premiere-route'),
-          `victoire : dix combats, ${choices} propositions (2 bonus + 1 récompense, une gardée) ; Gourde d’hypocras pour un combat, Fumée des pins (+25 de fatigue à l’adversaire) ; talent de la carte au choix (${team3[0].talents.join(' + ')}), Grosse bourse reçue`);
+          `victoire : dix combats, ${choices} propositions (une récompense de fin après les combats 3, 6 et 9 seulement, une gardée) ; Gourde d’hypocras pour un combat, Fumée des pins (+25 de fatigue à l’adversaire) ; talent de la carte au choix (${team3[0].talents.join(' + ')}), Grosse bourse reçue`);
         // Écran : frise des dix combats, choix du combattant, bouton du calendrier.
         const g4 = createRandomGame({ rng: createRng('singuliere-ecran') });
         services.gameState.setSession(g4);
@@ -6718,6 +6758,483 @@
             'téléphone (maquette A) : la lice en plein écran, « Combattre » en bas à droite, fiche de l’adversaire au toucher, retour compact');
         }
         SR1.abandonRun(g4);
+        // v1.1.7 : stylo pour renommer (téléphone), bouton du jour, tabards, mises à terre, récompenses, PV, talents.
+        {
+          const ML7 = await import('../src/ui/mobile/mobileLayout.js');
+          const { buildFighterSheet: bfs7 } = await import('../src/ui/components/FighterSheet.js');
+          const { HIDE_ADVANCE_ON: HA7 } = await import('../src/ui/mobile/MobileHub.js');
+          const { getSpriteImage: gsi7 } = await import('../src/render/sprites.js');
+          const { showQuickCard: sqc7, hideQuickCard: hqc7 } = await import('../src/ui/mobile/QuickCard.js');
+          const { simulateRound: sim7 } = await import('../src/combat/engine/CombatManager.js');
+          const { createArena: ca7 } = await import('../src/combat/Arena.js');
+          const { createCombatUnit: ccu7 } = await import('../src/combat/engine/CombatUnit.js');
+          const { COMBAT_RULES: CR7 } = await import('../src/data/combatRules.js');
+          const g7 = createRandomGame({ rng: createRng('v117') });
+          services.gameState.setSession(g7);
+          // 1 — Téléphone : le nom n'est modifiable qu'après le stylo ; le même bouton valide.
+          ML7.setMobileLayout(true);
+          const f7 = g7.playerFighters[1];
+          const sheet = bfs7(g7, f7);
+          document.body.append(sheet.title);
+          const noInput = !sheet.title.querySelector('input') && !sheet.body.querySelector('#fighter-name');
+          const pencil = sheet.title.querySelector('.rename-pencil');
+          pencil.click();
+          const input = sheet.title.querySelector('input');
+          input.value = 'Gautier le Preux';
+          const validateLabel = pencil.textContent;
+          pencil.click();
+          const renamed = f7.name === 'Gautier le Preux' && !sheet.title.querySelector('input') && pencil.textContent === '✎';
+          sheet.title.remove();
+          ML7.setMobileLayout(false);
+          check(noInput && pencil && validateLabel === '✓' && renamed,
+            'téléphone : le nom se modifie avec le stylo ✎ (champ fermé sinon), le même bouton ✓ valide le nouveau nom');
+          // 2 — Téléphone : pas de bouton du jour sur Compagnie et Ligue ; il revient sur le domaine.
+          ML7.setMobileLayout(true);
+          window.behourd.screens.show('team');
+          await wait(40);
+          const onTeam = Boolean(document.querySelector('.m-advance'));
+          window.behourd.screens.show('league');
+          await wait(40);
+          const onLeague = Boolean(document.querySelector('.m-advance'));
+          window.behourd.screens.show('borough');
+          await wait(40);
+          const onBorough = Boolean(document.querySelector('.m-advance'));
+          ML7.setMobileLayout(false);
+          check(HA7.join() === 'team,league' && !onTeam && !onLeague && onBorough,
+            'téléphone : le bouton « Jour suivant » disparaît sur Compagnie et Ligue, et revient sur le Bourg');
+          // 3 — Tabards : jamais le tabard d'origine en attendant l'image recolorée ; fiche rapide aux couleurs du club du combattant.
+          const pending = gsi7(g7.playerFighters[0].spriteId, 'idle', { primary: '#123456', secondary: '#654321', tertiary: '#abcdef' });
+          const otherTeam7 = g7.leagues.flatMap((l) => l.teamIds).find((id) => id !== g7.player.teamId);
+          const aiFighter = g7.getFightersOfTeam(otherTeam7)[0];
+          const quick = sqc7(g7, aiFighter, { x: 10, y: 10 });
+          const quickColor = quick?.querySelector('.fighter-sprite')?.style.getPropertyValue('--club-color');
+          hqc7();
+          check(pending === null && quickColor === g7.getTeam(aiFighter.teamId).emblem.resolvedColors().primary,
+            'tabards : rien n’est dessiné tant que l’image aux couleurs du club n’est pas prête (plus d’autre tabard un instant) ; la fiche rapide prend les couleurs du club du combattant');
+          // 5 — Mises à terre comptées : 3 au plus par manche et par combattant, 6 sur le combat.
+          const lice7 = ca7();
+          const unit7 = (fighter, side, x, y, skill) => {
+            Object.assign(fighter.stats, { polearm: skill, wrestling: skill, percussion: skill, endurance: skill });
+            return ccu7({ fighter, side, tile: { x, y }, fatigue: 0 });
+          };
+          const pool7 = g7.getFightersOfTeam(otherTeam7).slice(0, 6);
+          let roundMax = 0; let withBefore = 0;
+          for (let k = 0; k < 6; k++) {
+            const units = [unit7(g7.playerFighters[2], 'A', 5, 3, 99), ...pool7.slice(0, 5).map((f, i) => unit7(f, 'B', 7 + (i % 2), 1 + i, 2))];
+            const r = sim7({ arena: lice7, units, rng: createRng(`ko-cap-${k}`) });
+            roundMax = Math.max(roundMax, r.stats[g7.playerFighters[2].id].knockouts);
+            const r2 = sim7({ arena: lice7, units, rng: createRng(`ko-cap-${k}`), knockoutsBefore: { [g7.playerFighters[2].id]: 5 } });
+            withBefore = Math.max(withBefore, r2.stats[g7.playerFighters[2].id].knockouts);
+          }
+          check(CR7.knockoutCredit.maxPerRound === 3 && CR7.knockoutCredit.maxPerMatch === 6 && roundMax <= 3 && withBefore <= 1,
+            `mises à terre : au plus 3 par manche (vu : ${roundMax}) et 6 par combat (déjà 5 : ${withBefore} de plus) ; au-delà, l’aide va à un coéquipier`);
+        }
+        // 6, 7, 8 — expéditions singulières : PV, récompenses moins fortes, talents (remplacer ou ne pas attribuer).
+        {
+          const g8 = createRandomGame({ rng: createRng('v117-singuliere') });
+          services.gameState.setSession(g8);
+          INV1.addItem(g8, 'ferveur_reine', 60);
+          const s8 = XS1.ensureSeasonOffers(g8);
+          s8.offers[0].kind = 'singular';
+          s8.offers[0].opponents = SR1.generateSingularOpponents(0, createRng('adv-v117'));
+          const t8 = g8.playerFighters.slice(0, 3);
+          XS1.startExpedition(g8, s8.offers[0].id, t8.map((f) => f.id));
+          const r8 = SR1.getSingularRun(g8);
+          const startHp = SR1.runHp(g8, r8, t8[0].id);
+          r8.hp[t8[0].id] = 30;
+          r8.phase = 'choice';
+          r8.options = [{ kind: 'boon', id: 'repos-au-camp' }];
+          SR1.chooseOption(g8, 0, t8[0].id);
+          const healed = SR1.runHp(g8, r8, t8[0].id);
+          r8.phase = 'choice';
+          r8.options = [{ kind: 'boon', id: 'feu-de-camp' }];
+          SR1.chooseOption(g8, 0);
+          const capped = SR1.runHp(g8, r8, t8[0].id) <= SR1.runMaxHp(g8, r8, t8[0].id);
+          // Récompenses : seulement après les combats 3, 6, 9 ; selon la tranche ; Flamme et Parchemin pas en tranche 1.
+          r8.stage = 2;
+          const noReward = Array.from({ length: 20 }, (_, i) => SR1.rollOptions(g8, r8, createRng(`r2-${i}`))).every((o) => o.every((x) => x.kind === 'boon'));
+          r8.stage = 3;
+          const at3 = Array.from({ length: 60 }, (_, i) => SR1.rollOptions(g8, r8, createRng(`r3-${i}`)).filter((x) => x.kind === 'reward').map((x) => x.id)).flat();
+          check(healed === Math.min(SR1.runMaxHp(g8, r8, t8[0].id), 80) && capped && startHp > 0 && noReward && at3.length === 60 && !at3.includes('flamme-nouvelle') && !at3.includes('parchemin-ancien')
+            && SD1.describeSingularReward(SD1.getSingularReward('grosse-bourse'), 0) === '+300 deniers.' && SD1.describeSingularReward(SD1.getSingularReward('grosse-bourse'), 2).replace(/\s/g, ' ') === '+1 100 deniers.',
+            'expéditions singulières : les PV ne se récupèrent pas (Repos au camp +50 PV, Feu de camp +20, jamais au-delà du maximum) ; récompense de fin après les combats 3, 6, 9 seulement ; montants selon la tranche (Grosse bourse : 300 → 1 100), ni Flamme ni Parchemin en tranche 1');
+          // Talents à la victoire : le même combattant peut en recevoir deux (places différentes) ; on peut ne pas attribuer.
+          t8.forEach((f) => { f.talents = ['fourbe', 'fidele']; });
+          r8.phase = 'victory';
+          r8.stage = 10;
+          r8.reward = { type: 'talent', rarity: 'rare', talentId: 'bourreau' };
+          r8.rewards = [{ id: 'parchemin-ancien', talentId: 'sang-froid' }, { id: 'parchemin-ancien', talentId: 'cuir-epais' }];
+          const claims8 = SR1.getVictoryClaims(g8, r8);
+          const sameSlot = SR1.planTalentClaims(g8, claims8, { card: { fighterId: t8[0].id, slot: 0 }, 'reward-0': { fighterId: t8[0].id, slot: 0 } });
+          const unassigned = XS1.claimSingularVictory(g8, { card: { fighterId: t8[0].id, slot: 0 } });
+          const ok8 = XS1.claimSingularVictory(g8, { card: { fighterId: t8[0].id, slot: 0 }, 'reward-0': { fighterId: t8[0].id, slot: 1 }, 'reward-1': { fighterId: null } });
+          check(claims8.length === 3 && claims8.every((c) => c.eligible.length === 3) && !sameSlot.ok && !unassigned.ok && ok8.ok
+            && t8[0].talents.join() === 'bourreau,sang-froid' && t8[1].talents.join() === 'fourbe,fidele',
+            'victoire : même avec deux talents, chacun peut recevoir un talent en remplaçant celui de son choix (deux pour le même, places différentes) ; on peut aussi ne pas l’attribuer');
+        }
+        // v1.1.8 : téléphone (tutoriel, notifications, Compagnie, Bourg, affectations, volets, Reine, placement),
+        // « Sans activité », « En forme », recrues ×2, compétence à 100, fiche de l'expédition singulière.
+        {
+          const ML8 = await import('../src/ui/mobile/mobileLayout.js');
+          const { TUTORIAL_STEPS: TS8 } = await import('../src/data/tutorial.js');
+          const { TEAM_METRICS: TM8 } = await import('../src/ui/mobile/TeamMetric.js');
+          const { BOROUGH_MOBILE_LABEL_INSETS: BI8 } = await import('../src/ui/screens/BoroughScreen.js');
+          const { TavernScreen: Tav8 } = await import('../src/ui/screens/TavernScreen.js');
+          const { BoroughScreen: Bor8 } = await import('../src/ui/screens/BoroughScreen.js');
+          const { ExpeditionsScreen: Exp8 } = await import('../src/ui/screens/ExpeditionsScreen.js');
+          const { activityLabel: al8 } = await import('../src/ui/components/ActivitySelect.js');
+          const { AssignBoard: AB8 } = await import('../src/ui/mobile/AssignBoard.js');
+          const { FATIGUE_RULES: FR8 } = await import('../src/data/fatigue.js');
+          const { RECRUITMENT_CONFIG: RC8 } = await import('../src/data/recruitment.js');
+          const { computeRecruitPrice: crp8 } = await import('../src/systems/tavern/TavernRotationService.js');
+          const { calculateFighterLevel: lvl8 } = await import('../src/systems/fighters/ratings.js');
+          const AS8 = await import('../src/systems/activities/ActivityService.js');
+          const { DailyReport: DR8 } = await import('../src/systems/report/DailyReportService.js');
+          const { buildLogbookView: blv8 } = await import('../src/ui/report/logbookFormats.js');
+          const { SquadFighterDetail: SFD8 } = await import('../src/ui/components/ExpeditionBoard.js');
+          const g18 = createRandomGame({ rng: createRng('v118') });
+          services.gameState.setSession(g18);
+          // Tutoriel : chaque consigne « Cliquez » a sa version téléphone ; les textes du téléphone disent « touchez ».
+          const clickSteps = TS8.filter((s) => /Cliquez/.test(s.action ?? ''));
+          const mobileTexts = TS8.flatMap((s) => [...(s.mobileText ?? []), ...(s.mobileAfter ?? []), s.mobileAction ?? '']).join(' ');
+          check(clickSteps.length >= 4 && clickSteps.every((s) => s.mobileAction && /Touchez/.test(s.mobileAction))
+            && ['domain', 'fighter-card', 'recruits', 'advance'].every((id) => TS8.find((s) => s.id === id)?.mobileText?.length)
+            && !/clic|Cliquez|Passer la journée|À droite/i.test(mobileTexts) && /Jour suivant/.test(mobileTexts),
+            'tutoriel (téléphone) : « Touchez » au lieu de « Cliquez », « Compagnie » et « Jour suivant » comme sur les boutons, les lieux à gauche');
+          // Notifications en haut au centre ; Compagnie : « FAT » devant la fatigue ; la page défile sous le bandeau.
+          ML8.setMobileLayout(true);
+          window.behourd.screens.show('team');
+          await wait(60);
+          const toastRoot = getComputedStyle(document.getElementById('toast-root'));
+          const content8 = document.querySelector('.is-mobile-hub .hub-content');
+          const fatMetric = TM8.find((m) => m.id === 'fatigue').render(g18.playerFighters[0]);
+          check(parseFloat(toastRoot.top) < 20 && toastRoot.left !== 'auto' && toastRoot.transform !== 'none'
+            && fatMetric.textContent.startsWith('FAT') && TM8.find((m) => m.id === 'takedowns').render(g18.playerFighters[0]).textContent.indexOf('FAT') === -1
+            && getComputedStyle(content8).position === 'fixed' && parseFloat(getComputedStyle(content8).top) >= 60,
+            'téléphone : notifications en haut au centre ; « FAT » devant la fatigue (affichage Fatigue seulement) ; Compagnie défile sous le bandeau');
+          // Bourg : les étiquettes restent entre le bandeau et le dock.
+          window.behourd.screens.show('borough');
+          await wait(900);
+          const br8 = window.behourd.screens.current.renderer;
+          const boxes8 = [...(br8.labelBoxes ?? new Map()).values()];
+          check(BI8.top === 58 && BI8.bottom === 72 && br8.labelInsets.top === 58 && boxes8.length > 0
+            && boxes8.every((b) => b.top >= 58 && b.top + b.height <= br8.view.h - 72),
+            'Bourg (téléphone) : étiquettes des artisans jamais sous le bandeau du haut ni sous le dock');
+          // Affectations : « Sans activité » ; lieu fermé pour la saison en colonne étroite.
+          window.behourd.screens.show('centre');
+          await wait(60);
+          const board8 = AB8({ session: g18, selectedId: null, select() {}, assign() {}, closed: false });
+          board8.style.width = '900px';
+          document.body.append(board8);
+          const restCol = board8.querySelector('[data-activity="rest"]');
+          const closedCol = board8.querySelector('.m-assign-col.is-closed');
+          const openCol = board8.querySelector('.m-assign-col:not(.is-closed):not([data-activity="rest"])');
+          const narrow = !closedCol || closedCol.getBoundingClientRect().width < openCol.getBoundingClientRect().width;
+          board8.remove();
+          check(al8(null).endsWith('Sans activité') && restCol.textContent.includes('Sans activité') && narrow,
+            'affectations : « Sans activité » au lieu de « Au repos » ; un lieu fermé pour la saison n’est plus qu’une colonne étroite');
+          // Volets hauts (Taverne, Bourg, Baron) ; « En forme ».
+          check(Tav8.mobileSheet.tall && Bor8.mobileSheet.tall && Exp8.mobileSheet.tall && FR8.states[0].label === 'En forme',
+            'téléphone : volets hauts pour la Taverne, le Bourg et le Baron ; état « En forme » (et non « Reposé ») sous le seuil de fatigue');
+          ML8.setMobileLayout(false);
+          // Recrues : prix de la Taverne de départ doublés.
+          const rec8 = g18.recruitment.candidates.map((c) => c.fighter).find((f) => levelToStars(lvl8(f)) <= 2) ?? g18.playerFighters[3];
+          const prices8 = Array.from({ length: 20 }, (_, i) => crp8(rec8, createRng(`p8-${i}`)));
+          const base8 = Math.round(lvl8(rec8));
+          check(RC8.startingPriceFactor === 2 && prices8.every((p) => p === Math.max(1, p) && (p === 1 || (p % 2 === 0 && p >= 2 * (base8 - 10) && p <= 2 * (base8 + 10)))),
+            `Taverne : recrues de départ deux fois plus chères (niveau ± 10, × 2) — ${[...new Set(prices8)].slice(0, 6).join(', ')} deniers`);
+          // Compétence à 100 : « entraînement inutile », avec une note « au maximum ».
+          const max8 = g18.playerFighters[4];
+          max8.stats.polearm = 100;
+          const dummies8 = AS8.getActivity('dummies');
+          const report8 = new DR8(5);
+          AS8.defaultResolve(dummies8, max8, { session: g18, rng: createRng('max8'), report: report8 });
+          const ev8 = report8.ofType('activity.blocked')[0];
+          const tile8 = blv8(report8, { session: g18 }).tiles.find((t) => t.id === 'centre');
+          check(AS8.isTrainingUseless(max8, dummies8) && AS8.isTrainingAtMax(max8, dummies8) && ev8?.capped && ev8.atMax
+            && tile8.chips.find((c) => c.who === max8.name)?.text === 'entraînement inutile'
+            && tile8.notes?.some((n) => n.includes(`${max8.name} est au maximum en HAS (100)`)),
+            'carnet : une compétence à 100 signale « entraînement inutile » et une note « au maximum (100) », comme le potentiel atteint');
+          // Expédition singulière : la fiche du combattant touché (compétences, potentiel, fatigue).
+          const sheet8 = SFD8(g18, g18.playerFighters[0]);
+          check(sheet8.querySelectorAll('.xp-squad-skill').length === 4 && Boolean(sheet8.querySelector('.potential, .potential-flames, [class*="potential"]'))
+            && /Fatigue \d+ \/ 100/.test(sheet8.textContent) && SFD8(g18, null).textContent.includes('Touchez un combattant'),
+            'expédition singulière : toucher un combattant affiche sa fiche (quatre compétences, potentiel, fatigue, talents)');
+        }
+        // v1.1.9 (batterie) : scène couverte ralentie, densité d'écran plafonnée, couches fixes en mémoire.
+        {
+          const FP9 = await import('../src/render/framePacing.js');
+          const IV9 = await import('../src/render/IsoView.js');
+          // Cadence : 30 images/s sur téléphone ; couverte (fenêtre, volet haut) : 2 images/s.
+          const capBefore = FP9.getFrameCap();
+          FP9.setFrameCap(30);
+          let cover9 = false;
+          const pacer9 = FP9.createFramePacer({ hidden: () => false, covered: () => cover9 });
+          const frames9 = (from, ms) => { let n = 0; for (let t = from; t < from + ms; t += 1000 / 60) if (pacer9(t)) n++; return n; };
+          const free9 = frames9(0, 1000);
+          cover9 = true;
+          const covered9 = frames9(2000, 1000);
+          const backdrop9 = document.createElement('div');
+          backdrop9.className = 'modal-backdrop';
+          document.body.append(backdrop9);
+          const seen9 = FP9.isSceneCovered();
+          backdrop9.remove();
+          const tallSheet9 = document.createElement('section');
+          tallSheet9.className = 'm-sheet is-tall';
+          tallSheet9.dataset.state = 'closed';
+          document.body.append(tallSheet9);
+          const closedSeen9 = FP9.isSceneCovered();
+          tallSheet9.dataset.state = 'open';
+          const openSeen9 = FP9.isSceneCovered();
+          tallSheet9.remove();
+          FP9.setFrameCap(capBefore);
+          check(free9 >= 28 && free9 <= 31 && covered9 >= 1 && covered9 <= 3 && seen9 && !closedSeen9 && openSeen9 && !FP9.isSceneCovered(),
+            `téléphone : scène du domaine à ${free9} images/s, ${covered9} quand une fenêtre ou un volet haut la couvre (volet fermé : cadence normale)`);
+          // Densité d'écran plafonnée ; couche fixe redessinée seulement quand le cadrage ou la clé change.
+          IV9.setPixelRatioCap(2);
+          const ratio9 = IV9.canvasPixelRatio();
+          IV9.setPixelRatioCap(0);
+          const canvas9 = document.createElement('canvas');
+          canvas9.style.width = '200px';
+          canvas9.style.height = '100px';
+          document.body.append(canvas9);
+          const view9 = new IV9.IsoView(canvas9);
+          view9.resize();
+          view9.fit(10, 10);
+          let draws9 = 0;
+          const paint9 = () => { draws9++; view9.ctx.fillStyle = '#2f7a3a'; view9.ctx.fillRect(10, 10, 50, 30); };
+          view9.drawCachedLayer('sol', 'ete', paint9);
+          view9.drawCachedLayer('sol', 'ete', paint9);
+          const pixel9 = view9.ctx.getImageData(Math.round(20 * IV9.canvasPixelRatio()), Math.round(20 * IV9.canvasPixelRatio()), 1, 1).data;
+          view9.drawCachedLayer('sol', 'hiver', paint9);
+          view9.setUserZoom({ scale: 1.5 });
+          view9.drawCachedLayer('sol', 'hiver', paint9);
+          canvas9.remove();
+          check(ratio9 === Math.min(window.devicePixelRatio || 1, 2) && draws9 === 3 && pixel9[1] > pixel9[0] && pixel9[3] === 255,
+            `rendu : densité des canvas plafonnée (${ratio9}) ; couche fixe gardée en mémoire et recopiée (${draws9} dessins pour 4 images : saison et zoom la refont)`);
+        }
+        // v1.1.9 : musique et ambiances en Opus (.ogg) — chaque fichier référencé existe et se décode.
+        {
+          const AD9 = await import('../src/data/audio.js');
+          const files9 = new Set();
+          const walk9 = (v) => { if (typeof v === 'string' && v.startsWith('assets/audio/')) files9.add(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk9); };
+          walk9(AD9);
+          const ctx9 = new OfflineAudioContext(1, 44100, 44100);
+          const bad9 = [];
+          for (const f of files9) {
+            try { const a = await ctx9.decodeAudioData(await (await fetch(`../${f}`)).arrayBuffer()); if (!(a.duration > 0)) bad9.push(f); } catch { bad9.push(f); }
+          }
+          const list9 = [...files9];
+          check(bad9.length === 0 && list9.filter((f) => /\/(music|ambience)\//.test(f)).every((f) => f.endsWith('.ogg')) && list9.filter((f) => f.includes('/sfx/')).every((f) => f.endsWith('.mp3')),
+            `audio : ${list9.length} fichiers présents et lisibles ; musique et ambiances en Opus (.ogg), bruitages en MP3${bad9.length ? ` — illisibles : ${bad9.join(', ')}` : ''}`);
+        }
+        // v1.2 : talents améliorés (échelles ordinaire → rare → épique), nouvelles règles, quatre couleurs.
+        {
+          const TD2 = await import('../src/data/talents.js');
+          const TS2 = await import('../src/systems/talents/TalentService.js');
+          const TE2 = await import('../src/systems/talents/TalentEffects.js');
+          const { talentStrikeModifiers: tsm2 } = await import('../src/combat/engine/TalentCombat.js');
+          const { createCombatUnit: ccu2 } = await import('../src/combat/engine/CombatUnit.js');
+          const { awardHomeReward: ahr2 } = await import('../src/systems/league/HomeRewardService.js');
+          const UP2 = await import('../src/systems/borough/UpgradeService.js');
+          const { BOROUGH_UPGRADES: BU2 } = await import('../src/data/borough.js');
+          const g2 = createRandomGame({ rng: createRng('v120') });
+          const f2 = g2.playerFighters;
+          const t2 = (id) => TS2.getTalent(id);
+          // Échelles contre une classe : 5 / 8 / 12 %.
+          const ladder2 = [['briseur-de-garde', 'briseur-de-bouclier', 'briseur-de-reve', 'lutteur'], ['chasseur-de-lances', 'brise-hampe', 'fleau-des-lances', 'hastier'], ['rattrapeur', 'coupe-jarret', 'faucheur-de-coureurs', 'runner']]
+            .every(([a, b, c, cls]) => [[a, 'common', 0.05], [b, 'rare', 0.08], [c, 'epic', 0.12]].every(([id, rarity, value]) => t2(id)?.rarity === rarity && t2(id).effects[0].value === value && t2(id).effects[0].classId === cls));
+          // Quatre couleurs : chaque étiquette prend celle de sa famille, et rien d'autre.
+          const colors2 = new Set(TD2.TALENTS.map((t) => TS2.getTalentStyle(t).color));
+          check(ladder2 && TD2.TALENT_UNRANKED_STYLE === undefined && colors2.size === 4
+            && [...colors2].every((c) => Object.values(TD2.TALENT_RARITIES).some((r) => r.color === c)) && t2('collecteur').description.includes('sans activité'),
+            'talents : Briseur de garde → de bouclier → de rêve (et leurs pareils contre Hastier et Runner) : 5, 8, 12 % ; quatre couleurs d’étiquettes seulement');
+          // Combat : Coriace (dégâts reçus sous 30 % de ses PV), Écuyer de la Reine (Combat de la Reine).
+          const unit2 = (fighter, side, extra = {}) => ccu2({ fighter, side, tile: { x: side === 'A' ? 1 : 2, y: 1 }, fatigue: 0, ...extra });
+          const tough = unit2(f2[0], 'B', { talentEffects: TE2.combatEffectsOf({ talents: ['coriace'] }) });
+          const hitter = unit2(f2[1], 'A');
+          const fullHp = tsm2(hitter, tough, [hitter, tough], {}).reduction;
+          tough.hp = tough.maxHp * 0.2;
+          const lowHp = tsm2(hitter, tough, [hitter, tough], {}).reduction;
+          const squire = (competition) => unit2(f2[2], 'A', { talentEffects: TE2.combatEffectsOf({ talents: ['ecuyer-de-la-reine'] }), competition });
+          const target2 = unit2(f2[3], 'B');
+          const queenBonus = tsm2(squire('queen'), target2, [], {}).bonus;
+          const leagueBonus = tsm2(squire('combat'), target2, [], {}).bonus;
+          check(fullHp === 0 && Math.abs(lowHp - 0.06) < 1e-9 && Math.abs(queenBonus - 0.04) < 1e-9 && leagueBonus === 0,
+            'combat : Coriace −6 % de dégâts reçus sous 30 % de ses PV ; Écuyer de la Reine +4 % seulement pendant un Combat de la Reine');
+          // Économie : Quêteur (victoire à l'extérieur), Économe (Bourg, non cumulable).
+          f2[4].talents = ['queteur'];
+          const awayWin = ahr2(g2, { location: 'AWAY', won: true, participants: [f2[4]] });
+          const awayLoss = ahr2(g2, { location: 'AWAY', won: false, participants: [f2[4]] });
+          const upgrade2 = BU2[0];
+          const plain2 = UP2.getCurrentCost(g2, upgrade2.id);
+          f2[5].talents = ['econome'];
+          f2[6].talents = ['econome'];
+          const cheap2 = UP2.getCurrentCost(g2, upgrade2.id);
+          // Courbatures (Endurci, Increvable) ; Tardif (28 à 31 ans).
+          const tardif = { talents: ['tardif'] };
+          check(awayWin === 5 && awayLoss === 0 && cheap2 === Math.round(plain2 * 0.95) && TE2.upgradeDiscount(g2) === 0.05
+            && TE2.sorenessFactor({ talents: ['endurci'] }) === 0.7 && TE2.sorenessFactor({ talents: ['endurci', 'increvable'] }) === 0.5 && TE2.sorenessFactor({ talents: [] }) === 1
+            && TE2.potentialBoost(tardif, 27).value === 0 && TE2.potentialBoost(tardif, 29).value === 0.05 && TE2.potentialBoost(tardif, 32).value === 0,
+            `économie et carrière : Quêteur +5 deniers par victoire à l’extérieur ; Économe −5 % au Bourg (${plain2} → ${cheap2}, non cumulable) ; courbatures ×0,7 / ×0,5 ; Tardif de 28 à 31 ans`);
+          f2[4].talents = []; f2[5].talents = []; f2[6].talents = [];
+        }
+        // v1.2.1 : talents de combat des clubs de l'IA (tirés à la création, ajustés en fin de Coupe).
+        {
+          const AT = await import('../src/systems/clubs/AITalentService.js');
+          const { AI_TALENT_RULES: ATR } = await import('../src/data/aiTalents.js');
+          const { listAIClubs: listClubs1 } = await import('../src/systems/clubs/AIRecruitmentService.js');
+          const { selectTopFighters: top1 } = await import('../src/systems/rating/RatingService.js');
+          const { GameSession: GS1 } = await import('../src/state/GameSession.js');
+          const { COMBAT_TYPES: CT1 } = await import('../src/systems/talents/TalentEffects.js');
+          const TS1 = await import('../src/systems/talents/TalentService.js');
+          const g1 = createRandomGame({ rng: createRng('v121') });
+          const rar1 = (id) => TS1.getTalent(id)?.rarity;
+          // Talents possibles : de combat seulement, jamais d'exotique.
+          const pool1 = ['common', 'rare', 'epic'].flatMap((r) => AT.aiTalentPool(r));
+          const poolIds = new Set(pool1.map((t) => t.id));
+          check(AT.aiTalentPool('exotic').length === 0 && pool1.every((t) => t.effects.every((e) => CT1.includes(e.type)))
+            && ['fourbe', 'tambour', 'fidele', 'souffle-long', 'fourrure', 'titan', 'briseur-de-reve'].every((id) => poolIds.has(id))
+            && ['maitre-des-saisons', 'endurci', 'enfant-du-pays', 'ecuyer-de-la-reine', 'collecteur', 'legende-vivante'].every((id) => !poolIds.has(id)),
+            `IA : talents de combat seulement (${AT.aiTalentPool('common').length} ordinaires, ${AT.aiTalentPool('rare').length} rares, ${AT.aiTalentPool('epic').length} épiques ; ni exotique, ni économie, ni domicile)`);
+          // Création : règle de chaque division respectée, parmi les cinq premiers, deux talents au plus.
+          const fits = (session, clubId) => {
+            const rules = AT.clubTalentRule(session, clubId);
+            const fighters = session.getFightersOfTeam(clubId);
+            const top = new Set(top1(fighters, ATR.topCount).map((e) => e.fighter.id));
+            const okRules = rules.every((rule) => {
+              const n = fighters.filter((f) => top.has(f.id) && f.talents.some((id) => rar1(id) === rule.rarity)).length;
+              return n >= rule.min && n <= rule.max;
+            });
+            return okRules && fighters.every((f) => f.talents.length <= 2 && new Set(f.talents.map(rar1)).size === f.talents.length);
+          };
+          const clubs1 = listClubs1(g1);
+          const outside = clubs1.flatMap((id) => { const top = new Set(top1(g1.getFightersOfTeam(id), 5).map((e) => e.fighter.id)); return g1.getFightersOfTeam(id).filter((f) => !top.has(f.id) && f.talents.length); });
+          const l3 = g1.getLeague('league_3').teamIds.filter((id) => id !== g1.player.teamId);
+          const l3Rarities = new Set(l3.flatMap((id) => g1.getFightersOfTeam(id).flatMap((f) => f.talents.map(rar1))));
+          check(g1.aiTalentsSeeded && clubs1.every((id) => fits(g1, id)) && outside.length === 0 && [...l3Rarities].every((r) => r === 'common')
+            && g1.playerFighters.every((f) => !f.talents.length) && AT.seedAITalents(g1) === 0,
+            `IA : à la création, règle de chaque division (L3 : 0–2 ordinaires ; L2 : 1–3 ordinaires, 0–1 rare ; L1 et hors championnat : 1–3 rares, 1–2 épiques), dans les 5 meilleurs, 2 talents au plus — ${clubs1.length} clubs`);
+          // Sauvegarde : talents gardés (base de clubs : avec l'évolution du combattant).
+          const someClub = g1.getLeague('league_1').teamIds.find((id) => id !== g1.player.teamId);
+          const before1 = g1.getFightersOfTeam(someClub).map((f) => f.talents.join('+')).join();
+          const reloaded = GS1.fromJSON(JSON.parse(JSON.stringify(g1.toJSON())));
+          const after1 = reloaded.getFightersOfTeam(someClub).map((f) => f.talents.join('+')).join();
+          check(before1 === after1 && before1.length > 0 && reloaded.aiTalentsSeeded,
+            'IA : talents enregistrés avec la partie et retrouvés au chargement');
+          // Fin de Coupe : ajustement au plus juste.
+          const club = l3[0];
+          const tops = top1(g1.getFightersOfTeam(club), 5).map((e) => e.fighter);
+          const sixth = top1(g1.getFightersOfTeam(club), 9).map((e) => e.fighter)[5];
+          tops.forEach((f) => AT.setAIFighterTalents(g1, f, []));
+          tops.slice(0, 4).forEach((f, i) => AT.setAIFighterTalents(g1, f, [['fourbe', 'cuir-epais', 'hargneux', 'combinard'][i]]));
+          if (sixth) AT.setAIFighterTalents(g1, sixth, ['chanceux']);
+          AT.applyClubTalentRule(g1, club, createRng('rev1'));
+          const commons = tops.filter((f) => f.talents.some((id) => rar1(id) === 'common')).length;
+          // Club promu en Ligue 1 : ses ordinaires restent (ne comptent pas), rares et épiques ajoutés.
+          const promoted = l3[1];
+          g1.getLeague('league_3').teamIds = g1.getLeague('league_3').teamIds.filter((id) => id !== promoted);
+          g1.getLeague('league_1').teamIds.push(promoted);
+          const commonsBefore = g1.getFightersOfTeam(promoted).flatMap((f) => f.talents).filter((id) => rar1(id) === 'common').length;
+          AT.applyClubTalentRule(g1, promoted, createRng('rev2'));
+          const pf = g1.getFightersOfTeam(promoted);
+          const commonsAfter = pf.flatMap((f) => f.talents).filter((id) => rar1(id) === 'common').length;
+          check(commons === 2 && (!sixth || sixth.talents.join() === 'chanceux') && fits(g1, promoted) && commonsAfter === commonsBefore && pf.every((f) => f.talents.length <= 2),
+            'IA, fin de Coupe : trop d’ordinaires en L3 → ramenés à 2 ; un combattant hors des 5 premiers garde son talent ; club promu en L1 : ses ordinaires restent, rares et épiques ajoutés');
+          // Placement : les cartes adverses montrent compétences (valeur de combat) et talents.
+          const { PlacementFighterCard: PFC1 } = await import('../src/ui/components/PlacementFighterCard.js');
+          const enemy1 = g1.getFightersOfTeam(someClub).find((f) => f.talents.length);
+          const card1 = PFC1(enemy1, { side: 'enemy', state: 'available', session: g1, team: g1.getTeam(someClub), fatigue: 0, statusText: '' });
+          const values1 = [...card1.querySelectorAll('.pfc-skill-value')].map((e) => Number(e.textContent));
+          check(card1.querySelectorAll('.talent-badge').length === enemy1.talents.length && values1.length === 4 && values1.every((v) => v === Math.round(enemy1.score)),
+            'placement : carte adverse avec ses compétences (sa note de combat) et ses talents');
+        }
+        // v1.2.2 : comportements d'élite, et estimations avec les talents.
+        {
+          const AP2 = await import('../src/data/aiProfiles.js');
+          const LS2 = await import('../src/systems/ai/LineupStrategies.js');
+          const DE2 = await import('../src/combat/engine/ai/duelEstimate.js');
+          const { createCombatUnit: ccu22 } = await import('../src/combat/engine/CombatUnit.js');
+          const { combatEffectsOf: cef22 } = await import('../src/systems/talents/TalentEffects.js');
+          const BS2 = await import('../src/systems/ai/AIBenchService.js');
+          const elites = AP2.AI_ELITE_PROFILES;
+          check(elites.map((p) => p.id).join() === 'marteau-elite,tacticien-elite,stratege-elite' && elites.every((p) => p.elite && p.fighterAI.decisionInterval === 2 && p.fighterAI.retreat.maxPerRound === 0 && p.fighterAI.breathe.minFatigue > 100)
+            && elites.map((p) => AP2.getAIProfile(p.id).behavior).join() === 'implacable,magistral,visionnaire' && AP2.AI_PROFILES.length === 8,
+            'IA d’élite : Marteau (implacable), Tacticien (magistral), Stratège (visionnaire) — décisions tous les 2 tours, ni recul ni souffle');
+          // Composition d'élite : sans quotas de classes (les meilleurs en duel).
+          const roster22 = BS2.createBenchRoster('elite-compo');
+          const enemies22 = BS2.createBenchRoster('elite-compo-adv');
+          const unitOf22 = (f) => ccu22({ fighter: f, side: 'A', tile: { x: 0, y: 0 }, fatigue: 0 });
+          const pick22 = LS2.selectLineup('eliteDuel', { own: roster22, opponents: enemies22, size: 5, unitOf: unitOf22, fatigueOf: () => 0 });
+          const ranked22 = roster22.map((f) => ({ f, v: DE2.averageDuelStrength(unitOf22(f), enemies22.map(unitOf22)) })).sort((a, b) => b.v - a.v).slice(0, 5).map((e) => e.f.id);
+          const strat22 = LS2.selectLineup('eliteStrategist', { own: roster22, opponents: enemies22, size: 5, unitOf: unitOf22, fatigueOf: (f) => (f === roster22[0] ? 90 : 0) });
+          check(pick22.length === 5 && pick22.map((f) => f.id).join() === ranked22.join() && strat22.length === 5,
+            'IA d’élite : composition = les 5 meilleurs en duel, sans quotas de classes ; le Stratège d’élite ménage ses fatigués');
+          // Talents dans l'estimation : +12 % contre un Lutteur → meilleur rapport de force contre lui.
+          const lut22 = roster22.find((f) => f.specialtyId === 'lutteur') ?? roster22[0];
+          const plain22 = ccu22({ fighter: roster22[1], side: 'A', tile: { x: 0, y: 0 }, fatigue: 0 });
+          const gifted22 = ccu22({ fighter: roster22[1], side: 'A', tile: { x: 0, y: 0 }, fatigue: 0, talentEffects: cef22({ talents: ['briseur-de-reve', 'feu-follet'] }) });
+          const target22 = ccu22({ fighter: lut22, side: 'B', tile: { x: 1, y: 0 }, fatigue: 0 });
+          const dodger22 = ccu22({ fighter: lut22, side: 'B', tile: { x: 1, y: 0 }, fatigue: 0, talentEffects: cef22({ talents: ['feu-follet'] }) });
+          check(DE2.talentDamageFactor(plain22, target22) === 1 && DE2.talentDamageFactor(gifted22, target22) > 1.1
+            && DE2.talentDamageFactor(plain22, dodger22) < 0.9 && DE2.duelStrength(gifted22, target22) >= DE2.duelStrength(plain22, target22),
+            'IA : les estimations de duel comptent les talents (Briseur de rêve +12 % contre un Lutteur ; esquive du Feu follet)');
+          // Banc d'essai : à armes égales, le Marteau d'élite bat le Marteau d'origine.
+          let eliteWins = 0;
+          for (let i = 0; i < 16; i++) for (const r of BS2.playBenchPair({ first: AP2.getAIProfile('marteau-elite'), second: AP2.getAIProfile('marteau'), seed: `elite-test:${i}` })) if (r.won) eliteWins++;
+          check(eliteWins >= 17, `IA d’élite : le Marteau d’élite bat le Marteau d’origine à armes égales (${eliteWins} combats sur 32)`);
+        }
+        // v1.2.3 : fin d'étude — trois talents de la même famille, un seul choix ; la journée attend.
+        {
+          const SS3 = await import('../src/systems/talents/StudyService.js');
+          const TS3 = await import('../src/systems/talents/TalentService.js');
+          const { dayAction: da3 } = await import('../src/ui/mobile/MobileHub.js');
+          const g3 = createRandomGame({ rng: createRng('v123') });
+          services.gameState.setSession(g3);
+          const f3 = g3.playerFighters.find((f) => !f.isCaptain);
+          f3.talents = ['fourbe'];
+          f3.activityId = null;
+          const st3 = SS3.startStudy(g3, f3.id);
+          g3.calendar.currentDay = st3.study.endDay;
+          const ev3 = SS3.completeDueStudies(g3);
+          const study3 = st3.study;
+          const rar3 = new Set(study3.choices.map((id) => TS3.getTalent(id).rarity));
+          check(ev3.length === 1 && ev3[0].type === 'talent.choice' && study3.status === 'choosing' && study3.choices.length === 3 && new Set(study3.choices).size === 3
+            && rar3.size === 1 && rar3.has(study3.rarity) && !study3.choices.includes('fourbe') && f3.talents.join() === 'fourbe'
+            && SS3.getPendingTalentChoices(g3).length === 1 && !SS3.canStartStudy(g3, f3.id).ok,
+            `Scriptorium : fin d’étude — trois talents différents de la même famille (${study3.rarity}) (famille tirée, jamais celui qu’il garde), rien n’est donné avant le choix`);
+          // La journée ne passe pas : bouton du jour (ordinateur, téléphone), et l'écran ouvre le choix.
+          const day3 = g3.calendar.currentDay;
+          window.behourd.screens.show('centre');
+          await wait(60);
+          const barLabel = document.querySelector('.calendar-bar .btn-talent-choice')?.textContent ?? '';
+          window.behourd.screens.current.advanceDay();
+          await wait(60);
+          const modal3 = document.querySelector('.talent-choice-modal');
+          const cards3 = modal3 ? [...modal3.querySelectorAll('.talent-choice-card')] : [];
+          check(/CHOISIR UN TALENT/.test(barLabel) && da3(g3).label === 'Choisir un talent' && g3.calendar.currentDay === day3 && cards3.length === 3,
+            'journée : tant que le talent n’est pas choisi, le bouton du jour devient « Choisir un talent » et ouvre le choix (le jour ne passe pas)');
+          // Un seul choix : le talent choisi est donné, puis plus rien n'est à choisir.
+          cards3[1]?.click();
+          modal3?.querySelector('.modal-actions .btn-primary')?.click();
+          await wait(40);
+          const chosen3 = study3.choices[1];
+          const again3 = SS3.chooseStudyTalent(g3, study3.id, study3.choices[2]);
+          const outside = SS3.chooseStudyTalent(g3, study3.id, 'titan');
+          check(f3.talents.join() === `fourbe,${chosen3}` && study3.status === 'completed' && study3.talentId === chosen3 && !again3.ok && !outside.ok
+            && SS3.getPendingTalentChoices(g3).length === 0 && da3(g3).label !== 'Choisir un talent' && !document.querySelector('.talent-choice-modal'),
+            'Scriptorium : un seul talent choisi parmi les trois (il s’ajoute au premier) ; un second choix est refusé, la journée peut reprendre');
+          // Remplacement : le talent choisi prend la place visée au départ de l'étude.
+          f3.talents = ['fourbe', 'cuir-epais'];
+          g3.player.resources.deniers = 1000;
+          const st3b = SS3.startStudy(g3, f3.id, { slot: 0 });
+          g3.calendar.currentDay = st3b.study.endDay;
+          SS3.completeDueStudies(g3);
+          const pick3 = st3b.study.choices[0];
+          const r3 = SS3.chooseStudyTalent(g3, st3b.study.id, pick3);
+          check(st3b.ok && !st3b.study.choices.includes('cuir-epais') && r3.ok && f3.talents.join() === `${pick3},cuir-epais` && r3.event.previousTalentId === 'fourbe',
+            'Scriptorium : remplacement — le talent choisi remplace celui visé au départ (Fourbe), l’autre reste ; le talent gardé n’est jamais proposé');
+        }
         // v1.1.3 : succès des expéditions singulières (44 à 47).
         {
           const ACH3 = await import('../src/systems/achievements/AchievementService.js');

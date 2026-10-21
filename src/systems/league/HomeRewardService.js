@@ -2,7 +2,7 @@ import { HOME_REWARD_BY_LICE_LEVEL, HOME_REWARD_CURRENCY, MATCH_LOCATIONS } from
 import { addResource } from '../economy/wallet.js';
 import { getLiceLevel } from '../lice/LiceUpgradeService.js';
 import { randInt } from '../../utils/random.js';
-import { homeRewardMultiplier, homeWinBonus } from '../talents/TalentEffects.js';
+import { homeRewardMultiplier, homeWinBonus, awayWinBonus } from '../talents/TalentEffects.js';
 
 // Récompense d'une victoire de Ligue à domicile (HomeRewardManager) : deniers tirés selon le
 // niveau de la lice du joueur (data/homeAway.js). Aucune valeur ici ; un nouveau niveau de lice
@@ -31,7 +31,9 @@ export function computeHomeReward({ location, won, liceLevel }, rng = Math.rando
  */
 export function awardHomeReward(session, { location, won, participants = [] }, rng = Math.random) {
   const base = computeHomeReward({ location, won, liceLevel: getLiceLevel(session) }, rng);
-  const amount = base > 0 ? Math.round(base * homeRewardMultiplier(session)) + homeWinBonus(participants) : 0;
+  // Quêteur (v1.2) : une victoire à l'extérieur rapporte aussi, à ceux qui y ont combattu.
+  const awayBonus = won && location === MATCH_LOCATIONS.AWAY ? awayWinBonus(participants) : 0;
+  const amount = base > 0 ? Math.round(base * homeRewardMultiplier(session)) + homeWinBonus(participants) : awayBonus;
   if (amount > 0) addResource(session, HOME_REWARD_CURRENCY, amount);
   return amount;
 }

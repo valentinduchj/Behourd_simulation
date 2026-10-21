@@ -83,10 +83,24 @@ export function getClubSpriteUrl(spriteId, colors, animation = DEFAULT_ANIMATION
   return colors ? tintedEntry(spriteId, animation, colors)?.url ?? null : null;
 }
 
-/** Image d'un sprite ; avec `colors`, aux couleurs du club dès qu'elle est prête. */
+// Attente de l'image recolorée (v1.1.7) : sans elle, le tabard d'origine (rouge, bleu, vert…)
+// s'affichait un instant avant de prendre les couleurs du club. Le sprite de base ne sert plus
+// qu'en dernier recours, si l'image recolorée n'est toujours pas prête après ce délai.
+const TINT_WAIT_MS = 2000;
+const tintRequested = new Map(); // clé de l'image recolorée → premier instant demandé
+
+/**
+ * Image d'un sprite ; avec `colors`, aux couleurs du club dès qu'elle est prête. En attendant
+ * (au plus TINT_WAIT_MS) : null — rien n'est dessiné plutôt qu'un tabard d'une autre couleur.
+ */
 export function getSpriteImage(spriteId, animation = DEFAULT_ANIMATION, colors = null) {
-  const club = colors ? tintedEntry(spriteId, animation, colors)?.image : null;
-  return club && isReady(club) ? club : baseImage(spriteId, animation);
+  if (!colors) return baseImage(spriteId, animation);
+  const club = tintedEntry(spriteId, animation, colors)?.image;
+  if (club && isReady(club)) return club;
+  const key = `${spriteId}:${animation}:${colorsKey(colors)}`;
+  const now = Date.now();
+  if (!tintRequested.has(key)) tintRequested.set(key, now);
+  return now - tintRequested.get(key) < TINT_WAIT_MS ? null : baseImage(spriteId, animation);
 }
 
 /** Couleurs du club d'un combattant (fighter.teamId → club → couleurs de l'emblème), ou null. */
@@ -115,6 +129,8 @@ const isReady = (image) => image.complete && image.naturalWidth > 0;
  */
 export function drawSpriteFigure(ctx, x, y, { spriteId, animation = DEFAULT_ANIMATION, height, clubColors = null, ringColor = '#2a2016', highlighted = false, label = null, time = 0, phase = 0, colorIntensity = 1, fallback, pose = null }) {
   const image = getSpriteImage(spriteId, animation, clubColors);
+  // Image recolorée pas encore prête : rien pendant un court instant (jamais l'autre tabard).
+  if (!image) return;
   if (!isReady(image)) {
     drawFigure(ctx, x, y, { ...fallback, highlighted, label });
     return;

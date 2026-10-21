@@ -14,6 +14,7 @@ import { aliveInBracket, createBracket, propagateWinner } from './CupBracket.js'
 import { countKnockouts, recordFighterStats } from './CupStatistics.js';
 import { setStat } from '../fighters/stats.js';
 import { recordCupProgress } from '../achievements/AchievementService.js';
+import { getCurrentSeason } from '../climate/ClimateService.js';
 
 // Coupe de France (FrenchCupManager) : compétition permanente, indépendante du calendrier.
 // Elle vit tout entière dans session.frenchCup (tirage, poules, tableau, statistiques) et ne
@@ -397,6 +398,9 @@ export function simulateMatch(session, match) {
       B: { profile: profiles.B, fighters: session.getFightersOfTeam(match.teamBId) },
     },
     rng: createRng(`coupe:${cup.editionId}:${match.id}`),
+    // v1.2.1 : talents de combat des clubs de l'IA.
+    withTalents: true,
+    season: getCurrentSeason(session).id,
   });
   return applyMatchResult(session, match, { rounds: result.rounds, simulated: true, profiles: { A: profiles.A.id, B: profiles.B.id } });
 }

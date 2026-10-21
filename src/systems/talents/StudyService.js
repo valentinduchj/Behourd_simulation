@@ -2,7 +2,7 @@ import { STUDY_RULES } from '../../data/scriptorium.js';
 import { createId } from '../../utils/id.js';
 import { createRng } from '../../utils/random.js';
 import { getPotential } from '../fighters/PotentialService.js';
-import { getFighterTalents, getTalent, rollTalentWithOdds, setFighterTalentAt } from './TalentService.js';
+import { getFighterTalents, getTalent, rollRarity, pickTalentOfRarity, setFighterTalentAt } from './TalentService.js';
 import { TALENT_RULES } from '../../data/talents.js';
 import { getActiveOdds, getDeskCount } from './ScriptoriumUpgradeService.js';
 import { canAfford, spendResource } from '../economy/wallet.js';
@@ -16,14 +16,20 @@ import { isOnPeregrination, PEREGRINATION_REASON } from '../expeditions/journeys
 //   { id, fighterId, startDay, duration, endDay, status, talentId, closedOnDay, notified,
 //     ceremonyShown (révélation montrée au Scriptorium : présentation), mode ('first' | 'second' |
 //     'replace', v0.72), slot (place révélée ou remplacée : 0 ou 1), cost, previousTalentId }
-//   status : 'active' (en cours) | 'completed' (talent révélé) | 'interrupted' | 'cancelled'
-//            (combattant parti de la compagnie)
+//   status : 'active' (en cours) | 'choosing' (v1.2.3 : étude finie, trois talents proposés,
+//            choices) | 'completed' (talent choisi) | 'interrupted' | 'cancelled' (combattant
+//            parti de la compagnie)
+// v1.2.3 : à la fin de l'étude, la famille est tirée, puis STUDY_CHOICE_COUNT talents différents de
+// cette famille ; le joueur en choisit un (chooseStudyTalent). Tant qu'un choix attend, la journée
+// ne peut pas passer (HubScreen.advanceDay).
 // Tout se déduit de ces données et du calendrier du jeu (jamais du temps réel) : un combattant
 // est « en étude » tant qu'une étude active le concerne ; il est alors indisponible pour le
 // Centre et les combats (vérifié par la logique de jeu, pas seulement par l'affichage).
 
 // Études terminées gardées en mémoire (les plus récentes).
 const HISTORY_LIMIT = 50;
+/** Talents proposés à la fin d'une étude (même famille). */
+export const STUDY_CHOICE_COUNT = 3;
 
 /** Durée d'étude d'un combattant (jours), d'après son potentiel (0 à 3). */
 export function getStudyDuration(fighter, rules = STUDY_RULES) {
@@ -119,6 +125,7 @@ export function canStartStudy(session, fighterId, { slot = null, rules = STUDY_R
   const plan = getStudyPlan(session, fighter, rules);
   const { cost } = plan;
   if (isStudying(session, fighterId)) return { ok: false, reason: 'Ce combattant étudie déjà.', cost, plan };
+  if (getPendingTalentChoices(session).some((study) => study.fighterId === fighterId)) return { ok: false, reason: 'Choisissez d’abord le talent de sa dernière étude.', cost, plan };
   if (isOnPeregrination(session, fighterId)) return { ok: false, reason: PEREGRINATION_REASON, cost, plan };
   if (getFreeDesks(session) <= 0) return { ok: false, reason: 'Le Bureau d’étude est complet : interrompez une étude ou attendez sa fin.', cost, plan };
   if (slot !== null && !plan.slots.includes(slot)) return { ok: false, reason: 'Ce talent ne peut pas être remplacé.', cost, plan };
@@ -157,7 +164,7 @@ export function startStudy(session, fighterId, { slot = null, rules = STUDY_RULE
 }
 
 function trimHistory(session) {
-  const closed = studiesOf(session).filter((study) => study.status !== 'active');
+  const closed = studiesOf(session).filter((study) => study.status !== 'active' && study.status !== 'choosing');
   if (closed.length <= HISTORY_LIMIT) return;
   const drop = new Set(closed.slice(0, closed.length - HISTORY_LIMIT));
   session.studies = studiesOf(session).filter((study) => !drop.has(study));
@@ -213,33 +220,34 @@ export function completeDueStudies(session, { report = null } = {}) {
     const slot = study.mode === 'replace' || legacyReplace ? Math.min(study.slot ?? 0, Math.max(0, owned.length - 1)) : null;
     // Le talent gardé (l'autre place) n'est jamais tiré : pas de doublon. Celui qu'on remplace peut revenir.
     const exclude = owned.filter((_, index) => index !== slot);
-    // Tirage À LA RÉVÉLATION, avec l'artefact actif à ce moment : famille, puis talent.
+    // Tirage À LA FIN DE L'ÉTUDE, avec l'artefact actif à ce moment : famille, puis (v1.2.3)
+    // trois talents différents de cette famille, au choix du joueur.
     const odds = getActiveOdds(session);
-    const { rarity, talent, fallback } = rollTalentWithOdds('study', odds, createRng(`study:${study.id}`), { exclude });
-    const previous = slot === null ? null : owned[slot] ?? null;
-    // Remplacement : le nouveau talent prend la place choisie ; sinon il s'ajoute.
-    const granted = talent ? setFighterTalentAt(session, fighter, talent.id, slot) : null;
-    study.slot = slot ?? Math.max(0, (fighter.talents?.length ?? 1) - 1);
-    study.status = 'completed';
-    study.talentId = granted?.id ?? null;
+    const rng = createRng(`study:${study.id}`);
+    const rarity = rollRarity(odds, rng);
+    const choices = [];
+    let fallback = false;
+    for (let i = 0; i < STUDY_CHOICE_COUNT; i++) {
+      const pick = pickTalentOfRarity('study', rarity, rng, { exclude: [...exclude, ...choices] });
+      if (!pick.talent) break;
+      if (pick.fallback) fallback = true;
+      choices.push(pick.talent.id);
+    }
+    study.status = 'choosing';
+    study.choices = choices;
+    study.targetSlot = slot;
     study.rarity = rarity;
     study.rarityFallback = fallback;
     study.odds = { ...odds };
-    study.previousTalentId = previous;
-    study.closedOnDay = today;
-    study.notified = Boolean(report);
+    study.choiceDay = today;
     changed = true;
-    if (!granted) continue;
     const event = {
-      type: 'talent.revealed', fighterId: fighter.id, name: fighter.name, talentId: granted.id, talentName: granted.name,
-      rarity, previousTalentId: previous, previousTalentName: previous ? getTalent(previous)?.name ?? previous : null,
-      // v0.72 : place du talent (0 : premier, 1 : second) ; second : un second talent s'ajoute au premier.
-      slot: study.slot, second: slot === null && study.slot === 1,
+      type: 'talent.choice', fighterId: fighter.id, name: fighter.name, rarity, choices: [...choices],
+      choiceNames: choices.map((id) => getTalent(id)?.name ?? id), replace: slot !== null,
+      previousTalentName: slot !== null && owned[slot] ? getTalent(owned[slot])?.name ?? owned[slot] : null,
     };
     events.push(event);
     report?.add(event);
-    // Succès : talent découvert (compteur des talents ordinaires).
-    recordTalentDiscovered(session, granted.id);
   }
   if (changed) {
     trimHistory(session);
@@ -248,6 +256,61 @@ export function completeDueStudies(session, { report = null } = {}) {
     checkAchievements(session, { report });
   }
   return events;
+}
+
+/**
+ * Études finies dont le talent attend le choix du joueur (v1.2.3), de la plus ancienne à la plus
+ * récente. Celle d'un combattant parti de la compagnie est annulée au passage.
+ */
+export function getPendingTalentChoices(session) {
+  const pending = [];
+  for (const study of studiesOf(session)) {
+    if (study.status !== 'choosing') continue;
+    if (!isPlayerFighter(session, study.fighterId)) {
+      study.status = 'cancelled';
+      study.closedOnDay = session.calendar.currentDay;
+      session.markDirty?.();
+      continue;
+    }
+    pending.push(study);
+  }
+  return pending;
+}
+
+/**
+ * Le joueur choisit le talent d'une étude finie (un seul, parmi ses `choices`). Le talent prend la
+ * place prévue (ajout, ou remplacement choisi au départ de l'étude). Renvoie { ok, reason, talent,
+ * event } — event : 'talent.revealed' (comme une révélation).
+ */
+export function chooseStudyTalent(session, studyId, talentId) {
+  const study = studiesOf(session).find((s) => s.id === studyId);
+  if (!study || study.status !== 'choosing') return { ok: false, reason: 'Aucun talent à choisir pour cette étude.' };
+  if (!(study.choices ?? []).includes(talentId)) return { ok: false, reason: 'Ce talent ne fait pas partie des trois proposés.' };
+  const fighter = session.getFighter(study.fighterId);
+  if (!fighter || !isPlayerFighter(session, study.fighterId)) return { ok: false, reason: 'Ce combattant a quitté la compagnie.' };
+  const owned = [...(fighter.talents ?? [])];
+  const slot = study.targetSlot ?? null;
+  const previous = slot === null ? null : owned[slot] ?? null;
+  const granted = setFighterTalentAt(session, fighter, talentId, slot);
+  if (!granted) return { ok: false, reason: 'Ce talent ne peut pas lui être donné.' };
+  const today = session.calendar.currentDay;
+  study.slot = slot ?? Math.max(0, (fighter.talents?.length ?? 1) - 1);
+  study.status = 'completed';
+  study.talentId = granted.id;
+  study.previousTalentId = previous;
+  study.closedOnDay = today;
+  study.notified = true;
+  // Succès : talent découvert (compteur des talents ordinaires), puis succès d'état.
+  recordTalentDiscovered(session, granted.id);
+  trimHistory(session);
+  session.markDirty();
+  checkAchievements(session);
+  const event = {
+    type: 'talent.revealed', fighterId: fighter.id, name: fighter.name, talentId: granted.id, talentName: granted.name,
+    rarity: study.rarity, previousTalentId: previous, previousTalentName: previous ? getTalent(previous)?.name ?? previous : null,
+    slot: study.slot, second: slot === null && study.slot === 1,
+  };
+  return { ok: true, reason: null, talent: granted, event };
 }
 
 /**

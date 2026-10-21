@@ -4,6 +4,7 @@ import { getStarRating } from '../fighters/ratings.js';
 import { getClubLevel } from '../league/LeagueService.js';
 import { createRng } from '../../utils/random.js';
 import { selectLineup } from './LineupStrategies.js';
+import { combatEffectsOf } from '../talents/TalentEffects.js';
 
 // Comportement de l'équipe adverse (IA) dans un combat contre le joueur : un des 8 profils d'IA
 // (data/aiProfiles.js) tiré À CHAQUE COMBAT (AI_PROFILE_BY_CLUB_STARS : même chance pour tous),
@@ -54,7 +55,8 @@ export function describeBehavior(profile) {
 
 /** Combattant de manche (stats, fatigue du combat) pour les estimations de l'IA. */
 function unitFor(fighter, fatigue) {
-  return createCombatUnit({ fighter, side: 'B', tile: { x: 0, y: 0 }, fatigue, isCaptain: fighter.isCaptain === true });
+  // v1.2.2 : avec ses talents de combat (estimations des profils réfléchis).
+  return createCombatUnit({ fighter, side: 'B', tile: { x: 0, y: 0 }, fatigue, isCaptain: fighter.isCaptain === true, talentEffects: combatEffectsOf(fighter) });
 }
 
 /**

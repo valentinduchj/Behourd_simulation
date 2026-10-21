@@ -1659,3 +1659,38 @@ button.placement-card:not(:disabled):hover { border-color: #c99a2e; }
 .xp-opponent-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.85rem; }
 .xp-opponent-talents { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: flex-end; }
 .calendar-bar .btn-singular { background: linear-gradient(#8e2a3a, #6a1a26); border-color: #4a0f18; }
+/* v1.1.7 — PV de l'expédition singulière (rouge-vert) ; « Ne pas attribuer » à la victoire. */
+.sx-hp .sx-fatigue-bar > span { background: #3f8a3c; }
+.sx-hp.is-warm .sx-fatigue-bar > span { background: #d9b24a; }
+.sx-hp.is-tired .sx-fatigue-bar > span { background: #c0392b; }
+.sx-claim .sx-skip-claim { border-style: dashed; }
+.sx-claim .sx-skip-claim[aria-pressed="true"] { background: #6e5538; color: #fff; border-style: solid; }
+.cup-leader-matches { font-weight: 400; color: var(--text-muted); font-size: 0.8em; }
+
+/* Expédition singulière (v1.1.8) : la liste à gauche, la fiche du combattant touché à droite. */
+.xp-squad-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 17rem); gap: 0.7rem; align-items: start; margin-top: 0.4rem; }
+.xp-squad-layout .xp-fighters { margin: 0; }
+.xp-fighter.is-viewed { outline: 2px dashed #b07d1a; outline-offset: 1px; }
+.xp-squad-detail { position: sticky; top: 0; padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-card, #fffdf7); display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; }
+.xp-squad-empty { margin: 0; }
+.xp-squad-sheet { display: flex; flex-direction: column; gap: 0.35rem; }
+.xp-squad-head { display: flex; align-items: center; gap: 0.5rem; }
+.xp-squad-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.xp-squad-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 0.8rem; }
+.xp-squad-pot { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.xp-squad-skills { display: flex; flex-direction: column; gap: 3px; }
+.xp-squad-skill { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr) 2rem; align-items: center; gap: 6px; font-size: 0.85rem; }
+.xp-squad-skill b { text-align: right; font-variant-numeric: tabular-nums; }
+.xp-squad-skill.is-key { font-weight: 700; }
+.xp-squad-skill.is-maxed b { color: #a8322d; }
+.xp-squad-bar { height: 7px; border-radius: 4px; background: #e8dcc4; overflow: hidden; }
+.xp-squad-bar > span { display: block; height: 100%; background: #8f2a22; }
+.xp-squad-skill.is-key .xp-squad-bar > span { background: #b07d1a; }
+.xp-squad-fatigue { margin: 0; font-weight: 600; font-size: 0.85rem; }
+.xp-squad-fatigue.is-low { color: #2f7a35; }
+.xp-squad-fatigue.is-mid { color: #9a5a12; }
+.xp-squad-fatigue.is-high { color: #a8322d; }
+.xp-squad-talents { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; }
+.xp-squad-notalent { margin: 0; font-size: 0.82rem; }
+@media (max-width: 640px) { .xp-squad-layout { grid-template-columns: minmax(0, 1fr); } }
+.xp-squad-skill > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -96,13 +96,15 @@ export function renderSquadMobile(screen) {
   }));
   const aside = h('aside', { class: 'mm-aside' },
     opponentCard(screen),
-    h('p', { class: 'mm-hint' }, `À chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`),
+    h('p', { class: 'mm-hint' }, screen.isCup
+      ? `Coupe de France : emmenez ${screen.cupSquadSize} combattants pour toute la Coupe (${screen.squad.length} / ${screen.cupSquadSize}). À chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`
+      : `À chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`),
     h('button', { type: 'button', class: 'btn mm-action', onclick: () => screen.selectTypeTeam() }, 'Équipe type'),
     h('button', { type: 'button', class: 'btn mm-action', disabled: !screen.squad.length, onclick: () => { screen.squad = []; screen.update(); } }, 'Tout décocher'),
     h('button', {
-      type: 'button', class: 'btn btn-primary mm-go', disabled: screen.squad.length === 0,
-      onclick: () => { screen.lineup = []; screen.match.squadIds = [...screen.squad]; screen.goTo('lineup'); },
-    }, 'Valider l’effectif ▸'));
+      type: 'button', class: 'btn btn-primary mm-go', disabled: !screen.canConfirmSquad,
+      onclick: () => screen.confirmSquad(),
+    }, screen.isCup ? 'Emmener ces combattants ▸' : 'Valider l’effectif ▸'));
   return layout(screen,
     topBar(screen, { title: where, subtitle: `Choisissez jusqu’à ${max} combattants`, pill: { text: `${screen.squad.length} / ${max}`, className: full ? 'is-full' : '' }, onBack: () => screen.navigate(screen.backScreen) }),
     grid, aside, 'mm-squad');
@@ -130,7 +132,7 @@ export function renderLineupMobile(screen) {
       type: 'button', class: 'btn mm-action',
       onclick: () => { screen.lineup = autoSelectLineup(screen.session, screen.match, squad, need).map((f) => f.id); screen.update(); },
     }, 'Les moins fatigués') : null,
-    screen.match.rounds.length === 0 ? h('button', { type: 'button', class: 'btn mm-action', onclick: () => screen.goTo('squad') }, 'Modifier l’effectif') : null,
+    screen.match.rounds.length === 0 && !screen.isCup ? h('button', { type: 'button', class: 'btn mm-action', onclick: () => screen.goTo('squad') }, 'Modifier l’effectif') : null,
     need
       ? h('button', { type: 'button', class: 'btn btn-primary mm-go', disabled: screen.lineup.length !== need, onclick: () => screen.startPlacement() }, 'Placer dans La Lice ▸')
       : h('button', { type: 'button', class: 'btn btn-primary mm-go', onclick: () => screen.forfeitRound() }, 'Concéder la manche ▸'));
@@ -186,7 +188,7 @@ export function renderRoundResultMobile(screen) {
  * Fin du combat (championnat) : victoire ou défaite en grand, points et recette, manches ;
  * à droite le classement et les autres combats ; courbatures repliées.
  */
-export function renderFinalMobile(screen, { won, points, homeReward, standingsTable, others, seasonNote, soreness, onFinish }) {
+export function renderFinalMobile(screen, { won, points, homeReward, away = false, standingsTable, others, seasonNote, soreness, onFinish }) {
   const playerId = screen.playerTeam.id;
   const name = (id) => screen.session.getTeam(id)?.name ?? '?';
   const details = soreness ? h('details', { class: 'mm-soreness' }, h('summary', {}, 'Courbatures du lendemain'), soreness) : null;
@@ -198,7 +200,7 @@ export function renderFinalMobile(screen, { won, points, homeReward, standingsTa
         h('b', { class: 'mm-final-score' }, `${screen.match.scoreA} – ${screen.match.scoreB}`),
         EmblemView(screen.opponentTeam.emblem, { size: 54, title: screen.opponentTeam.name })),
       h('p', { class: 'mm-final-points' }, `+${points} point${points > 1 ? 's' : ''} au classement`),
-      homeReward ? h('p', { class: 'mm-final-points' }, `🏠 Victoire à domicile : +${homeReward} deniers`) : null,
+      homeReward ? h('p', { class: 'mm-final-points' }, away ? `⚔ Victoire à l’extérieur : +${homeReward} deniers` : `🏠 Victoire à domicile : +${homeReward} deniers`) : null,
       h('ol', { class: 'mm-rounds' }, screen.match.rounds.map((round) => h('li', { class: round.winnerTeamId === playerId ? 'is-win' : 'is-loss' },
         `M${round.number} · ${round.winnerTeamId === playerId ? 'gagnée' : 'perdue'} ${round.scoreA}–${round.scoreB}`))),
       h('button', { type: 'button', class: 'btn btn-primary mm-go', onclick: onFinish }, 'Terminer la journée ▸')),

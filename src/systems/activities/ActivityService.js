@@ -6,7 +6,7 @@ import { findUnmetCondition, getConditionType } from './conditions.js';
 import { isCombatDay } from '../calendar/CalendarService.js';
 import { applyUpgradesToActivity } from '../borough/UpgradeService.js';
 import { formatChance } from './format.js';
-import { isAtPotentialCap } from '../fighters/stats.js';
+import { isAtPotentialCap, isStatMaxed, getStat } from '../fighters/stats.js';
 import { getStatDefinition } from '../../data/stats.js';
 import { getCurrentSeason, getSeasonForDay, getSeasonalClosure } from '../climate/ClimateService.js';
 import { isAway, awayReason } from '../talents/StudyService.js';
@@ -167,7 +167,15 @@ export function enforceActivityCapacities(session) {
  */
 export function isTrainingUseless(fighter, activity) {
   const stat = activity?.reward?.type === 'stat' ? activity.reward.stat : null;
-  return Boolean(stat && getStatDefinition(stat)?.kind === 'skill' && isAtPotentialCap(fighter, stat));
+  // v1.1.8 : aussi à 100 (le maximum absolu), plus seulement au plafond du potentiel.
+  return Boolean(stat && getStatDefinition(stat)?.kind === 'skill' && isStatMaxed(fighter, stat));
+}
+
+/** La compétence de ce lieu est à son maximum absolu (100) — et pas seulement au plafond du potentiel. */
+export function isTrainingAtMax(fighter, activity) {
+  const stat = activity?.reward?.type === 'stat' ? activity.reward.stat : null;
+  const def = stat ? getStatDefinition(stat) : null;
+  return Boolean(def && def.kind === 'skill' && getStat(fighter, stat) >= def.max);
 }
 
 export function describeActivityEffect(activity) {
@@ -195,7 +203,7 @@ export function defaultResolve(activity, fighter, ctx) {
   // Compétence au plafond de son potentiel : plus aucun gain possible, inutile de tirer.
   const stat = activity.reward.type === 'stat' ? activity.reward.stat : null;
   if (isTrainingUseless(fighter, activity)) {
-    report.add({ ...base, type: 'activity.blocked', statId: stat, capped: true });
+    report.add({ ...base, type: 'activity.blocked', statId: stat, capped: true, atMax: isTrainingAtMax(fighter, activity) });
     return;
   }
 

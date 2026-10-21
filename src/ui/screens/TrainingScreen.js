@@ -27,7 +27,7 @@ import { openModal } from '../components/Modal.js';
 import { showToast } from '../components/Toast.js';
 import { audioDirector, buildCombatCues, playCombatCues } from '../../audio/AudioDirector.js';
 import { currentLocale } from '../../i18n/i18n.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
 
@@ -97,7 +97,7 @@ export class TrainingScreen extends HubScreen {
       if (this.renderer.isMarshalAt(event.clientX, event.clientY)) this.openSetup();
     });
     let last = performance.now();
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) {
         const dt = Math.min(0.1, (now - last) / 1000);

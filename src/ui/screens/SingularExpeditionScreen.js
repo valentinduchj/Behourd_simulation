@@ -1,7 +1,7 @@
 import { h } from '../../utils/dom.js';
 import { BaseScreen } from './BaseScreen.js';
 import { SCREENS } from '../../core/screenIds.js';
-import { SINGULAR_RULES, getSingularBoon, getSingularReward } from '../../data/singularExpedition.js';
+import { SINGULAR_RULES, SINGULAR_OPPONENT_COLORS, getSingularBoon, getSingularReward, describeSingularReward } from '../../data/singularExpedition.js';
 import { getLiceDecoration } from '../../data/liceDecorations.js';
 import { SPECTATOR_SPRITES } from '../../data/spectators.js';
 import { COMBAT_PLAYBACK } from '../../data/combatRules.js';
@@ -23,7 +23,7 @@ import { getPotential } from '../../systems/fighters/PotentialService.js';
 import { getTalent } from '../../systems/talents/TalentService.js';
 import {
   getSingularRun, canFightNext, fightNext, currentOpponent, boonsOf, optionTargets, chooseOption, abandonRun,
-  getVictoryClaims, claimNeedsSlot, placeOfRun,
+  getVictoryClaims, planTalentClaims, placeOfRun, runHp, runMaxHp,
 } from '../../systems/expeditions/SingularRunService.js';
 import { claimSingularVictory } from '../../systems/expeditions/ExpeditionService.js';
 import { describeReward } from '../components/ExpeditionBoard.js';
@@ -44,17 +44,19 @@ import { isMobileLayout } from '../mobile/mobileLayout.js';
 // les choix du joueur et afficher les résultats.
 
 // Adversaires : la compagnie du Sentier (couleurs de forêt).
-const FOREST_TEAM = Object.freeze({ id: 'sentier', name: 'Les gens du Sentier', emblem: new Emblem({ colors: { primary: 'sinople', secondary: 'brunatre', tertiary: 'or' } }) });
+const FOREST_TEAM = Object.freeze({ id: 'sentier', name: 'Les gens du Sentier', emblem: new Emblem({ colors: SINGULAR_OPPONENT_COLORS }) });
 // Spectateurs : villageois et enfants (les bêtes sont dans le décor).
 const VILLAGERS = SPECTATOR_SPRITES.filter((sprite) => ['spectator_01', 'spectator_02', 'spectator_03', 'spectator_04', 'spectator_11'].includes(sprite.id));
 
 const fatigueOf = (fighter) => Math.round(getStat(fighter, 'fatigue'));
 
-function FatigueGauge(value) {
-  const tone = value >= 100 ? 'is-spent' : value >= 75 ? 'is-tired' : value >= 50 ? 'is-warm' : '';
-  return h('span', { class: `sx-fatigue ${tone}`.trim(), title: `Fatigue ${value} / 100` },
-    h('span', { class: 'sx-fatigue-bar' }, h('span', { style: { width: `${Math.min(100, value)}%` } })),
-    h('span', { class: 'sx-fatigue-value' }, `FAT ${value}`));
+/** PV de l'expédition (v1.1.7 : ils ne se récupèrent pas d'un combat à l'autre). */
+function HpGauge(value, max) {
+  const ratio = max > 0 ? value / max : 0;
+  const tone = value <= 0 ? 'is-spent' : ratio <= 0.25 ? 'is-tired' : ratio <= 0.5 ? 'is-warm' : '';
+  return h('span', { class: `sx-fatigue sx-hp ${tone}`.trim(), title: `Points de vie ${value} / ${max}` },
+    h('span', { class: 'sx-fatigue-bar' }, h('span', { style: { width: `${Math.max(0, Math.min(100, ratio * 100))}%` } })),
+    h('span', { class: 'sx-fatigue-value' }, `PV ${value}`));
 }
 
 export class SingularExpeditionScreen extends BaseScreen {
@@ -198,7 +200,7 @@ export class SingularExpeditionScreen extends BaseScreen {
   renderFightCard(run, { watching = false } = {}) {
     const opponent = currentOpponent(run);
     if (!opponent) return null;
-    const { entry, fighter, fatigue } = opponent;
+    const { entry, fighter, hp, maxHp } = opponent;
     // Téléphone (v1.2) : carte résumée en haut à droite ; un appui ouvre la fiche complète.
     const mobile = isMobileLayout();
     return h('article', {
@@ -212,14 +214,14 @@ export class SingularExpeditionScreen extends BaseScreen {
           h('strong', {}, fighter.name),
           h('span', { class: 'sx-tags' }, ...FighterClassTags(fighter, this.session), FighterStars(calculateFighterLevel(fighter))),
           (entry.talents ?? []).length ? h('span', { class: 'sx-tags' }, ...TalentBadges(fighter, this.session)) : null),
-        FatigueGauge(Math.round(fatigue))));
+        HpGauge(Math.round(hp), maxHp)));
   }
 
   /** Téléphone : la fiche complète de l'adversaire du combat en cours. */
   openOpponent(run) {
     const opponent = currentOpponent(run);
     if (!opponent) return null;
-    const { entry, fighter, fatigue } = opponent;
+    const { entry, fighter, hp, maxHp } = opponent;
     return openModal({
       title: `${entry.boss ? '👑 ' : ''}${fighter.name} — combat ${run.stage + 1} / ${SINGULAR_RULES.fights}`,
       className: 'sx-opponent-modal',
@@ -229,7 +231,7 @@ export class SingularExpeditionScreen extends BaseScreen {
           h('span', { class: 'sx-tags' }, ...FighterClassTags(fighter, this.session), FighterStars(calculateFighterLevel(fighter))),
           (entry.talents ?? []).length ? h('span', { class: 'sx-tags' }, ...TalentBadges(fighter, this.session)) : h('span', { class: 'muted' }, 'sans talent'),
           (entry.talents ?? []).map((id) => getTalent(id)).filter(Boolean).map((talent) => h('p', { class: 'muted', style: { margin: '0' } }, `${talent.name} : ${talent.description}`))),
-        FatigueGauge(Math.round(fatigue))),
+        HpGauge(Math.round(hp), maxHp)),
       actions: [{ label: 'Fermer', variant: 'primary' }],
     });
   }
@@ -255,7 +257,7 @@ export class SingularExpeditionScreen extends BaseScreen {
           h('strong', {}, fighter.name, ko ? h('span', { class: 'sx-ko' }, ' KO') : null),
           h('span', { class: 'sx-tags' }, ...FighterClassTags(fighter, this.session), FighterStars(calculateFighterLevel(fighter))),
           boons.length ? h('span', { class: 'sx-boons' }, boons.map((b) => h('span', { class: 'sx-boon-icon', title: `${b.def.name} : ${b.def.description}` }, b.def.icon))) : null),
-        FatigueGauge(fatigueOf(fighter))));
+        HpGauge(runHp(this.session, run, id), runMaxHp(this.session, run, id))));
       })),
       h('button', { type: 'button', class: 'btn btn-fight sx-fight', disabled: !this.selectedId, onclick: () => this.fight() },
         this.selectedId ? `⚔ Combattre avec ${this.session.getFighter(this.selectedId).name}` : 'Personne n’est en état'));
@@ -274,7 +276,7 @@ export class SingularExpeditionScreen extends BaseScreen {
             h('span', { class: 'sx-option-kind' }, option.kind === 'boon' ? 'Bonus d’expédition' : 'Récompense de fin'),
             h('span', { class: 'sx-option-icon', 'aria-hidden': 'true' }, def.icon),
             h('strong', {}, def.name),
-            h('span', { class: 'sx-option-desc' }, def.description)),
+            h('span', { class: 'sx-option-desc' }, option.kind === 'reward' ? describeSingularReward(def, run.band ?? 0) : def.description)),
           open && targets.length
             ? h('div', { class: 'sx-targets' },
               h('span', { class: 'muted' }, 'Pour qui ?'),
@@ -287,15 +289,18 @@ export class SingularExpeditionScreen extends BaseScreen {
   /** Victoire : qui reçoit quoi, puis retour au domaine. */
   renderVictory(run) {
     const claims = getVictoryClaims(this.session, run);
+    const plan = planTalentClaims(this.session, claims, this.assignments);
     const rows = claims.map((claim) => {
       const chosen = this.assignments[claim.key] ?? {};
+      const step = plan.steps[claim.key];
       const label = claim.kind === 'talent'
         ? h('span', {}, 'Talent ', TalentBadge(getTalent(claim.talentId), this.session))
         : claim.kind === 'potential' ? `+${claim.value} potentiel 🔥` : `+${claim.value} dans chaque compétence de combat`;
-      const slotPicker = claim.kind === 'talent' && chosen.fighterId && claimNeedsSlot(this.session, chosen.fighterId)
+      // Talent : s'il a déjà deux talents (à ce moment, autres récompenses comprises), il en remplace un.
+      const slotPicker = claim.kind === 'talent' && chosen.fighterId && step?.needsSlot
         ? h('div', { class: 'sx-slots' },
-          h('span', { class: 'muted' }, 'À la place de :'),
-          ...this.session.getFighter(chosen.fighterId).talents.map((id, slot) => h('button', {
+          h('span', { class: 'muted' }, 'Remplacer :'),
+          ...step.talents.map((id, slot) => h('button', {
             type: 'button', class: 'btn btn-sm', 'aria-pressed': String(chosen.slot === slot), 'data-slot': String(slot),
             onclick: () => { this.assignments[claim.key] = { ...chosen, slot }; this.refresh(); },
           }, getTalent(id)?.name ?? id)))
@@ -305,24 +310,28 @@ export class SingularExpeditionScreen extends BaseScreen {
         claim.eligible.length
           ? h('div', { class: 'sx-claim-who' }, ...claim.eligible.map((id) => h('button', {
             type: 'button', class: 'btn btn-sm', 'aria-pressed': String(chosen.fighterId === id), 'data-fighter-id': id,
-            // Un seul nouveau talent par combattant.
-            disabled: (claim.kind === 'talent' && claims.some((other) => other !== claim && other.kind === 'talent' && this.assignments[other.key]?.fighterId === id))
-              // Potentiel : jamais plus que 3 flammes (autres flammes déjà attribuées comprises).
-              || (claim.kind === 'potential' && getPotential(this.session.getFighter(id)) + claim.value
+            // Potentiel : jamais plus que 3 flammes (autres flammes déjà attribuées comprises).
+            disabled: (claim.kind === 'potential' && getPotential(this.session.getFighter(id)) + claim.value
                 + claims.filter((other) => other !== claim && other.kind === 'potential' && this.assignments[other.key]?.fighterId === id).reduce((s2, other) => s2 + other.value, 0) > 3),
             onclick: () => { this.assignments[claim.key] = { fighterId: id, slot: null }; this.refresh(); },
-          }, this.session.getFighter(id).name)))
+          }, this.session.getFighter(id).name)),
+          // v1.1.7 : le joueur peut aussi ne pas l'attribuer.
+          h('button', {
+            type: 'button', class: 'btn btn-sm sx-skip-claim', 'aria-pressed': String(chosen.fighterId === null), 'data-skip': claim.key,
+            onclick: () => { this.assignments[claim.key] = { fighterId: null, slot: null }; this.refresh(); },
+          }, 'Ne pas attribuer'))
           : h('p', { class: 'muted' }, 'Personne ne peut le recevoir : il est perdu.'),
         slotPicker);
     });
-    const ready = claims.every((claim) => !claim.eligible.length || (this.assignments[claim.key]?.fighterId
-      && (claim.kind !== 'talent' || !claimNeedsSlot(this.session, this.assignments[claim.key].fighterId) || [0, 1].includes(this.assignments[claim.key].slot))));
+    // Prêt : chaque récompense a son combattant (ou « ne pas attribuer »), et le plan des talents tient.
+    const ready = plan.ok && claims.every((claim) => !claim.eligible.length || Object.prototype.hasOwnProperty.call(this.assignments, claim.key));
     const kept = run.rewards.map((r) => getSingularReward(r.id)).filter(Boolean);
     return h('section', { class: 'sx-victory' },
       h('h2', { class: 'sx-section-title' }, '🏆 Les dix combats sont gagnés !'),
       h('p', {}, `Récompense de la carte : ${describeReward(run.reward)}.`),
       kept.length ? h('p', {}, `Récompenses de fin : ${kept.map((r) => `${r.icon} ${r.name}`).join(' · ')}.`) : null,
       rows.length ? h('ul', { class: 'sx-claims' }, rows) : null,
+      !plan.ok && plan.reason !== 'Choisissez le talent remplacé.' ? h('p', { class: 'form-error' }, plan.reason) : null,
       h('button', { type: 'button', class: 'btn btn-primary sx-claim-button', disabled: !ready, onclick: () => this.claim() }, 'Recevoir les récompenses ▸'));
   }
 
@@ -450,7 +459,7 @@ export class SingularExpeditionScreen extends BaseScreen {
   runSnapshotForFight(result) {
     const run = this.session.expeditions?.run ?? result.run;
     const stage = result.won ? run.stage - 1 : run.stage;
-    return { ...run, stage, opponentFatigue: result.opponent.fatigue, phase: 'fight' };
+    return { ...run, stage, opponentHp: result.opponent.hp, phase: 'fight' };
   }
 
   endPlayback() {

@@ -13,7 +13,7 @@ export const MONDE_ARTICLES = [
       { type: 'table', source: 'climateSeasons' },
       { type: 'h', text: 'Le Centre' },
       { type: 'list', items: [
-        '☀ En **été**, la rivière est asséchée : personne ne peut y être affecté. Ceux qui y travaillaient passent au repos au premier jour de l’été.',
+        '☀ En **été**, la rivière est asséchée : personne ne peut y être affecté. Ceux qui y travaillaient se retrouvent sans activité au premier jour de l’été.',
         '❄ En **hiver**, la forêt est enneigée et inaccessible, de la même façon ; les feux de camp sont éteints.',
         'Au retour de la saison suivante, le lieu rouvre, mais personne n’y est renvoyé d’office : à vous de réaffecter vos combattants.',
       ] },

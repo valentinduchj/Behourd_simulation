@@ -1,5 +1,6 @@
 import { h } from '../../utils/dom.js';
 import { getSingularRun } from '../../systems/expeditions/SingularRunService.js';
+import { getPendingTalentChoices } from '../../systems/talents/StudyService.js';
 import { SCREENS } from '../../core/screenIds.js';
 import { getEventType, QUEEN_COMBAT } from '../../data/calendar.js';
 import { getEventTitle } from '../../systems/calendar/scheduler.js';
@@ -48,6 +49,8 @@ export function dayAction(session) {
   if (isOffSeason(session)) return { id: 'cup', label: 'Coupe de France', className: 'is-cup' };
   // Expédition singulière en cours (v1.1) : le temps est arrêté, le bouton y ramène.
   if (getSingularRun(session)) return { id: 'advance', label: 'Expédition', className: 'is-fight' };
+  // Étude finie (v1.2.3) : le bouton ouvre le choix du talent (HubScreen.advanceDay).
+  if (getPendingTalentChoices(session).length) return { id: 'advance', label: 'Choisir un talent', className: 'is-choice' };
   const championship = getPendingCombatEvent(session.calendar);
   const queen = getPendingQueenEvent(session.calendar);
   if (championship) return { id: 'fight', label: 'Combattre', className: 'is-fight' };
@@ -72,6 +75,9 @@ function nextEventText(session) {
  * Éléments flottants de l'écran mobile. `screen` : le HubScreen (navigation, Coffre, journée,
  * sauvegarde). Renvoie un fragment à poser dans la section `.hub`.
  */
+/** Onglets sans bouton du jour (téléphone). */
+export const HIDE_ADVANCE_ON = Object.freeze(['team', 'league']);
+
 export function MobileHubChrome(screen) {
   const { session } = screen;
   const team = session.playerTeam;
@@ -126,20 +132,24 @@ export function MobileHubChrome(screen) {
     onclick: () => (action.id === 'cup' ? screen.goToCup() : action.id === 'fight' ? screen.navigate(SCREENS.MATCH) : screen.advanceDay()),
   }, action.label);
 
-  return [day, right, places, dock, advance].filter(Boolean);
+  // v1.1.7 : le bouton du jour (« Jour suivant », « Combattre »…) n'apparaît pas sur les onglets
+  // Compagnie et Ligue ; il revient sur les cartes du domaine (Centre, Bourg…).
+  const showAdvance = !HIDE_ADVANCE_ON.includes(activeId);
+  return [day, right, places, dock, showAdvance ? advance : null].filter(Boolean);
 }
 
 /**
  * Écran à carte (Centre, Bourg, Taverne, Scriptorium, Ma Lice) : la scène occupe tout l'écran ;
  * le reste de la page passe dans un volet qui remonte du bas. Renvoie le volet (ou null).
  */
-export function decorateMapPage(page, { label, open = false, parts = null } = {}) {
+export function decorateMapPage(page, { label, open = false, parts = null, tall = false } = {}) {
   const stage = page?.querySelector?.(':scope > .centre-stage, :scope > .training-stage');
   if (!stage) return null;
   page.classList.add('m-map-page');
   const content = h('div', { class: 'm-sheet-content' });
   for (const child of [...page.children]) if (child !== stage) content.append(child);
-  const sheet = h('section', { class: `m-sheet ${parts ? 'has-parts' : ''}`.trim(), 'data-state': open ? 'open' : 'closed', 'aria-label': label });
+  // tall (v1.1.8 : Taverne, Bourg, Baron) : ouvert, le volet monte jusque sous le bandeau du haut.
+  const sheet = h('section', { class: `m-sheet ${parts ? 'has-parts' : ''} ${tall ? 'is-tall' : ''}`.replace(/\s+/g, ' ').trim(), 'data-state': open ? 'open' : 'closed', 'aria-label': label });
   const close = h('button', { type: 'button', class: 'm-sheet-close', 'aria-label': 'Fermer' }, icon('close', 18));
   // Volet en parties (v0.92, Centre : « Lieux » et « Affectations ») : un bouton par partie,
   // à gauche de l'écran ; le volet n'affiche que la partie choisie (éléments data-sheet-part).

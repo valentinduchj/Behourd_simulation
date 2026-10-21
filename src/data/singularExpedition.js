@@ -2,15 +2,16 @@
 //
 // Le joueur emmène TROIS combattants (ni absents, ni en étude, ni épuisés à 100) et enchaîne dix
 // combats en un contre un, une manche gagnante, dans une lice de forêt (data/arenas.js : 'sentier').
-// Aucun jour ne passe pendant l'expédition. Avant chaque combat, il choisit qui entre en lice ; la
-// fatigue se garde d'un combat à l'autre (les PV, eux, sont pleins à chaque combat). Un combattant
-// battu est KO jusqu'à la fin de l'expédition : un autre reprend le MÊME combat, contre le même
-// adversaire, qui garde sa fatigue. Les trois KO (ou plus personne en état) : expédition perdue,
-// Ferveurs comprises. Abandon possible à tout moment (perdue aussi).
+// Aucun jour ne passe pendant l'expédition. Avant chaque combat, il choisit qui entre en lice.
+// v1.1.7 : ce sont les POINTS DE VIE qui ne se récupèrent pas d'un combat à l'autre ; la fatigue,
+// elle, se récupère (chaque combat repart de la fatigue du départ). Un combattant battu (0 PV) est
+// KO jusqu'à la fin de l'expédition : un autre reprend le MÊME combat, contre le même adversaire,
+// qui garde ses PV. Les trois KO : expédition perdue, Ferveurs comprises. Abandon possible à tout
+// moment (perdue aussi).
 //
-// Entre deux combats gagnés, trois propositions (SINGULAR_RULES.choice) : le joueur en garde UNE —
-// un bonus temporaire (SINGULAR_BOONS, jusqu'à la fin de l'expédition sauf mention) ou une
-// récompense de fin (SINGULAR_REWARDS, donnée seulement en cas de victoire).
+// Entre deux combats gagnés, trois propositions : le joueur en garde UNE — un bonus temporaire
+// (SINGULAR_BOONS, jusqu'à la fin de l'expédition sauf mention), et seulement après les combats
+// `choice.rewardAfter` une récompense de fin (SINGULAR_REWARDS, donnée en cas de victoire).
 // Victoire : les dix combats gagnés avec au moins un combattant debout → récompense de la carte,
 // récompenses de fin ; un talent ou du potentiel va à l'un des trois, au choix du joueur.
 
@@ -21,8 +22,9 @@ export const SINGULAR_RULES = Object.freeze({
   decorationId: 'lice_sentier',
   // Épuisé : ne peut ni partir ni entrer en lice.
   exhaustedFatigue: 100,
-  // Propositions entre deux combats : `boons` bonus temporaires et `rewards` récompenses de fin.
-  choice: Object.freeze({ boons: 2, rewards: 1 }),
+  // Propositions entre deux combats : `boons` bonus temporaires et `rewards` récompenses de fin ;
+  // une récompense de fin n'est proposée qu'après les combats `rewardAfter` (v1.1.7 : 3 au plus).
+  choice: Object.freeze({ boons: 2, rewards: 1, rewardAfter: Object.freeze([3, 6, 9]) }),
   // Adversaires selon la tranche de coût (data/expeditions.js, costBands) : étoiles du 1er au 9e
   // (montée régulière, par demi-étoile), étoiles et talents du 10e ; à partir du combat
   // `talentFrom`, chance `talentChance` qu'un adversaire ait un talent de combat.
@@ -41,13 +43,13 @@ export const SINGULAR_RULES = Object.freeze({
 // Bonus temporaires. target : 'one' (un combattant debout, au choix), 'all' (les trois),
 // 'ko' (un combattant KO), 'opponent' (le prochain adversaire). effects : effets de talents
 // (data/talents.js) ajoutés en combat ; fights : durée en combats (sinon toute l'expédition) ;
-// now : effet immédiat ({ fatigue, revive, opponentFatigue }) ; afterWin : après chaque victoire.
+// now : effet immédiat ({ hp (PV rendus), revive, opponentFatigue }) ; afterWin : après chaque victoire.
 const boon = (id, icon, name, description, target, extra = {}) => Object.freeze({ id, icon, name, description, target, weight: 10, ...extra });
 
 export const SINGULAR_BOONS = Object.freeze([
   boon('pierre-a-aiguiser', '🗡', 'Pierre à aiguiser', '+2 % de dégâts finaux, jusqu’à la fin de l’expédition.', 'one', { effects: [{ type: 'finalDamage', value: 0.02, when: 'always' }] }),
-  boon('repos-au-camp', '⛺', 'Repos au camp', '−50 de fatigue, tout de suite.', 'one', { now: { fatigue: -50 } }),
-  boon('feu-de-camp', '🔥', 'Feu de camp', '−20 de fatigue pour les trois, tout de suite.', 'all', { now: { fatigue: -20 } }),
+  boon('repos-au-camp', '⛺', 'Repos au camp', '+50 PV, tout de suite.', 'one', { now: { hp: 50 } }),
+  boon('feu-de-camp', '🔥', 'Feu de camp', '+20 PV pour les trois, tout de suite.', 'all', { now: { hp: 20 } }),
   boon('cuirasse-rapiecee', '🛡', 'Cuirasse rapiécée', '−5 % de dégâts reçus.', 'one', { effects: [{ type: 'damageTaken', value: 0.05 }] }),
   boon('bottes-de-chasseur', '🥾', 'Bottes de chasseur', 'Se déplace 10 % plus vite dans la lice.', 'one', { effects: [{ type: 'moveSpeed', value: 0.1 }] }),
   boon('souffle-du-bucheron', '🪓', 'Souffle du bûcheron', 'Rester debout le fatigue 30 % de moins.', 'one', { effects: [{ type: 'fatigueEffort', factor: 0.7 }] }),
@@ -59,29 +61,47 @@ export const SINGULAR_BOONS = Object.freeze([
   boon('amulette-de-l-ours', '🐻', 'Amulette de l’ours', 'Une fois dans l’expédition, survit à un coup fatal à 1 PV.', 'one', { effects: [{ type: 'lastStand', per: 'match', invulnerableTicks: 0 }], once: true }),
   boon('oeil-du-chasseur', '🎯', 'Œil du chasseur', '+10 % de dégâts finaux contre un adversaire sous 50 % de ses PV.', 'one', { effects: [{ type: 'finalDamage', value: 0.1, when: 'targetHpBelow', threshold: 0.5 }] }),
   boon('coups-en-rafale', '⚡', 'Coups en rafale', 'Un coup de plus dans ses combos.', 'one', { effects: [{ type: 'comboHits', value: 1 }] }),
-  boon('benediction-du-druide', '🌿', 'Bénédiction du druide', '−15 de fatigue après chacune de ses victoires.', 'one', { afterWin: { fatigue: -15 } }),
+  boon('benediction-du-druide', '🌿', 'Bénédiction du druide', '+20 PV après chacune de ses victoires.', 'one', { afterWin: { hp: 20 } }),
   boon('peau-de-loup', '🐺', 'Peau de loup', 'Ses pénalités de fatigue commencent 10 points plus tard.', 'one', { effects: [{ type: 'fatigueThreshold', value: 10 }] }),
   boon('chant-de-veillee', '🎶', 'Chant de veillée', '+3 % de dégâts finaux pour les trois.', 'all', { effects: [{ type: 'finalDamage', value: 0.03, when: 'always' }] }),
   boon('esquive-du-renard', '🦊', 'Esquive du renard', '5 % de chances d’esquiver chaque coup reçu.', 'one', { effects: [{ type: 'dodgeChance', value: 0.05 }] }),
   boon('fumee-des-pins', '🌫', 'Fumée des pins', 'Le prochain adversaire commence avec +25 de fatigue.', 'opponent', { now: { opponentFatigue: 25 } }),
-  boon('remise-sur-pied', '🩹', 'Remise sur pied', 'Un combattant KO revient dans l’expédition, avec 80 de fatigue.', 'ko', { now: { revive: true, fatigue: 80 }, weight: 3, rare: true }),
+  boon('remise-sur-pied', '🩹', 'Remise sur pied', 'Un combattant KO revient dans l’expédition, avec 50 PV.', 'ko', { now: { revive: true, hp: 50 }, weight: 3, rare: true }),
 ]);
 
 // Récompenses de fin (victoire seulement). target : 'pick' — l'un des trois, choisi à la victoire.
+// v1.1.7 : valeurs selon la tranche de l'expédition — [tranche 1, 2, 3] — ({n} dans la description) ;
+// `bands` : tranches où la récompense peut être proposée (0, 1, 2).
 const reward = (id, icon, name, description, extra = {}) => Object.freeze({ id, icon, name, description, weight: 10, ...extra });
 
 export const SINGULAR_REWARDS = Object.freeze([
-  reward('bourse-du-chasseur', '👛', 'Bourse du chasseur', '+500 deniers.', { deniers: 500 }),
-  reward('grosse-bourse', '💰', 'Grosse bourse', '+1 000 deniers.', { deniers: 1000, weight: 6 }),
-  reward('coffre-de-la-cabane', '🧰', 'Coffre de la cabane', '+1 500 deniers.', { deniers: 1500, weight: 3, rare: true }),
-  reward('ferveurs-retrouvees', '🌸', 'Ferveurs retrouvées', '+2 Ferveurs de la Reine.', { ferveurs: 2 }),
-  reward('offrande-rendue', '🕯', 'Offrande rendue', 'La moitié du coût en Ferveurs est rendue.', { refund: 0.5 }),
-  reward('flamme-nouvelle', '🔥', 'Flamme nouvelle', '+1 potentiel à l’un des trois (3 au plus).', { potential: 1, target: 'pick' }),
-  reward('recrue-de-la-foret', '🍺', 'Recrue de la forêt', 'Une recrue offerte à la Taverne (potentiel 1 au moins).', { recruit: { minPotential: 1 } }),
-  reward('lecon-du-maitre-d-armes', '📯', 'Leçon du maître d’armes', '+3 dans chaque compétence de combat de l’un des trois.', { skills: 3, target: 'pick' }),
-  reward('parchemin-ancien', '📜', 'Parchemin ancien', 'Un talent ordinaire, tiré au hasard, pour l’un des trois.', { talentRarity: 'common', target: 'pick' }),
-  reward('cave-du-roi', '🍷', 'Cave du roi', '2 Hypocras dans Le Coffre.', { item: Object.freeze({ id: 'hypocras', quantity: 2 }) }),
+  reward('bourse-du-chasseur', '👛', 'Bourse du chasseur', '+{n} deniers.', { deniers: [150, 350, 600] }),
+  reward('grosse-bourse', '💰', 'Grosse bourse', '+{n} deniers.', { deniers: [300, 700, 1100], weight: 6 }),
+  reward('coffre-de-la-cabane', '🧰', 'Coffre de la cabane', '+{n} deniers.', { deniers: [500, 1100, 1800], weight: 3, rare: true }),
+  reward('ferveurs-retrouvees', '🌸', 'Ferveurs retrouvées', '+{n} Ferveur(s) de la Reine.', { ferveurs: [1, 1, 2] }),
+  reward('offrande-rendue', '🕯', 'Offrande rendue', 'Un tiers du coût en Ferveurs est rendu.', { refund: 1 / 3 }),
+  reward('flamme-nouvelle', '🔥', 'Flamme nouvelle', '+1 potentiel à l’un des trois (3 au plus).', { potential: 1, target: 'pick', bands: Object.freeze([1, 2]), weight: 5 }),
+  reward('recrue-de-la-foret', '🍺', 'Recrue de la forêt', 'Une recrue offerte à la Taverne (potentiel 1 au moins).', { recruit: { minPotential: 1 }, weight: 6 }),
+  reward('lecon-du-maitre-d-armes', '📯', 'Leçon du maître d’armes', '+{n} dans chaque compétence de combat de l’un des trois.', { skills: [1, 2, 3], target: 'pick' }),
+  reward('parchemin-ancien', '📜', 'Parchemin ancien', 'Un talent ordinaire, tiré au hasard, pour l’un des trois.', { talentRarity: 'common', target: 'pick', bands: Object.freeze([1, 2]), weight: 6 }),
+  reward('cave-du-roi', '🍷', 'Cave du roi', '{n} Hypocras dans Le Coffre.', { item: Object.freeze({ id: 'hypocras', quantity: [1, 1, 2] }) }),
 ]);
+
+/** Valeur d'une récompense pour une tranche (nombre, ou [tranche 1, 2, 3]). */
+export function singularRewardValue(value, band = 0) {
+  return Array.isArray(value) ? value[Math.max(0, Math.min(value.length - 1, band))] : value;
+}
+
+/** Description d'une récompense pour une tranche ({n} remplacé). */
+export function describeSingularReward(def, band = 0) {
+  if (!def) return '';
+  const n = singularRewardValue(def.deniers ?? def.ferveurs ?? def.skills ?? def.item?.quantity, band);
+  const text = def.description.replace('{n}', typeof n === 'number' ? n.toLocaleString('fr-FR') : '');
+  return text.replace('Ferveur(s)', n > 1 ? 'Ferveurs' : 'Ferveur');
+}
+
+/** Couleurs des adversaires (la compagnie du Sentier), partout où ils apparaissent. */
+export const SINGULAR_OPPONENT_COLORS = Object.freeze({ primary: 'sinople', secondary: 'brunatre', tertiary: 'or' });
 
 export const getSingularBoon = (id) => SINGULAR_BOONS.find((entry) => entry.id === id) ?? null;
 export const getSingularReward = (id) => SINGULAR_REWARDS.find((entry) => entry.id === id) ?? null;

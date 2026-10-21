@@ -10,6 +10,7 @@ import { ClubHistory } from './ClubHistory.js';
 import { ClubPalmares } from './ClubPalmares.js';
 import { ClubRosterHistory } from './ClubRosterHistory.js';
 import { FighterName } from './CaptainCrown.js';
+import { TalentBadges } from './TalentBadge.js';
 import { getProgressionIndicator, getIndicatorArrows } from '../../systems/clubs/AIProgressionService.js';
 import { PROGRESSION_NONE } from '../../data/aiProgression.js';
 
@@ -42,7 +43,9 @@ export function openClubSheet(session, team) {
       'li',
       { class: index < topCount ? 'is-top' : '' },
       FighterSprite(fighter, { size: 44, team }),
-      h('span', { class: 'club-roster-who' }, FighterName(fighter, { session, className: 'club-roster-name' }), progressionMark(fighter)),
+      h('span', { class: 'club-roster-who' }, FighterName(fighter, { session, className: 'club-roster-name' }), progressionMark(fighter),
+        // v1.2.1 : talents de combat (clubs de l'IA comme compagnie du joueur).
+        (fighter.talents ?? []).length ? h('span', { class: 'club-roster-talents' }, ...TalentBadges(fighter, session)) : null),
       // [Elite] [Classe] dans une même cellule (la grille de l'effectif garde ses colonnes).
       h('span', { class: 'class-tags' }, ...FighterClassTags(fighter, session)),
       FighterStars(level),

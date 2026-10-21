@@ -225,6 +225,70 @@
         {"id":"club_custom_011_f07","name":"Jehan le Vieux","specialty":"hastier","sprite":"hastier_01","score":52},
         {"id":"club_custom_011_f08","name":"Foulques de Meaux","specialty":"lutteur","sprite":"lutteur_02","score":41}
       ]
+    },
+    {
+      "id": "club_custom_012",
+      "name": "Norsemen",
+      "emblem": "fasce",
+      "colors": {"primary":"#8984cd","secondary":"#8984cd","tertiary":"#a19fc1"},
+      "fighters": [
+        {"id":"club_custom_012_f01","name":"Roger le Balafré","specialty":"hastier","sprite":"hastier_01","score":41,"captain":true},
+        {"id":"club_custom_012_f02","name":"Richard de Gisors","specialty":"hastier","sprite":"hastier_03","score":38},
+        {"id":"club_custom_012_f03","name":"Clément de Senlis","specialty":"hastier","sprite":"hastier_03","score":40},
+        {"id":"club_custom_012_f04","name":"Yves","specialty":"hastier","sprite":"hastier_03","score":35},
+        {"id":"club_custom_012_f05","name":"Rainier","specialty":"lutteur","sprite":"lutteur_01","score":42},
+        {"id":"club_custom_012_f06","name":"Josselin le Vieux","specialty":"hastier","sprite":"hastier_01","score":43},
+        {"id":"club_custom_012_f07","name":"Hamon le Taciturne","specialty":"hastier","sprite":"hastier_01","score":55},
+        {"id":"club_custom_012_f08","name":"Renaud le Vieux","specialty":"hastier","sprite":"hastier_04","score":50}
+      ]
+    },
+    {
+      "id": "club_custom_013",
+      "name": "Masanada",
+      "emblem": "fasce",
+      "colors": {"primary":"#000000","secondary":"#ff0000","tertiary":"#fff700"},
+      "fighters": [
+        {"id":"club_custom_013_f01","name":"Renaud de Coutances","specialty":"hastier","sprite":"hastier_01","score":27,"captain":true},
+        {"id":"club_custom_013_f02","name":"Roger de Laon","specialty":"lutteur","sprite":"lutteur_04","score":32},
+        {"id":"club_custom_013_f03","name":"Pierre d’Étampes","specialty":"lutteur","sprite":"lutteur_03","score":38},
+        {"id":"club_custom_013_f04","name":"Tancrède de Beauvais","specialty":"runner","sprite":"runner_04","score":28},
+        {"id":"club_custom_013_f05","name":"Geoffroy le Bref","specialty":"lutteur","sprite":"lutteur_01","score":34},
+        {"id":"club_custom_013_f06","name":"Hervé","specialty":"runner","sprite":"runner_04","score":15},
+        {"id":"club_custom_013_f07","name":"Galeran d’Orbec","specialty":"hastier","sprite":"hastier_01","score":21},
+        {"id":"club_custom_013_f08","name":"Évrard Bras-de-Fer","specialty":"lutteur","sprite":"lutteur_03","score":20}
+      ]
+    },
+    {
+      "id": "club_custom_014",
+      "name": "Ferreus Lupus",
+      "emblem": "chef",
+      "colors": {"primary":"#d15010","secondary":"#8a7c56","tertiary":"#d15010"},
+      "fighters": [
+        {"id":"club_custom_014_f01","name":"Guillaume le Vieux","specialty":"runner","sprite":"runner_04","score":35,"captain":true},
+        {"id":"club_custom_014_f02","name":"Mathieu de Rouen","specialty":"lutteur","sprite":"lutteur_01","score":32},
+        {"id":"club_custom_014_f03","name":"Arnaud le Fort","specialty":"runner","sprite":"runner_01","score":41},
+        {"id":"club_custom_014_f04","name":"Odon le Pieux","specialty":"runner","sprite":"runner_01","score":62},
+        {"id":"club_custom_014_f05","name":"Raymond Brise-Lance","specialty":"hastier","sprite":"hastier_02","score":21},
+        {"id":"club_custom_014_f06","name":"Yves de Rouen","specialty":"lutteur","sprite":"lutteur_02","score":24},
+        {"id":"club_custom_014_f07","name":"Gauthier d’Évreux","specialty":"hastier","sprite":"hastier_04","score":28},
+        {"id":"club_custom_014_f08","name":"Hervé","specialty":"lutteur","sprite":"lutteur_01","score":29}
+      ]
+    },
+    {
+      "id": "club_custom_015",
+      "name": "Half Ton",
+      "emblem": "bande",
+      "colors": {"primary":"#ff0000","secondary":"#ff0000","tertiary":"#ffd500"},
+      "fighters": [
+        {"id":"club_custom_015_f01","name":"Roger d’Orbec","specialty":"hastier","sprite":"hastier_04","score":71,"captain":true},
+        {"id":"club_custom_015_f02","name":"Jehan de Laon","specialty":"hastier","sprite":"hastier_02","score":28},
+        {"id":"club_custom_015_f03","name":"Guillaume de Senlis","specialty":"runner","sprite":"runner_04","score":31},
+        {"id":"club_custom_015_f04","name":"Enguerrand Bras-de-Fer","specialty":"lutteur","sprite":"lutteur_01","score":45},
+        {"id":"club_custom_015_f05","name":"Gilles d’Arras","specialty":"hastier","sprite":"hastier_04","score":50},
+        {"id":"club_custom_015_f06","name":"Herluin le Jeune","specialty":"runner","sprite":"runner_03","score":32},
+        {"id":"club_custom_015_f07","name":"Amaury","specialty":"hastier","sprite":"hastier_01","score":34},
+        {"id":"club_custom_015_f08","name":"Godefroy le Vieux","specialty":"hastier","sprite":"hastier_04","score":28}
+      ]
     }
   ]
 }

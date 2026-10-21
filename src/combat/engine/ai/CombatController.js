@@ -42,6 +42,25 @@ export class CombatController {
     }
   }
 
+  /**
+   * À qui compter une mise à terre : l'auteur du coup fatal, sauf s'il en a déjà le maximum de la
+   * manche (rules.knockoutCredit) ; alors au coéquipier qui a le plus frappé la victime et qui
+   * n'est pas lui-même au maximum ; sinon à personne (le KO reste dans la manche).
+   */
+  knockoutCreditOf(unit, target) {
+    const { stats, fighters, rules } = this.round;
+    const perRound = rules.knockoutCredit?.maxPerRound ?? Infinity;
+    const perMatch = rules.knockoutCredit?.maxPerMatch ?? Infinity;
+    const before = this.round.knockoutsBefore ?? {};
+    const room = (id) => stats.get(id).knockouts < perRound && stats.get(id).knockouts + (before[id] ?? 0) < perMatch;
+    if (room(unit.id)) return unit.id;
+    const on = this.round.damageOn ?? new Map();
+    const helper = fighters
+      .filter((ally) => ally.side === unit.side && ally.id !== unit.id && room(ally.id) && (on.get(`${ally.id}>${target.id}`) ?? 0) > 0)
+      .sort((a, b) => (on.get(`${b.id}>${target.id}`) ?? 0) - (on.get(`${a.id}>${target.id}`) ?? 0))[0];
+    return helper?.id ?? null;
+  }
+
   /** Un coup : dégâts, statistiques, événements, KO éventuel. */
   strike(unit, target, tick) {
     const { fighters, arena, rules, rng, events, stats, controllers } = this.round;
@@ -109,6 +128,8 @@ export class CombatController {
     detail.comboHits = unit.comboHits;
     detail.highlight = position.finalBonus > 0;
     unit.strikes = (unit.strikes ?? 0) + 1;
+    // Dégâts réellement portés (v1.1.7) : jamais plus que les PV qui restaient (statistiques).
+    const effective = Math.min(detail.damage, Math.max(0, target.hp));
     target.hp = Math.max(0, target.hp - detail.damage);
     // Fatigue du coup : frapper fatigue un peu, encaisser beaucoup plus (selon les dégâts).
     applyStrikeFatigue(unit, target, detail.damage, rules);
@@ -140,9 +161,15 @@ export class CombatController {
       }
     }
     unit.state = 'attacking';
-    stats.get(unit.id).dealt += detail.damage;
+    stats.get(unit.id).dealt += effective;
+    // Dégâts portés à chaque adversaire dans la manche (aide d'une mise à terre).
+    if (detail.damage > 0) {
+      const on = (this.round.damageOn ??= new Map());
+      const key = `${unit.id}>${target.id}`;
+      on.set(key, (on.get(key) ?? 0) + detail.damage);
+    }
     stats.get(unit.id).attacks += 1;
-    stats.get(target.id).taken += detail.damage;
+    stats.get(target.id).taken += effective;
     events.push({ tick, type: 'attack', unitId: unit.id, targetId: target.id, damage: detail.damage, hpAfter: target.hp, detail });
     // Percussion du Runner : la cible, renversée, perd son prochain tour.
     if (position.stun && target.hp > 0) {
@@ -155,10 +182,11 @@ export class CombatController {
       // dans les données de la manche (résultat, statistiques).
       target.status = 'ko';
       target.state = 'ko';
-      stats.get(unit.id).knockouts += 1;
+      const creditId = this.knockoutCreditOf(unit, target);
+      if (creditId) stats.get(creditId).knockouts += 1;
       events.push({ tick, type: 'ko', unitId: target.id, byId: unit.id });
       // Attribution du KO à l'auteur du coup fatal, au moment même (statistiques de carrière).
-      this.round.onKnockout?.(unit.id, target.id, tick);
+      if (creditId) this.round.onKnockout?.(creditId, target.id, tick);
       controllers.get(target.id).knockOut(tick);
       for (const [id, controller] of controllers) {
         if (id !== target.id && controller.targetId === target.id) controller.loseTarget('target-ko', tick);

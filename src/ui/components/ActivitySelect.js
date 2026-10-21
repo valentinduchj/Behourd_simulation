@@ -17,7 +17,7 @@ const JOURNEY_LABEL = '🧭 En expédition';
 /** Libellé de l'activité actuelle d'un combattant. */
 export function activityLabel(activityId) {
   const activity = activityId ? getActivity(activityId) : null;
-  return activity ? `${activity.icon} ${activity.name}` : `${CENTRE_LAYOUT.rest.icon} Au repos`;
+  return activity ? `${activity.icon} ${activity.name}` : `${CENTRE_LAYOUT.rest.icon} Sans activité`;
 }
 
 /**

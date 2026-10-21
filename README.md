@@ -127,6 +127,54 @@ Une journée de championnat sautée par l'avance rapide (Admin › Temps) est di
 
 - Succès 44 à 47 (catégorie Monde, `data/achievements.js`), accordés à la victoire par `AchievementService.recordSingularVictory(session, run)` (appelé par `SingularRunService.claimVictory`) : Le Sentier des pins (toute victoire), Trois debout (aucun combat perdu dans `run.history`), Loup solitaire (les dix combats gagnés par le même combattant), Seigneur des cimes (`run.band === 2`).
 
+## Repos après la Coupe (v1.2.4)
+
+- `QUEEN_COMBAT_CONFIG.restAfterCupDays` (3) : `SeasonService.startNextSeason` place la première journée de championnat après ce repos et repousse les Combats de la Reine prévus avant (`CalendarService.postponeQueenCombats`, jamais sur une journée de championnat).
+
+## Trois talents au choix (v1.2.3)
+
+- **Étude finie** (`StudyService.completeDueStudies`) : famille tirée, puis `STUDY_CHOICE_COUNT` (3) talents différents de cette famille ; l'étude passe à `status: 'choosing'` (`choices`, `targetSlot`), événement de carnet `talent.choice`. `chooseStudyTalent(session, studyId, talentId)` donne le talent (une fois) ; `getPendingTalentChoices` liste les choix en attente.
+- **Journée bloquée** : `HubScreen.advanceDay` ouvre `openTalentChoice` (`ui/components/TalentChoiceModal.js`) ; bouton « Choisir un talent » dans `CalendarBar` et `MobileHub.dayAction` ; carte au Scriptorium.
+
+## Comportements d'élite (v1.2.2)
+
+- **Profils** : `AI_ELITE_PROFILES` (`src/data/aiProfiles.js`) — `marteau-elite`, `tacticien-elite`, `stratege-elite` ; tirés pour les clubs de 4,5 étoiles et plus (`AI_PROFILE_BY_CLUB_STARS`, deuxième tranche). Optimisés au banc d'essai (effectifs à talents de Ligue 1, contre les 8 profils) : ≈ 70–73 % de victoires (≈ 55–60 % pour les originaux).
+- **Composition** : `LINEUP_STRATEGIES.eliteDuel` et `eliteStrategist` (`systems/ai/LineupStrategies.js`), sans quotas de classes.
+- **Talents dans les estimations** : `duelEstimate.talentDamageFactor` (bonus et réductions de `TalentCombat.talentStrikeModifiers`, esquive), utilisé par `duelStrength` (composition, placement) et `TargetSelectionService.estimateDuel` (cible en manche) ; `OpponentAIService` estime les combattants avec leurs talents.
+
+## Talents des adversaires (v1.2.1)
+
+- **Règle** : `src/data/aiTalents.js` (`AI_TALENT_RULES` : par division, familles et fourchettes ; talents « de combat » = domaines retenus et effets tous dans `TalentEffects.COMBAT_TYPES`).
+- **Service** : `systems/clubs/AITalentService.js` — `seedAITalents` (une fois, `initializeWorld`, tirage propre à la partie), `reviewAITalents` (fin de Coupe : `SeasonService.startNextSeason`, après les montées et descentes ; retraites faites à la clôture de la saison), `applyClubTalentRule` (`create` / `adjust`). Talents d'un combattant de la base de clubs : `aiFighterStates[id].talents` ; recrue de l'IA : sur elle-même.
+- **Combat** : `RoundService` passe les talents de tous les combattants ; Coupe (IA contre IA) : `playBenchMatch({ withTalents, season })`.
+- **Affichage** : fiche du club, cartes adverses du placement (compétences = `getCombatValue`), bouton « Adversaires » et `MatchScreen.inspectEnemy` (téléphone), classement de la Coupe.
+
+## Les talents montent en grade (v1.2.0)
+
+- **115 talents** (`src/data/talents.js`) : 60 ordinaires, 30 rares, 15 épiques, 10 exotiques. Échelles ordinaire → rare → épique par simple changement de valeur (ex. `vsClass` 0,05 / 0,08 / 0,12).
+- **Nouveaux effets** (`systems/talents/TalentEffects.js`) : `awayWinDeniers` (`awayWinBonus`, versé par `HomeRewardService.awardHomeReward` à l'extérieur), `upgradeDiscount` (`UpgradeService.getCurrentCost`, non cumulable), `sorenessFactor` (`FatigueService.applyMatchSoreness`), `potentialBoost.minAge`, condition de combat `when: 'queen'` (`CombatUnit.competition`, passé par `RoundService` depuis `match.kind`). `damageTaken` accepte `when: 'selfHpBelow'` (Coriace).
+- **Quatre couleurs** : `TALENT_UNRANKED_STYLE` supprimé ; `getTalentStyle` renvoie toujours une famille. Hors saison : `.talent-badge.is-dormant` en pointillés.
+
+## Plus léger : audio Opus, batterie (v1.1.9)
+
+- **Audio** : musique (Opus 96 kb/s) et ambiances (Opus 48 kb/s mono) en `.ogg` ; bruitages en MP3. Extensions par dossier : `EXTENSION` dans `src/data/audio.js`. 25 → 13 Mo.
+- **Batterie (téléphone)** : `createScenePacer()` (`render/framePacing.js`) — scène du domaine à `COVERED_FPS` (2) quand `COVERING_SELECTOR` (fenêtre, volet haut, affectations) la couvre ; jamais pour le combat (sa simulation avance au rythme du dessin). Densité des canvas plafonnée : `setPixelRatioCap(2)` (`render/IsoView.js`, appelé par `main.js`). Couches fixes gardées en mémoire : `IsoView.drawCachedLayer(name, key, draw)` (sol du Bourg, planchers de la Taverne et du Scriptorium ; pas le Centre ni les Expéditions, dont l'eau est animée).
+
+## Ergonomie sur téléphone (v1.1.8)
+
+- **Téléphone** (`css/mobile.css`, blocs « v1.1.8 ») : notifications en haut au centre ; écrans de lecture (Compagnie, Ligue) dans une zone fixe sous le bandeau ; colonnes d'affectation en flex (lieu fermé étroit, noms sur deux lignes) ; Combat de la Reine sur une ligne (en-tête masqué) ; cartes posées réduites au placement ; carte des Terres entre le titre et les boutons. Volets hauts : option `tall` de `decorateMapPage` (`static mobileSheet = { tall: true }` : Taverne, Bourg, Baron). Bourg : `BoroughRenderer.labelInsets` (`BOROUGH_MOBILE_LABEL_INSETS`). Tutoriel : `mobileText` / `mobileAfter` / `mobileAction` (`data/tutorial.js`). Compagnie : « FAT » dans `TeamMetric`.
+- **Libellés** : « Sans activité » (au lieu de « Au repos ») ; `FATIGUE_RULES.states[0].label` « En forme ».
+- **Taverne** : `RECRUITMENT_CONFIG.startingPriceFactor` (× 2 sur le prix des recrues de départ).
+- **Compétence à 100** : `isTrainingUseless` couvre aussi le maximum absolu (`isStatMaxed`), `isTrainingAtMax` ; événement `activity.blocked` avec `atMax` (note « au maximum (100) » au carnet).
+- **Expédition singulière** : `SquadFighterDetail` (`ExpeditionBoard`), fiche du combattant touché dans le choix des trois.
+
+## Expéditions aux PV, Coupe à huit, mises à terre plafonnées (v1.1.7)
+
+- **Expéditions singulières** (`SingularRunService`) : `run.hp` / `run.maxHp` (PV gardés d'un combat à l'autre, `runHp`), `run.startFatigue` (chaque combat repart de la fatigue du départ), `run.opponentHp` (l'adversaire vainqueur garde ses PV) ; bonus `now.hp` / `afterWin.hp`. Récompenses de fin : `SINGULAR_RULES.choice.rewardAfter` (après les combats 3, 6, 9), valeurs par tranche (`singularRewardValue`, `describeSingularReward`), `bands`. Victoire : `planTalentClaims` (plusieurs talents pour un même combattant, place remplacée au choix ; `fighterId: null` = non attribué).
+- **Coupe de France** : `cup.playerSquad` (huit combattants choisis au premier combat, `MatchScreen.confirmSquad`), repris aux combats suivants (étape directement aux cinq de la manche).
+- **Mises à terre** : `COMBAT_RULES.knockoutCredit` { maxPerRound: 3, maxPerMatch: 6 } (`CombatController.knockoutCreditOf`, `simulateRound({ knockoutsBefore })`) ; dégâts comptés plafonnés aux PV restants.
+- **Téléphone** : renommer au stylo (`FighterSheet`), pas de bouton du jour sur Compagnie et Ligue (`MobileHub.HIDE_ADVANCE_ON`). **Tabards** : `getSpriteImage` attend l'image recolorée (2 s au plus) ; Scriptorium, fiche rapide et adversaires d'expédition aux couleurs de leur club.
+
 ## Le Baron ; expéditions moins chères (v1.1.2)
 
 - Le Capitaine des Expéditions s'appelle désormais **le Baron** (textes seulement : l'identifiant du sprite `expedition_captain` et celui du talent `compagnon-du-capitaine` ne changent pas ; le capitaine des compagnies garde son nom).

@@ -59,12 +59,14 @@ const snapshot = (unit) => ({ ...unit, stats: { ...unit.stats } });
 
 /**
  * Manche entre deux camps déjà placés. units : CombatUnit[] (camps 'A' et 'B').
+ * knockoutsBefore (facultatif) : { [fighterId]: mises à terre déjà comptées dans le combat } (plafond
+ * rules.knockoutCredit.maxPerMatch).
  * onKnockout(attackerId, targetId, tick) : appelé dès qu'un coup met une cible KO (auteur du
  * coup fatal) — le moteur constate le KO, l'appelant en tient les statistiques.
  * aiConfigBySide (facultatif) : { A, B } — réglages d'IA propres à chaque camp (banc d'essai des
  * stratégies, systems/ai/) ; sinon `aiConfig` pour tous.
  */
-export function simulateRound({ arena, units, rng = Math.random, rules = COMBAT_RULES, aiConfig = FIGHTER_AI_CONFIG, aiConfigBySide = null, onKnockout = null }) {
+export function simulateRound({ arena, units, rng = Math.random, rules = COMBAT_RULES, aiConfig = FIGHTER_AI_CONFIG, aiConfigBySide = null, onKnockout = null, knockoutsBefore = null }) {
   const configOf = (unit) => aiConfigBySide?.[unit.side] ?? aiConfig;
   // Talents : effets d'équipe calculés une fois au début de la manche (combat/engine/TalentCombat.js).
   const fighters = prepareTalentUnits(units.map((unit) => ({
@@ -90,7 +92,7 @@ export function simulateRound({ arena, units, rng = Math.random, rules = COMBAT_
     },
   };
   const controllers = new Map(fighters.map((unit, index) => [unit.id, new FighterAIController(unit, { index, config: configOf(unit), hooks, rules })]));
-  const combat = new CombatController({ fighters, byId, arena, rules, rng, events, stats, controllers, onKnockout });
+  const combat = new CombatController({ fighters, byId, arena, rules, rng, events, stats, controllers, onKnockout, knockoutsBefore });
 
   const sideAlive = (side) => fighters.some((unit) => unit.side === side && isActive(unit));
   const order = () => fighters

@@ -1,11 +1,12 @@
 import { h } from '../../utils/dom.js';
+import { openTalentChoice } from '../components/TalentChoiceModal.js';
 import { HubScreen } from './HubScreen.js';
 import { ScriptoriumScene } from '../../scriptorium/ScriptoriumScene.js';
 import { ScriptoriumRenderer } from '../../scriptorium/ScriptoriumRenderer.js';
 import { getVisibleExits, describeExit, getExit } from '../../systems/navigation/LocationNavigationService.js';
 import {
   canStartStudy, getActiveStudies, getFreeDesks, getStudyDuration, getStudyPlan, getStudyProgress, interruptStudy, startStudy,
-  takeUnseenRevealCeremonies,
+  takeUnseenRevealCeremonies, getPendingTalentChoices,
 } from '../../systems/talents/StudyService.js';
 import { SCENE_VFX } from '../../data/vfx.js';
 import {
@@ -26,7 +27,7 @@ import { PotentialFlames } from '../components/Potential.js';
 import { TalentBadge, TalentBadges } from '../components/TalentBadge.js';
 import { spectatorUrl } from '../../render/spectators.js';
 import { currentLocale } from '../../i18n/i18n.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
 
@@ -122,7 +123,7 @@ export class ScriptoriumScreen extends HubScreen {
     this.listen(this.canvas, 'click', (event) => this.activate(this.targetAt(event.clientX, event.clientY)));
     // Le chat et la souris ne vivent que pendant l'affichage (rien ne s'accumule après le départ).
     let last = performance.now();
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) {
         this.scene.update((now - last) / 1000);
@@ -206,6 +207,8 @@ export class ScriptoriumScreen extends HubScreen {
     this.scene.setArtifact(getActiveConfiguration(this.session));
     const studies = getActiveStudies(this.session);
     this.scene.setStudents(studies.map((study) => ({ fighter: this.session.getFighter(study.fighterId), study })).filter((s) => s.fighter));
+    // v1.1.7 : tabard aux couleurs de la compagnie (comme au Centre et dans la Lice).
+    this.renderer.teamColors = this.session.playerTeam?.emblem.resolvedColors() ?? null;
     if (this.renderer) {
       const first = studies[0];
       const subtitle = !studies.length ? `Libre · ${getDeskCount(this.session)} place${getDeskCount(this.session) > 1 ? 's' : ''}`
@@ -220,10 +223,16 @@ export class ScriptoriumScreen extends HubScreen {
 
   renderPanels() {
     const studies = getActiveStudies(this.session);
+    // v1.2.3 : études finies dont le talent attend le choix du joueur.
+    const pending = getPendingTalentChoices(this.session);
     const desks = getDeskCount(this.session);
     const free = getFreeDesks(this.session);
     const config = getActiveConfiguration(this.session);
     this.panelHost.replaceChildren(
+      ...pending.map((study) => h('article', { class: 'zone-card study-choice-card', 'data-study': study.id },
+        h('h3', { class: 'zone-card-title' }, h('span', { 'aria-hidden': 'true' }, '✦'), `Étude terminée : ${this.session.getFighter(study.fighterId)?.name ?? '?'}`),
+        h('p', { class: 'zone-card-desc' }, 'Trois talents se sont révélés : choisissez celui qu’il gardera.'),
+        h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: () => openTalentChoice(this.session, { study, onChosen: () => this.navigate(this.id) }) }, 'Choisir son talent'))),
       h('article', { class: `zone-card study-desk-card ${studies.length ? 'is-busy' : ''}`.trim() },
         h('h3', { class: 'zone-card-title' }, h('span', { 'aria-hidden': 'true' }, '📜'), 'Le Bureau d’étude',
           h('span', { class: 'study-desk-count' }, `${studies.length} / ${desks} place${desks > 1 ? 's' : ''}`)),
@@ -241,7 +250,7 @@ export class ScriptoriumScreen extends HubScreen {
             h('button', { type: 'button', class: 'btn btn-sm', onclick: () => this.openFlavia() }, 'Parler à la Professeure Flavia'))),
         h('article', { class: 'zone-card study-rules-card' },
           h('h3', { class: 'zone-card-title' }, h('span', { 'aria-hidden': 'true' }, '🕯'), 'L’étude'),
-          h('p', { class: 'zone-card-desc' }, `Un combattant en étude ne s’entraîne pas et ne combat pas. À la fin, un talent se révèle. Chaque combattant peut avoir deux talents : le premier et le second se révèlent gratuitement. Avec deux talents, une nouvelle étude (${deniers(STUDY_RULES.replaceCost)}) remplace celui qu’on choisit, à la révélation. Interrompue, l’étude ne révèle rien et n’est pas remboursée.`),
+          h('p', { class: 'zone-card-desc' }, `Un combattant en étude ne s’entraîne pas et ne combat pas. À la fin, trois talents de la même famille se révèlent : vous en choisissez un. Chaque combattant peut avoir deux talents : le premier et le second s’obtiennent gratuitement. Avec deux talents, une nouvelle étude (${deniers(STUDY_RULES.replaceCost)}) remplace celui qu’on choisit. Interrompue, l’étude ne révèle rien et n’est pas remboursée.`),
           h('ul', { class: 'study-durations' }, Object.entries(STUDY_RULES.durationByPotential).map(([potential, duration]) => h('li', {},
             PotentialFlames({ potential: Number(potential) }), h('span', {}, days(duration))))))),
     );

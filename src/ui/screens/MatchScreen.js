@@ -72,6 +72,7 @@ import {
 import { pointsFor } from '../../systems/frenchCup/CupGroups.js';
 import { currentLocale } from '../../i18n/i18n.js';
 import { createFramePacer } from '../../render/framePacing.js';
+import { getCombatValue } from '../../combat/engine/CombatUnit.js';
 import { haptic } from '../mobile/Haptics.js';
 
 /** « 1 de vos combattants a été mis KO : rétabli pour la manche suivante. » (accordé au nombre). */
@@ -130,6 +131,14 @@ export class MatchScreen extends BaseScreen {
       this.match = createCupPlayerMatch(this.session, this.params.cupMatchId);
       this.event = this.match ? { day: null, data: {} } : null;
       this.step = 'squad';
+      // v1.1.7 : les huit combattants emmenés sont choisis une fois, au premier combat de la Coupe ;
+      // ensuite, on choisit seulement les cinq de chaque manche.
+      const kept = this.cupSquadKept();
+      if (this.match && kept.length) {
+        this.squad = kept;
+        this.match.squadIds = [...kept];
+        this.step = 'lineup';
+      }
     } else if (queenEvent) {
       this.event = queenEvent;
       // Idempotent : ne tire que ce qui manque (propositions, combats secondaires d'une ancienne sauvegarde).
@@ -148,6 +157,43 @@ export class MatchScreen extends BaseScreen {
 
   get isQueen() {
     return this.kind === 'queen';
+  }
+
+  /** Coupe : combattants emmenés (choisis au premier combat), encore en état de combattre. */
+  cupSquadKept() {
+    const cup = this.isCup ? getCup(this.session) : null;
+    return (cup?.playerSquad ?? []).filter((id) => {
+      const fighter = this.session.playerFighters.find((f) => f.id === id);
+      return fighter && canSelectForMatch(this.session, fighter).ok;
+    });
+  }
+
+  /** Coupe : nombre exact de combattants à emmener (8, ou tous si la compagnie en a moins). */
+  get cupSquadSize() {
+    if (!this.isCup) return null;
+    const available = this.session.playerFighters.filter((f) => canSelectForMatch(this.session, f).ok).length;
+    return Math.min(MATCH_RULES.maxSquadSize, available);
+  }
+
+  /** La sélection de l'effectif peut-elle être validée ? (Coupe : exactement cupSquadSize.) */
+  get canConfirmSquad() {
+    return this.isCup ? this.squad.length === this.cupSquadSize && this.squad.length > 0 : this.squad.length > 0;
+  }
+
+  /** Valide l'effectif engagé (Coupe : gardé pour toute la Coupe). */
+  confirmSquad() {
+    if (!this.canConfirmSquad) return;
+    this.lineup = [];
+    // Effectif engagé enregistré sur le combat (talent Légende vivante).
+    this.match.squadIds = [...this.squad];
+    if (this.isCup) {
+      const cup = getCup(this.session);
+      if (cup) {
+        cup.playerSquad = [...this.squad];
+        this.session.markDirty?.();
+      }
+    }
+    this.goTo('lineup');
   }
 
   get isCup() {
@@ -360,7 +406,8 @@ export class MatchScreen extends BaseScreen {
     return h(
       'div',
       { class: 'match-body panel' },
-      h('h2', { class: 'section-title' }, 'Choisissez votre adversaire'),
+      // Téléphone (v1.1.8) : l'en-tête est masqué ; la couronne rappelle le Combat de la Reine.
+      h('h2', { class: 'section-title' }, isMobileLayout() ? '♛ ' : null, 'Choisissez votre adversaire'),
       h('p', {}, `${options.length} compagnies acceptent de vous affronter, de la moins à la plus redoutable. Choisissez-en une seule : ce choix est définitif. La récompense n’est versée qu’en cas de victoire ; ce combat ne compte pas pour le championnat.`),
       options.length
         ? h('div', { class: 'queen-options' }, options.map((option) => this.renderQueenOption(option)))
@@ -467,7 +514,9 @@ export class MatchScreen extends BaseScreen {
       'div',
       { class: 'match-body panel' },
       h('h2', { class: 'section-title' }, 'Effectif engagé'),
-      h('p', {}, `Sélectionnez jusqu’à ${max} combattants pour ce combat. À chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`),
+      h('p', {}, this.isCup
+        ? `Coupe de France : choisissez les ${this.cupSquadSize} combattants que vous emmenez pour toute la Coupe. Avant chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`
+        : `Sélectionnez jusqu’à ${max} combattants pour ce combat. À chaque manche, ${MATCH_RULES.fightersPerRound} d’entre eux entreront dans La Lice.`),
       this.renderSavedTeams(),
       h('h3', { class: 'sheet-section-title squad-fighters-title' }, 'Combattants'),
       FighterFilterBar(this.squadFilter, (filter) => { this.squadFilter = filter; this.update(); }, { shown: listed.matching, total: listed.total }),
@@ -486,10 +535,10 @@ export class MatchScreen extends BaseScreen {
           onclick: () => this.selectTypeTeam(),
         }, 'Sélection de l’équipe Type'),
         h('button', {
-          type: 'button', class: 'btn btn-primary', disabled: this.squad.length === 0,
-          // Effectif engagé enregistré sur le combat (talent Légende vivante).
-          onclick: () => { this.lineup = []; this.match.squadIds = [...this.squad]; this.goTo('lineup'); },
-        }, 'Valider l’effectif ▸'),
+          type: 'button', class: 'btn btn-primary', disabled: !this.canConfirmSquad,
+          title: this.isCup && !this.canConfirmSquad ? `Choisissez exactement ${this.cupSquadSize} combattants pour la Coupe.` : null,
+          onclick: () => this.confirmSquad(),
+        }, this.isCup ? 'Emmener ces combattants ▸' : 'Valider l’effectif ▸'),
       ),
     );
   }
@@ -693,7 +742,7 @@ export class MatchScreen extends BaseScreen {
         'div',
         { class: 'match-actions' },
         h('span', { class: 'pick-count' }, `${this.lineup.length} / ${need}`),
-        this.match.rounds.length === 0
+        this.match.rounds.length === 0 && !this.isCup
           ? h('button', { type: 'button', class: 'btn', onclick: () => this.goTo('squad') }, 'Modifier l’effectif')
           : null,
         need
@@ -778,7 +827,9 @@ export class MatchScreen extends BaseScreen {
     // Interface mobile (v0.83) : fiche du combattant à placer (compétences, état, rôle).
     this.placementDetail = h('aside', { class: 'placement-detail', 'aria-live': 'polite' });
     this.refreshPlacementUi();
-    return h(
+    this.enemyPanelOpen = false;
+    this.inspectEnemyId = null;
+    this.placementScreenEl = h(
       'div',
       { class: 'match-body panel placement-screen' },
       h(
@@ -805,29 +856,35 @@ export class MatchScreen extends BaseScreen {
       h('div', { class: 'placement-actionbar' }, this.placementStatus, this.placementActions),
       this.placementDetail,
     );
+    return this.placementScreenEl;
   }
 
   /** Fiche du combattant en cours de placement (affichée en mobile, à côté de la main de cartes). */
   renderPlacementDetail() {
     if (!this.placementDetail) return;
-    const fighter = this.placingId ? this.session.getFighter(this.placingId) : null;
-    if (!fighter || !this.isPlayerTurn) {
+    // v1.2.1 : un adversaire touché dans la lice montre sa fiche (stats et talents) à la place.
+    const enemy = this.inspectEnemyId ? this.session.getFighter(this.inspectEnemyId) : null;
+    const fighter = enemy ?? (this.placingId ? this.session.getFighter(this.placingId) : null);
+    if (!fighter || (!enemy && !this.isPlayerTurn)) {
       this.placementDetail.hidden = true;
       return;
     }
+    this.placementDetail.classList.toggle('is-enemy', Boolean(enemy));
     const fatigue = this.matchFatigue(fighter);
     const key = { lutteur: 'wrestling', hastier: 'polearm', runner: 'percussion' }[fighter.specialtyId];
     const skills = [['wrestling', 'Lutte'], ['polearm', 'Arme d’hast'], ['percussion', 'Percussion'], ['endurance', 'Endurance']];
     this.placementDetail.hidden = false;
     // (replaceChildren écrirait « null » : les éléments absents sont retirés.)
     this.placementDetail.replaceChildren(...[
+      enemy ? h('p', { class: 'pd-enemy-head' }, h('span', {}, 'Adversaire'),
+        h('button', { type: 'button', class: 'pd-close', 'aria-label': 'Fermer la fiche de l’adversaire', onclick: () => this.inspectEnemy(null) }, '✕')) : null,
       h('div', { class: 'pd-head' },
-        FighterSprite(fighter, { size: 46, team: this.playerTeam, colorIntensity: getColorIntensity(fatigue) }),
+        FighterSprite(fighter, { size: 46, team: enemy ? this.opponentTeam : this.playerTeam, colorIntensity: getColorIntensity(fatigue) }),
         h('div', { class: 'pd-identity' },
           h('strong', { class: 'pd-name' }, FighterName(fighter, { session: this.session })),
           h('span', { class: 'pd-tags' }, ...FighterClassTags(fighter, this.session), FighterStars(calculateFighterLevel(fighter))))),
       h('div', { class: 'pd-skills' }, skills.map(([stat, label]) => {
-        const value = Math.round(fighter.stats?.[stat] ?? 0);
+        const value = Math.round(getCombatValue(fighter, stat) ?? 0);
         return h('div', { class: `pd-skill ${stat === key ? 'is-key' : ''}`.trim() },
           h('span', {}, label),
           h('span', { class: 'pd-bar' }, h('span', { style: { width: `${Math.min(100, value)}%` } })),
@@ -837,6 +894,27 @@ export class MatchScreen extends BaseScreen {
       ...TalentBadges(fighter, this.session),
       fighter.specialty?.formationRole ? h('p', { class: 'pd-role' }, `Rôle : ${fighter.specialty.formationRole}.`) : null,
     ].filter(Boolean));
+  }
+
+  /**
+   * Fiche d'un adversaire (v1.2.1) : sur téléphone, dans le panneau de fiche ; sur ordinateur, sa
+   * carte est mise en évidence dans la colonne des adversaires. null : refermée.
+   */
+  inspectEnemy(fighterId) {
+    this.inspectEnemyId = fighterId;
+    this.renderPlacementDetail();
+    for (const card of this.enemyList?.querySelectorAll('.placement-enemy') ?? []) {
+      const on = card.dataset.fighterId === fighterId;
+      card.classList.toggle('is-inspected', on);
+      if (on && !isMobileLayout()) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  /** Téléphone : volet des cartes adverses (bouton « Adversaires »). */
+  toggleEnemyPanel(open = !this.enemyPanelOpen) {
+    this.enemyPanelOpen = open;
+    this.placementScreenEl?.classList.toggle('is-enemies-open', open);
+    this.refreshPlacementUi();
   }
 
   /** Colonnes (mon équipe à gauche, adversaires à droite), tour en cours et boutons. */
@@ -861,7 +939,7 @@ export class MatchScreen extends BaseScreen {
         onSelect: (fighterId) => { this.placingId = fighterId; this.refreshPlacementUi(); this.refreshLice(); },
       });
     });
-    // Adversaires : présence, classe, étoiles, sprite, fatigue — jamais leurs statistiques.
+    // Adversaires : classe, étoiles, sprite, fatigue, et (v1.2.1) leurs compétences et talents.
     const enemies = this.opponentLineup.map((id) => {
       const fighter = this.session.getFighter(id);
       const tile = manager.getPlacement('B', id);
@@ -875,6 +953,7 @@ export class MatchScreen extends BaseScreen {
     });
     this.ownList.replaceChildren(...own);
     this.enemyList.replaceChildren(...enemies);
+    for (const card of this.enemyList.querySelectorAll('.placement-enemy')) card.classList.toggle('is-inspected', card.dataset.fighterId === this.inspectEnemyId);
     this.renderPlacementDetail();
     const placedOwn = this.lineup.filter((id) => manager.getPlacement('A', id)).length;
     const placedEnemy = this.opponentLineup.filter((id) => manager.getPlacement('B', id)).length;
@@ -911,6 +990,11 @@ export class MatchScreen extends BaseScreen {
         : null,
       // Consommables (Pain au méteil, Hypocras…) donnés aux combattants alignés pour cette manche.
       // Coupe de France : Le Coffre est fermé.
+      // Téléphone (v1.2.1) : les cartes adverses (stats, talents) dans un volet.
+      isMobileLayout() ? h('button', {
+        type: 'button', class: `btn btn-sm enemies-button ${this.enemyPanelOpen ? 'is-active' : ''}`.trim(), 'aria-pressed': String(Boolean(this.enemyPanelOpen)),
+        onclick: () => this.toggleEnemyPanel(),
+      }, this.enemyPanelOpen ? 'Fermer les adversaires' : `Adversaires (${this.opponentLineup.length})`) : null,
       isChestLocked({ match: this.match }) ? null : h('button', {
         type: 'button', class: 'btn btn-sm chest-button', onclick: () => this.openPlacementChest(),
         title: 'Donner un consommable à un combattant aligné pour cette manche',
@@ -1061,7 +1145,15 @@ export class MatchScreen extends BaseScreen {
 
   onLiceClick(event) {
     const tile = this.renderer.pickArenaTile(event.clientX, event.clientY);
-    if (!tile || !this.isPlayerTurn) return;
+    if (!tile) return;
+    // v1.2.1 : un adversaire déjà placé sur cette case → sa fiche (stats et talents).
+    const enemyHere = [...(this.placement?.placements.B ?? new Map())].find(([, placed]) => placed.x === tile.x && placed.y === tile.y);
+    if (enemyHere) {
+      this.inspectEnemy(this.inspectEnemyId === enemyHere[0] ? null : enemyHere[0]);
+      return;
+    }
+    if (this.inspectEnemyId) this.inspectEnemy(null);
+    if (!this.isPlayerTurn) return;
     if (!this.placingId) return;
     this.placePlayerFighter(this.placingId, tile);
   }
@@ -1539,7 +1631,8 @@ export class MatchScreen extends BaseScreen {
         h('p', { class: 'final-score' }, `${Math.max(this.match.scoreA, this.match.scoreB)} – ${Math.min(this.match.scoreA, this.match.scoreB)}`),
         h('p', { class: 'final-points' }, `+${points} point${points > 1 ? 's' : ''} au classement`),
         // Victoire à domicile : recette de la lice (HomeRewardService).
-        homeReward ? h('p', { class: 'final-points home-reward' }, `🏠 Victoire à domicile : +${homeReward} deniers`) : null,
+        // v1.2 : à l'extérieur, la prime du Quêteur.
+        homeReward ? h('p', { class: 'final-points home-reward' }, playerResult.location === 'AWAY' ? `⚔ Victoire à l’extérieur : +${homeReward} deniers` : `🏠 Victoire à domicile : +${homeReward} deniers`) : null,
         h(
           'ol',
           { class: 'round-summary' },
@@ -1559,6 +1652,7 @@ export class MatchScreen extends BaseScreen {
         won: this.match.winnerId === playerId,
         points: playerResult.points[playerId],
         homeReward: playerResult.homeReward ?? 0,
+        away: playerResult.location === 'AWAY',
         others,
         standingsTable: h('section', { class: 'mm-standings' }, h('h3', { class: 'sheet-section-title' }, `${this.seasonEnd ? 'Classement final' : 'Classement'} — ${getLeagueName(playerLeagueId)}`), LeagueMiniTable(standings, { around: 2 })),
         seasonNote: this.seasonEnd ? h('p', { class: 'season-over-note', role: 'status' }, `Dernière journée : la saison ${this.seasonEnd.season} est terminée.`) : null,

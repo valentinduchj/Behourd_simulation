@@ -3,7 +3,7 @@ import { CENTRE_LAYOUT } from '../../data/centreLayout.js';
 import { STAT_DEFINITIONS } from '../../data/stats.js';
 import { FATIGUE_RULES } from '../../data/fatigue.js';
 import {
-  listActivities, getAssignedFighters, getFreeSlots, getActivityClosure, isTrainingUseless,
+  listActivities, getAssignedFighters, getFreeSlots, getActivityClosure, isTrainingUseless, isTrainingAtMax,
 } from '../../systems/activities/ActivityService.js';
 import { isStudying } from '../../systems/talents/StudyService.js';
 import { isOnPeregrination } from '../../systems/expeditions/journeys.js';
@@ -120,12 +120,12 @@ export function AssignBoard(screen) {
     h('p', { class: 'm-assign-meta' }, h('span', {}, effect), h('b', {}, places)),
     closedReason ? h('p', { class: 'm-assign-note' }, closedReason) : null,
     dimmed && check.reason && !closedReason ? h('p', { class: 'm-assign-note' }, check.reason) : null,
-    useless ? h('p', { class: 'm-assign-note is-useless' }, 'Potentiel atteint') : null,
+    useless ? h('p', { class: 'm-assign-note is-useless' }, useless === 'max' ? 'Maximum atteint' : 'Potentiel atteint') : null,
     h('div', { class: 'm-assign-chips' }, assigned.map(chip)));
   };
   const rest = fighters.filter((f) => !f.activityId);
   const columns = [
-    column({ id: null, icon: CENTRE_LAYOUT.rest.icon, name: 'Au repos', effect: '—', places: String(rest.length), assigned: rest }),
+    column({ id: null, icon: CENTRE_LAYOUT.rest.icon, name: 'Sans activité', effect: '—', places: String(rest.length), assigned: rest }),
     ...listActivities(session).map((activity) => {
       const assigned = getAssignedFighters(session, activity.id);
       const closure = getActivityClosure(session, activity.id);
@@ -133,7 +133,7 @@ export function AssignBoard(screen) {
         id: activity.id, icon: activity.icon, name: activity.name, effect: shortEffect(activity),
         places: Number.isFinite(activity.capacity) && activity.capacity ? `${assigned.length} / ${activity.capacity}` : String(assigned.length),
         assigned, closedReason: closure ? 'Fermé pour la saison' : null,
-        useless: Boolean(selected) && isTrainingUseless(selected, activity),
+        useless: Boolean(selected) && isTrainingUseless(selected, activity) && (isTrainingAtMax(selected, activity) ? 'max' : 'potential'),
       });
     }),
   ];

@@ -6,6 +6,10 @@ export const QUEEN_COMBAT_CONFIG = Object.freeze({
   // Jours entre deux Combats de la Reine (tirage uniforme, bornes comprises), à partir
   // de la date du précédent (ou du début de la partie pour le premier).
   interval: Object.freeze({ min: 15, max: 18 }),
+  // Repos après la Coupe de France (v1.2.4) : aucun combat (Combat de la Reine, ni première
+  // journée de championnat) dans les N jours qui suivent le début de la nouvelle saison ; un
+  // Combat de la Reine prévu plus tôt est repoussé.
+  restAfterCupDays: 3,
 
   // Nombre d'adversaires proposés ; le joueur en choisit un seul. Ils sont présentés du
   // moins étoilé au plus étoilé (à égalité, dans l'ordre du tirage).

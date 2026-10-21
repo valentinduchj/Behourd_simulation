@@ -112,6 +112,42 @@ export const LINEUP_STRATEGIES = {
   },
 };
 
+/** Combattants de manche (estimations) d'une liste. */
+const unitsOf = (fighters, unitOf) => fighters.map(unitOf);
+
+/**
+ * Élite (v1.2.2, mesuré au banc d'essai) : SANS quotas de classes — imposer 2 Lutteurs,
+ * 2 Hastiers et 1 Runner coûtait environ 9 points de victoires face aux autres comportements.
+ */
+Object.assign(LINEUP_STRATEGIES, {
+  /** Les 5 qui gagnent le mieux leurs duels contre l'effectif adverse disponible (stats, fatigue, talents). */
+  eliteDuel({ own, opponents, size, unitOf }) {
+    const enemies = unitsOf(opponents, unitOf);
+    return own
+      .map((fighter) => ({ fighter, value: averageDuelStrength(unitOf(fighter), enemies) }))
+      .sort((a, b) => b.value - a.value || byLevel(a.fighter, b.fighter))
+      .slice(0, size)
+      .map((entry) => entry.fighter);
+  },
+  /**
+   * Prévoit la composition adverse (les `size` adversaires les plus forts contre son effectif),
+   * s'y oppose, et ménage ses combattants au-delà de `tired` de fatigue (pénalité progressive).
+   */
+  eliteStrategist({ own, opponents, size, unitOf, fatigueOf, tired = 40, tiredScale = 40 }) {
+    const ownUnits = unitsOf(own, unitOf);
+    const expected = opponents
+      .map((fighter) => ({ fighter, value: averageDuelStrength(unitOf(fighter), ownUnits) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, size)
+      .map((entry) => unitOf(entry.fighter));
+    return own
+      .map((fighter) => ({ fighter, value: averageDuelStrength(unitOf(fighter), expected) - Math.max(0, fatigueOf(fighter) - tired) / tiredScale }))
+      .sort((a, b) => b.value - a.value || byLevel(a.fighter, b.fighter))
+      .slice(0, size)
+      .map((entry) => entry.fighter);
+  },
+});
+
 export function selectLineup(strategyId, context) {
   return (LINEUP_STRATEGIES[strategyId] ?? LINEUP_STRATEGIES.fresh)(context);
 }

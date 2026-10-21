@@ -3,7 +3,7 @@ import { CENTRE_LAYOUT } from '../../data/centreLayout.js';
 import {
   assignActivity, listActivities, getAssignedFighters, describeActivityEffect,
   describeActivityConditions, formatChance, getFreeSlots, isCentreClosed, CENTRE_CLOSED_REASON,
-  getActivity, isTrainingUseless, getActivityClosure,
+  getActivity, isTrainingUseless, isTrainingAtMax, getActivityClosure,
 } from '../../systems/activities/ActivityService.js';
 import { getCurrentSeason } from '../../systems/climate/ClimateService.js';
 import { calculateFighterLevel } from '../../systems/fighters/ratings.js';
@@ -33,7 +33,7 @@ import {
   applyAssignmentPreset, canCreateAssignmentPreset, captureAssignments, createAssignmentPreset, deleteAssignmentPreset,
   describeAssignmentPreset, describePresetIssues, getAssignmentPreset, listAssignmentPresets, updateAssignmentPreset,
 } from '../../systems/activities/AssignmentPresetService.js';
-import { createFramePacer } from '../../render/framePacing.js';
+import { createScenePacer } from '../../render/framePacing.js';
 import { focusField } from '../mobile/mobileLayout.js';
 import { attachMapZoom } from '../mobile/MapZoom.js';
 import { isMobileLayout } from '../mobile/mobileLayout.js';
@@ -107,7 +107,7 @@ export class CentreScreen extends HubScreen {
     this.listen(window, 'keydown', (event) => { if (event.key === 'Escape') { this.select(null); this.selectActivity(null); } });
     this.listen(this.canvas, 'mouseleave', () => { this.hoverActivityId = null; });
 
-    const draw = createFramePacer();
+    const draw = createScenePacer();
     const frame = (now) => {
       if (draw(now)) this.drawFrame(now / 1000);
       this.frameId = requestAnimationFrame(frame);
@@ -419,7 +419,7 @@ export class CentreScreen extends HubScreen {
     this.renderer.selectedId = fighterId;
     const fighter = fighterId ? this.session.getFighter(fighterId) : null;
     this.hint.textContent = fighter
-      ? `${fighter.name} sélectionné (${activityLabel(fighter.activityId)}). Cliquez sur un lieu pour l’y affecter, ou sur la cour pour le mettre au repos.`
+      ? `${fighter.name} sélectionné (${activityLabel(fighter.activityId)}). Cliquez sur un lieu pour l’y affecter, ou sur la cour pour le laisser sans activité.`
       : DEFAULT_HINT;
     this.hint.classList.toggle('is-active', Boolean(fighter));
     this.renderPanels();
@@ -450,7 +450,7 @@ export class CentreScreen extends HubScreen {
         { class: `saved-team assignment-preset ${info.invalid ? 'is-incomplete' : ''}`.trim(), 'data-preset-id': item.id },
         h('button', {
           type: 'button', class: 'saved-team-select', disabled: this.closed,
-          title: `Appliquer « ${item.name} » : ${summary || 'aucune affectation'}${item.resetOthers ? ' — les autres au repos' : ''}${invalid}`,
+          title: `Appliquer « ${item.name} » : ${summary || 'aucune affectation'}${item.resetOthers ? ' — les autres sans activité' : ''}${invalid}`,
           onclick: () => this.applyPreset(item.id),
         }, item.name, info.invalid ? h('span', { class: 'saved-team-missing' }, `⚠ ${info.invalid}`) : null),
         h('button', { type: 'button', class: 'saved-team-action', title: `Modifier ${item.name}`, 'aria-label': `Modifier ${item.name}`, onclick: () => this.openPresetEditor(item) }, '✎'),
@@ -508,7 +508,7 @@ export class CentreScreen extends HubScreen {
       h('label', { class: 'saved-team-field' }, h('span', {}, 'Nom'), input),
       h('p', { class: 'muted' }, `Affectations actuelles : ${current.counts.map(({ activityId, count }) => `${activityLabel(activityId)} ×${count}`).join(' · ')}.`),
       captureBox ? h('label', { class: 'check-field' }, captureBox, ' Remplacer par les affectations actuelles') : null,
-      h('label', { class: 'check-field' }, resetBox, ' Mettre au repos les combattants absents de la configuration (recrues arrivées depuis)'),
+      h('label', { class: 'check-field' }, resetBox, ' Laisser sans activité les combattants absents de la configuration (recrues arrivées depuis)'),
       error,
     );
     input.addEventListener('input', () => { error.textContent = ''; });
@@ -653,7 +653,9 @@ export class CentreScreen extends HubScreen {
             ActivitySelect(fighter, (activityId) => this.assign(fighter.id, activityId), { session: this.session, compact: true }),
             // Potentiel atteint dans la compétence de ce lieu : recalculé à chaque affichage.
             isTrainingUseless(fighter, getActivity(fighter.activityId))
-              ? h('span', { class: 'useless-training', title: 'Ce combattant a atteint son potentiel maximal dans la compétence de ce lieu : affectez-le ailleurs.' }, 'Entraînement inutile : potentiel atteint')
+              ? (isTrainingAtMax(fighter, getActivity(fighter.activityId))
+                ? h('span', { class: 'useless-training', title: 'La compétence de ce lieu est au maximum (100) : affectez-le ailleurs.' }, 'Entraînement inutile : maximum atteint')
+                : h('span', { class: 'useless-training', title: 'Ce combattant a atteint son potentiel maximal dans la compétence de ce lieu : affectez-le ailleurs.' }, 'Entraînement inutile : potentiel atteint'))
               : null,
           ),
         ))),

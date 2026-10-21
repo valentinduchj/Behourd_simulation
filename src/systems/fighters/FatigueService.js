@@ -3,7 +3,7 @@ import { COMBAT_RULES } from '../../data/combatRules.js';
 import { randInt } from '../../utils/random.js';
 import { getStat, worsenStat } from './stats.js';
 import { FATIGUE_RULES } from '../../data/fatigue.js';
-import { fatigueCapOf, fatigueEffortFactor, fatigueRecoveryFactor, fatigueThresholdShift, squadFatigueFactor } from '../talents/TalentEffects.js';
+import { fatigueCapOf, fatigueEffortFactor, fatigueRecoveryFactor, fatigueThresholdShift, squadFatigueFactor, sorenessFactor } from '../talents/TalentEffects.js';
 
 // Fatigue : règles de jeu (gain après une manche) et indicateur visuel, sans rendu.
 // Les interfaces reçoivent une INTENSITÉ DE COULEUR (0 à 1) et ne connaissent pas la fatigue.
@@ -134,7 +134,8 @@ export function applyMatchSoreness(session, match, rules = FATIGUE_RULES) {
     if (!fighter || !isPlayerFighter(session, fighter, match)) continue;
     const ko = match.isKnockedOut(fighterId);
     const before = getStat(fighter, 'fatigue');
-    let amount = rounds * perRound + (ko ? knockedOut : 0);
+    // Endurci / Increvable (v1.2) : courbatures réduites.
+    let amount = Math.round((rounds * perRound + (ko ? knockedOut : 0)) * sorenessFactor(fighter));
     const cap = fatigueCapOf(fighter);
     if (cap !== null) amount = Math.max(0, Math.min(amount, cap - before));
     worsenStat(fighter, 'fatigue', amount);

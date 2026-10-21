@@ -58,6 +58,21 @@ export function resolveCombatDayConflicts(calendar) {
 
 // --- Lecture ---
 
+/**
+ * Repousse les Combats de la Reine prévus avant `fromDay` (v1.2.4 : repos après la Coupe de
+ * France) au premier jour libre à partir de `fromDay` (jamais un jour de championnat). Renvoie
+ * les événements déplacés.
+ */
+export function postponeQueenCombats(calendar, fromDay) {
+  const moved = [];
+  for (const event of calendar.events) {
+    if (event.typeId !== QUEEN_COMBAT || event.status !== 'scheduled' || event.day >= fromDay) continue;
+    event.day = findFreeCombatDay(calendar, fromDay, event);
+    moved.push(event);
+  }
+  return moved;
+}
+
 /** Journée de championnat prévue ce jour et pas encore disputée, ou null. */
 export function getPendingCombatEvent(calendar, day = calendar.currentDay) {
   return calendar.getEventsOn(day).find((event) => event.typeId === CHAMPIONSHIP_MATCH && event.status === 'scheduled') ?? null;

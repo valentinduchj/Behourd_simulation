@@ -10,6 +10,7 @@ import { createRandomTeam } from '../game/teamFactory.js';
 import { calculateClubLevel } from '../fighters/ratings.js';
 import { createRng } from '../../utils/random.js';
 import { selectLineup } from './LineupStrategies.js';
+import { combatEffectsOf } from '../talents/TalentEffects.js';
 
 // Banc d'essai des IA de combat : de vrais combats simulés de bout en bout (manches gagnantes,
 // composition, placement alterné, moteur de combat, fatigue entre les manches, KO), entre deux
@@ -28,15 +29,17 @@ const other = (side) => (side === 'A' ? 'B' : 'A');
  * stats }], ticks }. Les effectifs ne sont jamais modifiés (fatigue et KO propres au combat).
  * fatigueStart (facultatif) : Map id → fatigue de départ.
  */
-export function playBenchMatch({ sides, rng, rules = COMBAT_RULES, matchRules = MATCH_RULES, arena = createArena(), fatigueStart = null, keepSimulations = false }) {
+export function playBenchMatch({ sides, rng, rules = COMBAT_RULES, matchRules = MATCH_RULES, arena = createArena(), fatigueStart = null, keepSimulations = false, season = null, withTalents = false }) {
   const fatigue = new Map(fatigueStart ?? []);
   const knockedOut = new Set();
   const score = { A: 0, B: 0 };
   const rounds = [];
   const fighterById = new Map(SIDES.flatMap((side) => sides[side].fighters.map((f) => [f.id, f])));
   const fatigueOf = (fighter) => fatigue.get(fighter.id) ?? 0;
+  // withTalents (v1.2.1, Coupe de France) : talents de combat des combattants (clubs de l'IA).
   const unitOf = (fighter, side = 'A', tile = { x: 0, y: 0 }) => createCombatUnit({
     fighter, side, tile, fatigue: fatigueOf(fighter), isCaptain: fighter.isCaptain === true, rules,
+    ...(withTalents ? { talentEffects: combatEffectsOf(fighter, { season }), season } : {}),
   });
   // Premier à placer : le club le plus fort, puis chacun son tour (règle du jeu).
   const levelA = calculateClubLevel(sides.A.fighters);
@@ -65,8 +68,11 @@ export function playBenchMatch({ sides, rng, rules = COMBAT_RULES, matchRules = 
     const units = SIDES.flatMap((side) => lineups[side]
       .filter((fighter) => manager.placements[side].has(fighter.id))
       .map((fighter) => unitOf(fighter, side, manager.placements[side].get(fighter.id))));
+    // Mises à terre déjà comptées dans le combat (plafond par combat, rules.knockoutCredit).
+    const knockoutsBefore = {};
+    for (const r of rounds) for (const [id, s] of Object.entries(r.stats ?? {})) knockoutsBefore[id] = (knockoutsBefore[id] ?? 0) + (s.knockouts ?? 0);
     const simulation = simulateRound({
-      arena, units, rng, rules,
+      arena, units, rng, rules, knockoutsBefore,
       aiConfigBySide: { A: sides.A.profile.fighterAI, B: sides.B.profile.fighterAI },
     });
     score[simulation.winnerSide] += 1;

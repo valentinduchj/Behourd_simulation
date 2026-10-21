@@ -20,13 +20,13 @@ import { rollTavernTalent } from '../talents/TalentService.js';
  * ÉTOILES (le niveau de la Taverne n'y change rien) :
  *   - étoiles débloquées par une amélioration : prix fixe du barème RECRUITMENT_CONFIG.starPrices
  *     (2,5★ : 150, 3★ : 350, 3,5★ : 600, 4★ : 1 250 deniers) ;
- *   - étoiles proposées dès le départ (jusqu'à 2★) : niveau (arrondi) ± 10 deniers.
+ *   - étoiles proposées dès le départ (jusqu'à 2★) : (niveau (arrondi) ± 10) × 2 deniers (v1.1.8).
  */
 export function computeRecruitPrice(fighter, rng = Math.random) {
   const fixed = getRecruitPriceForStars(getStarRating(calculateFighterLevel(fighter)));
   if (fixed !== null) return fixed;
   const { min, max } = RECRUITMENT_CONFIG.priceVariation;
-  const price = Math.round(calculateFighterLevel(fighter)) + randInt(rng, min, max);
+  const price = (Math.round(calculateFighterLevel(fighter)) + randInt(rng, min, max)) * (RECRUITMENT_CONFIG.startingPriceFactor ?? 1);
   return Math.max(RECRUITMENT_CONFIG.minimumPrice, price);
 }
 

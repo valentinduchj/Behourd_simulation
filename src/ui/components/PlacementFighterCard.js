@@ -5,6 +5,8 @@ import { FighterStars } from './Rating.js';
 import { FighterName } from './CaptainCrown.js';
 import { calculateFighterLevel } from '../../systems/fighters/ratings.js';
 import { fatigueLevelClass, fatigueText } from '../../systems/fighters/FatigueService.js';
+import { TalentBadges } from './TalentBadge.js';
+import { getCombatValue } from '../../combat/engine/CombatUnit.js';
 
 // Carte compacte d'un combattant pendant le placement dans la Lice : la même pour nos combattants
 // (colonne de gauche, cliquable) et pour les adversaires (colonne de droite, information seule).
@@ -25,11 +27,12 @@ export function SkillLine(fighter) {
     'span',
     { class: `pfc-skill ${stat === key ? 'is-key' : ''}`.trim() },
     h('span', { class: 'pfc-skill-label' }, label),
-    h('span', { class: 'pfc-skill-value' }, String(Math.round(fighter.stats?.[stat] ?? 0))),
+    // Valeur de combat (v1.2.1) : un combattant de l'IA, défini par sa note, l'a dans chaque compétence.
+    h('span', { class: 'pfc-skill-value' }, String(Math.round(getCombatValue(fighter, stat) ?? 0))),
   )));
 }
 
-function cardBody(fighter, { session, team, fatigue, statusText, effects = [], colorIntensity = 1, skills = false }) {
+function cardBody(fighter, { session, team, fatigue, statusText, effects = [], colorIntensity = 1, skills = false, talents = false }) {
   return [
     FighterSprite(fighter, { size: 34, team, colorIntensity }),
     h(
@@ -40,6 +43,8 @@ function cardBody(fighter, { session, team, fatigue, statusText, effects = [], c
       h('span', { class: 'pfc-tags' }, ...FighterClassTags(fighter, session), FighterStars(calculateFighterLevel(fighter))),
       // Nos combattants seulement (jamais les statistiques de l'adversaire) ; affiché en mobile.
       skills ? SkillLine(fighter) : null,
+      // v1.2.1 : talents (cartes adverses).
+      talents && (fighter.talents ?? []).length ? h('span', { class: 'pfc-talents' }, ...TalentBadges(fighter, session)) : null,
       h(
         'span',
         { class: 'pfc-foot' },
@@ -59,7 +64,8 @@ export function PlacementFighterCard(fighter, { side = 'own', state = 'available
         class: `placement-card placement-enemy ${state === 'placed' || state === 'last' ? 'is-placed' : ''} ${state === 'last' ? 'is-last' : ''}`.trim(),
         'data-fighter-id': fighter.id,
       },
-      ...cardBody(fighter, rest),
+      // v1.2.1 : compétences et talents de l'adversaire visibles (choix du placement).
+      ...cardBody(fighter, { ...rest, skills: true, talents: true }),
     );
   }
   const locked = state === 'placed';
